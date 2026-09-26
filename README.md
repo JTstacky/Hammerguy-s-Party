@@ -10,7 +10,7 @@ Hammerguy's Party is a party of chaotic minigames for up to 10 friends, in the b
 
 ![Hammerguy's Party](docs/screenshot.png)
 
-**Play:** https://tenggames.com.au/Hammerguy-s-Party/ (GitHub Pages).
+**Play:** https://tenggames.com.au/hammerguys-party/
 
 ## Minigames
 
@@ -45,7 +45,9 @@ npm run build      # static site → dist/
 
 ## Deployment
 
-`.github/workflows/pages.yml` tests, builds and deploys to GitHub Pages on every push to `main`. One-time setup: **Settings → Pages → Source: GitHub Actions**.
+The game is published on **tenggames.com.au/hammerguys-party/** as part of the Teng Games site ([JTstacky/Chess-tutor](https://github.com/JTstacky/Chess-tutor)). That site's deploy clones and builds this repo.
+
+On every push to `main`, `.github/workflows/publish.yml` tests and builds, then asks the site to redeploy. That step needs the repository secret `SITE_DISPATCH_TOKEN`: a fine-grained token with access to Chess-tutor only and **Contents: Read and write**. Without the secret, changes go live on the site's next deploy.
 
 ## How it works
 
