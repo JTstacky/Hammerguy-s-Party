@@ -211,3 +211,18 @@ test('uther party: races pay 8, 7, 6 to finishers and 0 to everyone else', () =>
   const p = g.payouts();
   assert.deepEqual([1, 2, 3, 4].map((x) => p.get(x)), [7, 0, 8, 0]);
 });
+
+test('touch attack order: a tap on a rival attacks it; on empty ground it does nothing', () => {
+  const g = new Surv(fakeParty(), [1, 2]);
+  g.attack = { range: 1.5, cd: 1, point: 0.3, dmg: 10 };
+  g.spawnHeroes([[0, 0], [5, 0]], { hp: 100 });
+  const me = g.heroes.get(1);
+  g.command(1, { c: 'attack', x: 12, y: 7 });
+  assert.equal(me.attackOrder ?? null, null);
+  assert.equal(me.target ?? null, null, 'no move order from a tap on the ground');
+  g.command(1, { c: 'attack', x: 5.2, y: 0.1 });
+  assert.equal(me.attackOrder, g.heroes.get(2));
+  g.attack = null;
+  g.command(1, { c: 'attack', x: 5, y: 0 });
+  assert.equal(me.attackOrder, g.heroes.get(2), 'no attacks in this game: order ignored, nothing changes');
+});

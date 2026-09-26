@@ -8,6 +8,7 @@ import * as M from './models.js';
 import { LITE, FX_DENSITY } from '../device.js';
 import { Effects, fxTexture } from './effects.js';
 import { blendedGround } from './terrain.js';
+import { bakeStatic, bakeModel } from './batch.js';
 import { VIEWS, SKINS, EVENTS, THEMES_EXTRA, MAP_BUILDERS } from './registry.js';
 import './basics.js';
 import { play } from '../audio.js';
@@ -182,9 +183,12 @@ export class World {
   constructor(canvas, overlay) {
     this.canvas = canvas;
     this.overlay = overlay;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, LITE ? 1.5 : 2));
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, LITE ? 1.25 : 2));
     this.renderer.shadowMap.enabled = true;
+    // Phones redraw the shadow map every other frame (render()): half the
+    // shadow cost, and at 60 fps the lag is invisible.
+    this.renderer.shadowMap.autoUpdate = !LITE;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -330,7 +334,7 @@ export class World {
         }
       }
     } else if (groundLayers) {
-      const ground = blendedGround(groundLayers, f);
+      const ground = blendedGround(groundLayers, f, B + 34);
       ground.position.y = 0.01;
       this.mapGroup.add(ground);
     } else {
@@ -375,8 +379,21 @@ export class World {
       this.mapGroup.add(floor);
     }
 
-    for (const p of map.props || []) this.addProp(p, map.theme);
+    // Props the fixed camera can never see are skipped: the camera centre is
+    // clamped to ±bounds and shows about zoom x 0.95 either side and a bit
+    // more up-screen (-z) than down. The rest are merged into a few draw calls.
+    this.propGroup = new THREE.Group();
+    this.mapGroup.add(this.propGroup);
+    const zoom = map.zoom ?? this.zoom;
+    const reachX = B + zoom * 0.95 + 3;
+    for (const p of map.props || []) {
+      if (p.t !== 'line' && (Math.abs(p.x) > reachX || p.y < -(B + zoom * 0.8 + 3) || p.y > B + zoom * 0.5 + 3)) continue;
+      this.addProp(p, map.theme);
+    }
+    bakeStatic(this.propGroup, { castShadow: !LITE });
     for (const name of map.build || []) MAP_BUILDERS.get(name)?.(map, this);
+    this.camera.far = zoom * 2 + 120;
+    this.camera.updateProjectionMatrix();
   }
 
   addProp(p, theme) {
@@ -386,7 +403,12 @@ export class World {
       case 'rock': obj = M.rock(p.s); break;
       case 'bush': obj = M.bush(p.s); break;
       case 'pillar': obj = M.pillar(p.s); break;
-      case 'torch': obj = M.torch(); this.animated.push({ type: 'torch', obj }); break;
+      case 'torch':
+        obj = M.torch();
+        this.animated.push({ type: 'torch', obj });
+        obj.position.set(p.x, obj.position.y, p.y);
+        this.mapGroup.add(obj);
+        return;
       case 'moonwell': obj = M.moonwell(); break;
       case 'goldmine': obj = M.goldmine(); break;
       case 'flag': obj = M.flag(); break;
@@ -401,7 +423,7 @@ export class World {
       default: return;
     }
     obj.position.set(p.x, obj.position.y, p.y);
-    this.mapGroup.add(obj);
+    this.propGroup.add(obj);
   }
 
   // -------------------------------------------------------- snapshots
@@ -457,13 +479,13 @@ export class World {
     let obj;
     const v = { id: e.id, k: e.k, owner: e.o, deadT: 0 };
     switch (e.k) {
-      case 'warlock': obj = M.warlock(color); break;
+      case 'warlock': obj = bakeModel(M.warlock(color)); break;
       case 'paladin':
         v.sk = e.sk;
-        obj = e.sk && SKINS.has(e.sk) ? SKINS.get(e.sk)(color) : M.paladin(color);
+        obj = e.sk && SKINS.has(e.sk) ? SKINS.get(e.sk)(color) : bakeModel(M.paladin(color));
         break;
-      case 'kodo': obj = M.kodo(); break;
-      case 'golem': obj = M.golem(); break;
+      case 'kodo': obj = bakeModel(M.kodo()); break;
+      case 'golem': obj = bakeModel(M.golem()); break;
       case 'coin': obj = M.coin(); break;
       case 'goldbag': obj = M.goldbag(); break;
       case 'meteor': {
@@ -497,8 +519,8 @@ export class World {
         v.parts = { inst, n };
         break;
       }
-      case 'catapult': obj = M.catapult(!!e.demo); break;
-      case 'beastmaster': obj = M.beastmaster(); break;
+      case 'catapult': obj = bakeModel(M.catapult(!!e.demo)); break;
+      case 'beastmaster': obj = bakeModel(M.beastmaster()); break;
       case 'lob': {
         // A lobbed boulder, like WC3's catapult missile: it flies from the
         // siege engine to a fixed point. On the ground its shadow darkens as
@@ -633,6 +655,7 @@ export class World {
     v.def?.remove?.(v, this);
     v.obj.traverse((o) => {
       if (o.isInstancedMesh) o.dispose();
+      else if (o.userData.baked) o.geometry.dispose();
     });
   }
 
@@ -700,6 +723,7 @@ export class World {
     if (this.lab) this.updateLab(dt);
     this.updateCamera(dt);
     this.fx.update(dt, this.width, this.height);
+    if (LITE) this.renderer.shadowMap.needsUpdate = (this.frameNo = (this.frameNo || 0) + 1) % 2 === 1;
     this.renderer.render(this.scene, this.camera);
     this.positionBars();
   }

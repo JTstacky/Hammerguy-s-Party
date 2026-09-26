@@ -130,6 +130,15 @@ export class Minigame {
   command(pid, m) {
     const u = this.heroes.get(pid);
     if (!u || !u.alive || u.finished) return;
+    if (m.c === 'attack') {
+      // Touch: a tap on a unit. Attacks it if it can be attacked; never moves.
+      const tgt = this.attack ? this.attackTargetAt(pid, +m.x || 0, +m.y || 0) : null;
+      if (tgt) {
+        u.attackOrder = tgt;
+        if (u.cast) u.cast.queued = null;
+      }
+      return;
+    }
     if (this.attack && (m.c === 'move' || m.c === 'stop')) {
       // A right-click on something attackable is an attack order; anything else cancels it.
       const tgt = m.c === 'move' ? this.attackTargetAt(pid, +m.x || 0, +m.y || 0) : null;
@@ -517,6 +526,7 @@ export class Minigame {
       scores: this.meta.ranking === 'score' ? Object.fromEntries([...this.scores].map(([k, v]) => [k, Math.floor(v)])) : null,
       ability: this.abilitySnap(pid),
       abilities: this.abilitiesSnap(pid),
+      attack: this.attack ? 1 : undefined,
     };
   }
 

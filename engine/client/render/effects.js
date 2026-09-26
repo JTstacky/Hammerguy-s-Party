@@ -2,7 +2,7 @@
 // lightning bolts and WC3-style floating text.
 
 import * as THREE from 'three';
-import { LITE } from '../device.js';
+import { LITE, FX_DENSITY } from '../device.js';
 
 const MAX_PARTICLES = 6000;
 
@@ -87,11 +87,13 @@ class Particles {
   }
 
   update(dt) {
+    let last = -1;
     for (let i = 0; i < MAX_PARTICLES; i++) {
       if (this.life[i] <= 0) {
         if (this.alpha[i] !== 0) this.alpha[i] = 0;
         continue;
       }
+      last = i;
       this.life[i] -= dt;
       const k = Math.max(0, this.life[i] / this.maxLife[i]);
       const dr = 1 - this.drag[i] * dt;
@@ -104,7 +106,7 @@ class Particles {
       this.alpha[i] = k;
       this.size[i] = this.size0[i] * (0.4 + 0.6 * k);
     }
-    for (const a of ['position', 'color', 'size', 'alpha']) this.geo.attributes[a].needsUpdate = true;
+    uploadLive(this, last, ['position', 'color', 'size', 'alpha']);
   }
 }
 
@@ -189,6 +191,7 @@ export function fxTexture(file, onLoad, { repeat = false, srgb = true } = {}) {
 
 class SpriteParticles {
   constructor(scene, { file, cols = 1, rows = 1, mode = 'add', max = 1500, blending }) {
+    max = Math.ceil(max * FX_DENSITY);
     this.max = max;
     this.cells = cols * rows;
     this.pos = new Float32Array(max * 3);
@@ -271,11 +274,13 @@ class SpriteParticles {
   }
 
   update(dt) {
+    let last = -1;
     for (let i = 0; i < this.max; i++) {
       if (this.life[i] <= 0) {
         if (this.alpha[i] !== 0) this.alpha[i] = 0;
         continue;
       }
+      last = i;
       this.life[i] -= dt;
       const k = Math.max(0, this.life[i] / this.maxLife[i]); // 1 → 0
       const age = 1 - k;
@@ -293,12 +298,33 @@ class SpriteParticles {
       this.size[i] = this.size0[i] * (1 + (this.grow[i] - 1) * age);
       if (this.anim[i]) this.frame[i] = Math.min(this.cells - 1, this.frame0[i] + Math.floor(age * this.anim[i]));
     }
-    for (const a of ['position', 'color', 'size', 'alpha', 'rot', 'frame']) this.geo.attributes[a].needsUpdate = true;
+    uploadLive(this, last, ['position', 'color', 'size', 'alpha', 'rot', 'frame']);
   }
 }
 
 const tmpColor = new THREE.Color();
 const rnd = (a, b) => a + Math.random() * (b - a);
+
+// Uploads and draws only particles 0..last (the live range). A system with
+// nothing alive is hidden and skips the upload entirely; one more upload
+// after it empties clears the last frame's particles.
+function uploadLive(sys, last, attrs) {
+  const n = last + 1;
+  if (n === 0 && !sys.drawn) {
+    sys.points.visible = false;
+    return;
+  }
+  sys.points.visible = n > 0;
+  const upto = Math.max(n, sys.drawn || 0);
+  sys.drawn = n;
+  sys.geo.setDrawRange(0, n);
+  for (const a of attrs) {
+    const at = sys.geo.attributes[a];
+    at.clearUpdateRanges();
+    at.addUpdateRange(0, upto * at.itemSize);
+    at.needsUpdate = true;
+  }
+}
 
 export class Effects {
   constructor(scene, overlay, camera) {

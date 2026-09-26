@@ -71,7 +71,7 @@ lowercase and unique (`roadkill`, `ratmaze`).
 - **Events:** `this.ev({ k: 'kind', x, y, ... })` fires one-shot effects on every client.
   - Built-in kinds: `boom` (with `s: 'rock'|'fire'|'kodo'`, `r`, `big`), `death`, `burn`, `squish`, `splash`, `txt`, `dmg`, `sfx` (`s`: sound name), `purge`, `shove`, `swing`, `hit`.
   - Your own kinds go through `registerEvent`.
-- **HUD:** `hud(pid)` may return `{ label: 'Cheese: carried by Arthas' }` (shown in the top bar). `static timer = false` shows time played instead of a countdown.
+- **HUD:** `hud(pid)` may return `{ label: 'Cheese: carried by Arthus' }` (shown in the top bar). `static timer = false` shows time played instead of a countdown.
 - **Map:** `{ theme, floor: { shape: 'rect', w, h } | { shape: 'disc', r }, props: [...], bounds, build: ['yourbuilder'], follow }`.
   - Themes: `grass`, `dirt`, `stone`, `night`, `ice`, `lava`, or register your own.
   - Props: `tree`, `bush`, `rock`, `pillar`, `torch`, `moonwell`, `goldmine`, `flag` (`{ t, x, y, s }`). The helpers are in `server/minigames/props.js`.

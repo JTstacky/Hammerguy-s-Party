@@ -13,6 +13,18 @@ import { IS_TOUCH } from './device.js';
 import { PLAYER_COLORS } from '../shared/constants.js';
 
 const $ = (id) => document.getElementById(id);
+
+// A fixed camera distance that frames the arena on a landscape screen (the
+// view is about 1.6x wider than tall), with a little of the surroundings.
+// Games that scroll (follow: true) stay close; a map can set its own zoom.
+function fitZoom(map) {
+  const f = map.floor;
+  if (!f) return null;
+  const hw = f.shape === 'disc' ? f.r : f.w / 2;
+  const hh = f.shape === 'disc' ? f.r : f.h / 2;
+  const z = Math.max(hw, hh * 1.6) + 6;
+  return Math.round(Math.min(map.follow ? 26 : 32, Math.max(22, z)));
+}
 // ?only=<minigame id> makes every game in the party that minigame (practice).
 // Read at load: hosting rewrites the URL.
 const ONLY = new URLSearchParams(location.search).get('only') || undefined;
@@ -220,6 +232,8 @@ export function startApp(cfg) {
         world.zoom = cfg.gameZoom ?? 30;
         break;
       case 'map':
+        // Each game fixes its own camera distance (WC3 maps did), sized to its arena.
+        world.zoom = m.map.zoom ?? fitZoom(m.map) ?? cfg.gameZoom ?? 30;
         world.setMap(m.map);
         world.follow = true;
         break;

@@ -1,31 +1,34 @@
 // Touch controls for phones and tablets. WC3 has none, so this maps its mouse
 // orders onto thumbs and sends the same commands the mouse does:
-//  - Left side: a floating joystick. Holding it steers the hero toward a point
-//    just ahead of it ('steer' orders, re-sent while held); letting go stops.
-//  - Right side: a tap is a right-click (move there), or the target of a
-//    spell waiting for one. Holding keeps moving toward the finger. A second
-//    finger there cancels both (no zoom: each game fixes the camera).
+//  - A fixed joystick in the bottom-left corner is the only way to move.
+//    Holding it steers the hero toward a point just ahead of it ('steer'
+//    orders, re-sent while held); letting go stops. Touching anywhere else
+//    never moves the hero.
+//  - A tap elsewhere is only for targets: the target of a spell waiting for
+//    one, or a creature or rival to attack (WC3's right-click on a unit). The
+//    tap picks the nearest unit on screen, so a thumb doesn't need to be exact.
 //  - Ability buttons fire on touch-down (hud-base.js), so they work while
 //    the other thumb is on the joystick.
-//  - The command card becomes big thumb buttons (CSS: body.touch).
-// The camera always follows the hero on touch.
+//  - No zoom: each game fixes the camera. The camera always follows the hero.
 
+import * as THREE from 'three';
 import { unlockAudio } from './audio.js';
 
-const STICK_ZONE = 0.42; // left fraction of the screen that starts the joystick
 const STICK_R = 56; // px: knob travel
+const GRAB_R = 100; // px: how far from the stick's centre a touch still grabs it
 const DEAD = 10; // px: dead zone
 const AHEAD = 2; // world units: how far ahead of the hero a steer order points
 const RESEND = 100; // ms between steer orders while the stick is held
-const TAP_MS = 250;
-const TAP_PX = 14;
+const TAP_MS = 300;
+const TAP_PX = 16;
+const PICK_PX = 44; // px: how near a unit's on-screen body a tap must land to target it
 
 export class TouchControls {
   constructor(input) {
     this.input = input;
     this.world = input.world;
-    this.stick = null; // { id, ox, oy, x, y, dir, sent, last }
-    this.fingers = new Map(); // right-side touches: id -> { x, y, x0, y0, t0, hold }
+    this.stick = null; // { id, x, y, dir, sent, last }
+    this.taps = new Map(); // other touches: id -> { x, y, x0, y0, t0 }
     document.body.classList.add('touch');
 
     this.el = document.createElement('div');
@@ -34,15 +37,27 @@ export class TouchControls {
     document.getElementById('hud').appendChild(this.el);
     this.base = this.el.firstChild;
     this.knob = this.base.firstChild;
+    this.place();
+    window.addEventListener('resize', () => this.place());
 
     const c = this.world.canvas;
     // Stop the browser from scrolling, zooming or firing mouse events for touches.
     c.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+    this.el.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     c.addEventListener('pointerdown', (e) => this.down(e));
+    this.base.addEventListener('pointerdown', (e) => this.down(e));
     window.addEventListener('pointermove', (e) => this.move(e));
     window.addEventListener('pointerup', (e) => this.up(e));
     window.addEventListener('pointercancel', (e) => this.up(e, true));
     setInterval(() => this.tick(), RESEND);
+  }
+
+  // The stick's fixed centre: bottom-left, clear of the notch.
+  place() {
+    const safe = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-left')) || 0;
+    this.cx = Math.max(96, safe + 92);
+    this.cy = innerHeight - Math.min(116, innerHeight * 0.3);
+    this.base.style.transform = `translate(${this.cx}px, ${this.cy}px)`;
   }
 
   get active() {
@@ -53,26 +68,20 @@ export class TouchControls {
     if (e.pointerType === 'mouse') return;
     unlockAudio();
     this.world.follow = true;
-    if (!this.stick && e.clientX < innerWidth * STICK_ZONE && !this.input.targeting) {
-      this.stick = { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: e.clientX, y: e.clientY, dir: null, sent: false, last: 0 };
+    if (!this.stick && Math.hypot(e.clientX - this.cx, e.clientY - this.cy) < GRAB_R) {
+      this.stick = { id: e.pointerId, x: e.clientX, y: e.clientY, dir: null, sent: false, last: 0 };
       this.el.classList.add('on');
-      this.base.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-      this.knob.style.transform = '';
+      this.move(e);
       return;
     }
-    const f = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), hold: false };
-    this.fingers.set(e.pointerId, f);
-    // Two fingers on the right: neither counts as a tap or a hold.
-    if (this.fingers.size > 1) for (const g of this.fingers.values()) g.hold = 'multi';
+    this.taps.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   }
 
   move(e) {
     const s = this.stick;
     if (s && e.pointerId === s.id) {
-      s.x = e.clientX;
-      s.y = e.clientY;
-      let dx = s.x - s.ox;
-      let dy = s.y - s.oy;
+      let dx = e.clientX - this.cx;
+      let dy = e.clientY - this.cy;
       const len = Math.hypot(dx, dy);
       if (len > STICK_R) {
         dx *= STICK_R / len;
@@ -86,10 +95,11 @@ export class TouchControls {
       if (turned && performance.now() - s.last > 50) this.steer();
       return;
     }
-    const f = this.fingers.get(e.pointerId);
-    if (!f) return;
-    f.x = e.clientX;
-    f.y = e.clientY;
+    const f = this.taps.get(e.pointerId);
+    if (f) {
+      f.x = e.clientX;
+      f.y = e.clientY;
+    }
   }
 
   up(e, cancelled = false) {
@@ -97,26 +107,52 @@ export class TouchControls {
     if (s && e.pointerId === s.id) {
       this.stick = null;
       this.el.classList.remove('on');
-      this.base.style.transform = '';
       this.knob.style.transform = '';
       if (s.sent && this.active) this.input.send({ t: 'cmd', c: 'stop' });
       return;
     }
-    const f = this.fingers.get(e.pointerId);
+    const f = this.taps.get(e.pointerId);
     if (!f) return;
-    this.fingers.delete(e.pointerId);
-    if (cancelled || f.hold || !this.active) return;
+    this.taps.delete(e.pointerId);
+    if (cancelled || !this.active) return;
     const quick = performance.now() - f.t0 < TAP_MS && Math.hypot(f.x - f.x0, f.y - f.y0) < TAP_PX;
-    if (!quick && !this.input.targeting) return;
+    if (!quick) return;
     const p = this.world.screenToGround(f.x, f.y);
     if (!p) return;
     const inp = this.input;
     if (inp.targeting) {
       inp.castAt(inp.targeting, p);
       inp.cancelTarget();
-    } else {
-      inp.moveTo(p);
+      return;
     }
+    // Attack games: a tap on a creature or rival is an attack order on it
+    // (the server checks it can be attacked). It never moves the hero.
+    if (!inp.getSnap()?.attack) return;
+    const u = this.unitAt(f.x, f.y);
+    if (u) {
+      inp.send({ t: 'cmd', c: 'attack', x: +u.obj.position.x.toFixed(2), y: +u.obj.position.z.toFixed(2) });
+      this.world.fx.ring(u.obj.position.x, u.obj.position.z, 0.9, '#ff3030', 0.4);
+    }
+  }
+
+  // The unit whose body (projected at chest height) is nearest the tap.
+  unitAt(sx, sy) {
+    const rect = this.world.canvas.getBoundingClientRect();
+    let best = null;
+    let bd = PICK_PX;
+    for (const v of this.world.views.values()) {
+      if (v.id === this.world.myUnit || !v.obj?.visible) continue;
+      if (!v.obj.userData?.kind && !v.hpFill && !v.def?.unit) continue; // not a unit
+      tmp.copy(v.obj.position);
+      tmp.y += 1;
+      tmp.project(this.world.camera);
+      const d = Math.hypot(rect.left + ((tmp.x + 1) / 2) * rect.width - sx, rect.top + ((1 - tmp.y) / 2) * rect.height - sy);
+      if (d < bd) {
+        bd = d;
+        best = v;
+      }
+    }
+    return best;
   }
 
   // Steers the hero toward a point just ahead of it in the stick's direction.
@@ -133,14 +169,8 @@ export class TouchControls {
   }
 
   tick() {
-    if (this.stick) return this.steer();
-    // A held finger on the right keeps moving toward it, like held right-click.
-    if (this.fingers.size !== 1 || this.input.targeting || !this.active) return;
-    const f = [...this.fingers.values()][0];
-    if (f.hold === 'multi' || performance.now() - f.t0 < TAP_MS) return;
-    const p = this.world.screenToGround(f.x, f.y);
-    if (!p) return;
-    this.input.moveTo(p, !f.hold, f.hold ? 'steer' : 'move');
-    f.hold = true;
+    if (this.stick) this.steer();
   }
 }
+
+const tmp = new THREE.Vector3();

@@ -273,7 +273,7 @@ body.touch #joy { position: absolute; inset: 0; pointer-events: none; }
 body.touch .joy-base {
   position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%;
   border: 2px solid rgba(255, 230, 170, 0.35); background: radial-gradient(circle, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.35));
-  transform: translate(max(96px, env(safe-area-inset-left) + 90px), calc(100dvh - 110px)); opacity: 0.45; transition: opacity 0.15s;
+  opacity: 0.6; transition: opacity 0.15s; pointer-events: auto; touch-action: none;
 }
 body.touch #joy.on .joy-base { opacity: 1; transition: none; }
 body.touch .joy-knob {

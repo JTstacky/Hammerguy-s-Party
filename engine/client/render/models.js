@@ -227,45 +227,101 @@ export function paladin(color) {
   const body = new THREE.Group();
   g.add(body);
   const steel = plateMat();
+  const silver = silverMat();
   const gold = goldMat();
+  const mail = mat('#6c7078', { metalness: 0.6, roughness: 0.55 });
+  const skin = mat('#e0b48e', { roughness: 0.7 });
+  const beardM = mat('#d8c8a8', { roughness: 0.9 });
   const team = mat(color, { roughness: 0.8, side: THREE.DoubleSide });
   const teamDark = mat(darken(color, 0.6), { roughness: 0.85, side: THREE.DoubleSide });
+  const leather = leatherMat();
+
+  // Legs: mail thighs, gold knee cops, steel greaves and pointed sabatons.
   const leg = (s) => {
     const hip = new THREE.Group();
-    hip.position.set(0, 0.62, 0.13 * s);
-    hip.add(mesh(tube([[0, 0, 0], [0.02, -0.25, 0], [0, -0.5, 0]], 0.11, 0.085, 6, 10), steel));
-    hip.add(mesh(scaled(G.sphere, 0.08), gold, 0.05, -0.28, 0));
-    hip.add(mesh(scaled(G.sphere, 0.13, 0.07, 0.1), steel, 0.06, -0.57, 0));
+    hip.position.set(0, 0.62, 0.12 * s);
+    hip.add(mesh(tube([[0, 0.02, 0], [0.01, -0.2, 0.01 * s], [0.02, -0.3, 0]], 0.1, 0.085, 5, 10), mail));
+    hip.add(mesh(scaled(G.sphere, 0.075, 0.07, 0.075), gold, 0.05, -0.3, 0));
+    hip.add(mesh(lathe([[0.075, -0.56], [0.085, -0.48], [0.08, -0.36], [0.07, -0.32]], 12), silver));
+    const foot = mesh(blob(0.15, 0.055, 0.075, { seed: 90, amt: 0.03 }), steel, 0.07, -0.58, 0);
+    hip.add(foot);
     return hip;
   };
   const legL = leg(1);
   const legR = leg(-1);
-  const torso = mesh(lathe([[0.2, 0.6], [0.25, 0.72], [0.29, 0.9], [0.31, 1.05], [0.27, 1.18], [0.14, 1.27], [0.08, 1.3]]), steel);
-  torso.scale.set(0.9, 1, 1.18);
-  const faulds = mesh(new THREE.CylinderGeometry(0.25, 0.32, 0.26, 20, 1, true), steel, 0, 0.6, 0);
-  faulds.scale.z = 1.12;
-  const belt = mesh(new THREE.TorusGeometry(0.265, 0.035, 8, 28).rotateX(Math.PI / 2), gold, 0, 0.73, 0);
-  belt.scale.z = 1.15;
-  const tabard = mesh(cloth(0.28, 0.72, 0.05), team, 0.27, 0.62, 0);
+
+  // Torso: a breastplate with a proud chest and narrow waist, banded below.
+  const torso = mesh(lathe([[0.17, 0.66], [0.2, 0.74], [0.25, 0.86], [0.3, 0.98], [0.31, 1.08], [0.27, 1.17], [0.16, 1.25], [0.09, 1.29]], 24), steel);
+  torso.scale.set(0.82, 1, 1.3);
+  const ridge = mesh(tube([[0.2, 0.8, 0], [0.26, 0.98, 0], [0.24, 1.16, 0]], 0.022, 0.018, 6, 6), gold);
+  const bands = [0.7, 0.78].map((y, i) => {
+    const b = mesh(new THREE.TorusGeometry(0.2 + i * 0.025, 0.018, 6, 24).rotateX(Math.PI / 2), silver, 0, y, 0);
+    b.scale.set(0.84, 1, 1.25);
+    return b;
+  });
+  const belt = mesh(new THREE.TorusGeometry(0.2, 0.03, 8, 28).rotateX(Math.PI / 2), leather, 0, 0.64, 0);
+  belt.scale.set(0.9, 1, 1.25);
+  const buckle = mesh(scaled(G.box, 0.03, 0.07, 0.09), gold, 0.19, 0.64, 0);
+  // Tassets over the hips.
+  const tassets = [1, -1].map((s) => {
+    const t = mesh(new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 0.6, Math.PI * 0.35, Math.PI * 0.4), steel, 0, 0.66, 0.08 * s);
+    t.rotation.y = s > 0 ? -0.2 : Math.PI - 0.4;
+    t.scale.set(1, 1.3, 1);
+    return t;
+  });
+  // Tabard with gold trim and a sun emblem; cape with gold clasps.
+  const tabard = mesh(cloth(0.2, 0.62, 0.03, -0.04), team, 0.21, 0.5, 0);
   tabard.rotation.y = Math.PI;
-  const cape = mesh(cloth(0.62, 1.0, 0.18, 0.2), teamDark, -0.25, 0.72, 0);
-  const gorget = mesh(new THREE.CylinderGeometry(0.12, 0.17, 0.1, 16), gold, 0, 1.29, 0);
-  const helm = mesh(lathe([[0.15, 1.3], [0.18, 1.38], [0.19, 1.48], [0.17, 1.58], [0.1, 1.66], [0.01, 1.68]], 24), steel);
-  const visor = mesh(scaled(G.box, 0.03, 0.04, 0.22), mat('#141414'), 0.18, 1.47, 0);
-  const crest = mesh(scaled(G.box, 0.28, 0.05, 0.03), gold, 0, 1.64, 0);
-  const plume = mesh(tube([[0.05, 1.66, 0], [-0.1, 1.8, 0], [-0.3, 1.72, 0], [-0.4, 1.52, 0]], 0.05, 0.015), team);
-  const pauld = (s) => {
-    const p = mesh(new THREE.SphereGeometry(0.15, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), gold, 0, 1.15, 0.31 * s);
-    p.rotation.x = 0.5 * s;
-    p.scale.set(1, 0.9, 1);
+  const trimL = mesh(tube([[0.215, 0.2, 0.1], [0.23, 0.5, 0.1], [0.25, 0.78, 0.1]], 0.012, 0.012, 4, 5), gold);
+  const trimR = mesh(tube([[0.215, 0.2, -0.1], [0.23, 0.5, -0.1], [0.25, 0.78, -0.1]], 0.012, 0.012, 4, 5), gold);
+  const emblem = mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.012, 12).rotateZ(Math.PI / 2), gold, 0.3, 0.98, 0);
+  const cape = mesh(cloth(0.62, 1.05, 0.22, 0.24), teamDark, -0.22, 0.72, 0);
+  const clasps = [1, -1].map((s) => mesh(scaled(G.sphere, 0.045), gold, -0.14, 1.2, 0.2 * s));
+  // Pauldrons: three overlapping shells, the top one trimmed in gold.
+  const pauldron = (s) => {
+    const p = new THREE.Group();
+    p.position.set(-0.01, 1.16, 0.33 * s);
+    p.rotation.x = 0.55 * s;
+    const shell = (r, y) => mesh(new THREE.SphereGeometry(r, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.42), steel, 0, y, 0);
+    p.add(shell(0.2, 0), shell(0.18, -0.06), shell(0.15, -0.11));
+    const rim = mesh(new THREE.TorusGeometry(0.175, 0.016, 6, 24).rotateX(Math.PI / 2), gold, 0, 0.045, 0);
+    p.add(rim, mesh(scaled(G.sphere, 0.035), gold, 0, 0.2, 0));
     return p;
   };
-  const arm = (s, fwd) => mesh(tube([[0, 1.12, 0.36 * s], [0.08 + fwd * 0.1, 0.9, 0.4 * s], [0.12 + fwd * 0.2, 0.72, 0.3 * s]], 0.085, 0.075, 8, 8), steel);
-  const fist = (s, fwd) => mesh(scaled(G.sphere, 0.08), steel, 0.12 + fwd * 0.2, 0.7, 0.3 * s);
+  // Arms: steel upper arms, gold elbow cops, gauntlets.
+  const arm = (s, fwd) => {
+    const a = new THREE.Group();
+    a.add(mesh(tube([[0, 1.1, 0.35 * s], [0.04 + fwd * 0.08, 0.92, 0.38 * s], [0.1 + fwd * 0.18, 0.74, 0.3 * s]], 0.075, 0.065, 8, 10), steel));
+    a.add(mesh(scaled(G.sphere, 0.06), gold, 0.04 + fwd * 0.08, 0.92, 0.38 * s));
+    a.add(mesh(blob(0.085, 0.075, 0.075, { seed: 91 }), silver, 0.12 + fwd * 0.2, 0.71, 0.3 * s));
+    return a;
+  };
+  // Head: a face with a full beard under an open-faced helm with a nasal,
+  // cheek guards, a gold crest and a team-colour plume.
+  const head = new THREE.Group();
+  head.position.set(0.02, 1.4, 0);
+  head.add(mesh(scaled(G.sphere, 0.14, 0.15, 0.13), skin, 0.02, 0, 0));
+  head.add(mesh(blob(0.12, 0.13, 0.13, { seed: 92, amt: 0.1 }), beardM, 0.08, -0.1, 0));
+  head.add(mesh(blob(0.06, 0.03, 0.1, { seed: 93 }), beardM, 0.14, -0.01, 0));
+  for (const s of [1, -1]) head.add(mesh(scaled(G.sphere, 0.022), mat('#20303a'), 0.135, 0.03, 0.05 * s));
+  head.add(mesh(lathe([[0.16, -0.02], [0.17, 0.05], [0.165, 0.12], [0.13, 0.19], [0.07, 0.23], [0.001, 0.24]], 24), silver));
+  head.add(mesh(scaled(G.box, 0.04, 0.12, 0.025), silver, 0.16, 0.04, 0));
+  for (const s of [1, -1]) {
+    const cheek = mesh(scaled(G.box, 0.1, 0.13, 0.025), silver, 0.07, -0.04, 0.14 * s);
+    cheek.rotation.y = -0.4 * s;
+    head.add(cheek);
+  }
+  head.add(mesh(new THREE.TorusGeometry(0.165, 0.016, 6, 28).rotateX(Math.PI / 2), gold, 0, 0.05, 0));
+  head.add(mesh(scaled(G.box, 0.3, 0.035, 0.025), gold, 0, 0.21, 0));
+  head.add(mesh(tube([[0.02, 0.23, 0], [-0.12, 0.34, 0], [-0.3, 0.3, 0], [-0.4, 0.12, 0]], 0.045, 0.012, 12, 8), team));
+  const gorget = mesh(new THREE.CylinderGeometry(0.11, 0.16, 0.1, 18), gold, 0, 1.27, 0);
+  gorget.scale.z = 1.2;
+
   const hammer = warhammer();
   hammer.position.set(0.15, 0.9, -0.42);
   hammer.rotation.z = -0.3;
-  body.add(legL, legR, torso, faulds, belt, tabard, cape, gorget, helm, visor, crest, plume, pauld(1), pauld(-1), arm(1, 0.3), fist(1, 0.3), arm(-1, 0), fist(-1, 0), hammer);
+  hammer.scale.setScalar(0.8);
+  body.add(legL, legR, torso, ridge, ...bands, belt, buckle, ...tassets, tabard, trimL, trimR, emblem, cape, ...clasps, pauldron(1), pauldron(-1), arm(1, 0.3), arm(-1, 0), gorget, head, hammer);
   g.userData = { body, staff: hammer, legL, legR, kind: 'hero' };
   return g;
 }
@@ -582,11 +638,13 @@ function pineTier(r, h, seed) {
   return g;
 }
 
+const PINE_SHADES = ['#9cc08c', '#b0c894', '#a4b88a', '#b8d0a0'];
 export function tree(s = 1, { snow = false } = {}) {
   const g = new THREE.Group();
   const seed = Math.floor(Math.random() * 1000) + 1;
   g.add(mesh(lathe([[0.2 * s, 0], [0.16 * s, 0.25 * s], [0.12 * s, 1.2 * s], [0.06 * s, 2.6 * s]], 10), barkMat()));
-  const shade = snow ? '#ffffff' : new THREE.Color().setHSL(0.3 + (Math.random() - 0.5) * 0.06, 0.35, 0.62 + Math.random() * 0.12);
+  // Four shades, so trees share materials and batch into few draw calls.
+  const shade = snow ? '#ffffff' : PINE_SHADES[Math.floor(Math.random() * PINE_SHADES.length)];
   const needles = snow ? mat('#e4eef6', { roughness: 0.9 }) : texMat('tex_needles.webp', '#2f5a2a', shade, 1, { roughness: 0.95 });
   const tiers = [[1.2, 1.3, 1.25], [0.95, 1.15, 1.85], [0.7, 1.0, 2.4], [0.45, 0.85, 2.9]];
   tiers.forEach(([r, h, y], i) => {

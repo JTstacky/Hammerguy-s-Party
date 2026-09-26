@@ -20,8 +20,7 @@ startApp({
     '<b>Enter</b> chat',
   ],
   touchHelp: [
-    '<b>Joystick</b> (left thumb) move · let go to stop',
-    '<b>Tap</b> the ground to walk there · <b>hold</b> to keep walking',
+    '<b>Joystick</b> (bottom left) move · let go to stop',
     '<b>Ability buttons</b> (bottom right) · targeted ones: tap the button, then tap the target',
     '<b>Tap</b> a creature or rival to attack it (in games with attacks)',
   ],
