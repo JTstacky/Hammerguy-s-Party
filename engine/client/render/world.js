@@ -4,7 +4,7 @@
 
 import * as THREE from 'three';
 import * as M from './models.js';
-import { Effects } from './effects.js';
+import { Effects, fxTexture } from './effects.js';
 import { play } from '../audio.js';
 
 const INTERP_DELAY = 0.11; // seconds behind the newest snapshot
@@ -93,13 +93,42 @@ function noiseTexture(base, vary, { size = 256, speckle = 0.5, tiles = false, cr
   return tex;
 }
 
+// Hand-painted WC3-style ground tiles (client/public/fx/), one repeat per this many units.
+const TILE_UNITS = 8;
+const painted = new Map();
+
+// Puts a painted tile on `material` once it has loaded; the procedural
+// texture stays as the fallback until then (or if the file is missing).
+function paint(material, file, units = TILE_UNITS) {
+  const fallback = material.map;
+  const apply = (tex) => {
+    const t = tex.clone();
+    t.repeat.set(fallback.repeat.x * (fallback.userData.units || 1) / units, fallback.repeat.y * (fallback.userData.units || 1) / units);
+    t.needsUpdate = true;
+    material.map = t;
+    material.needsUpdate = true;
+  };
+  if (painted.has(file)) {
+    const tex = painted.get(file);
+    if (tex.image) apply(tex);
+    else tex.userData.waiting.push(apply);
+    return;
+  }
+  const tex = fxTexture(file, (t) => {
+    for (const fn of t.userData.waiting) fn(t);
+    t.userData.waiting = [];
+  }, { repeat: true });
+  tex.userData.waiting = [apply];
+  painted.set(file, tex);
+}
+
 const THEMES = {
   lava: { sky: '#1a0806', fog: '#2a0c06', floor: ['#6f6259', 40, { tiles: true }], sun: '#ffd0a0', hemi: ['#ffb080', '#401008'] },
-  grass: { sky: '#88aacc', fog: '#9fb8c8', floor: ['#4f7a34', 40, { blades: true }], outer: ['#3a5a26', 30, { blades: true }], sun: '#fff2d8', hemi: ['#cfe6ff', '#3a4a20'] },
-  dirt: { sky: '#8c7a66', fog: '#9a8670', floor: ['#8a6a48', 45, {}], outer: ['#5e4a34', 35, {}], sun: '#ffe2b8', hemi: ['#ffe8cc', '#4a3a28'] },
-  stone: { sky: '#8aa0b8', fog: '#98a8b8', floor: ['#8e8a80', 35, { tiles: true }], outer: ['#46663a', 30, { blades: true }], sun: '#fff0dc', hemi: ['#dde8ff', '#404838'] },
-  night: { sky: '#0c1428', fog: '#101a30', floor: ['#2c4a3a', 35, { blades: true }], outer: ['#1c3028', 30, { blades: true }], sun: '#9fb8ff', hemi: ['#5870b0', '#101810'], sunI: 1.4 },
-  ice: { sky: '#aac8e0', fog: '#b8d4e8', floor: ['#cfe6f2', 25, { cracks: true }], sun: '#ffffff', hemi: ['#e0f0ff', '#406080'] },
+  grass: { sky: '#88aacc', fog: '#9fb8c8', floor: ['#4f7a34', 40, { blades: true }], outer: ['#3a5a26', 30, { blades: true }], sun: '#fff2d8', hemi: ['#cfe6ff', '#3a4a20'], tex: 'tex_grass.webp', outerTex: 'tex_grass.webp', outerTint: '#9aa890' },
+  dirt: { sky: '#8c7a66', fog: '#9a8670', floor: ['#8a6a48', 45, {}], outer: ['#5e4a34', 35, {}], sun: '#ffe2b8', hemi: ['#ffe8cc', '#4a3a28'], tex: 'tex_dirt.webp', outerTex: 'tex_dirt.webp', outerTint: '#a89a88' },
+  stone: { sky: '#8aa0b8', fog: '#98a8b8', floor: ['#8e8a80', 35, { tiles: true }], outer: ['#46663a', 30, { blades: true }], sun: '#fff0dc', hemi: ['#dde8ff', '#404838'], tex: 'tex_stone.webp', outerTex: 'tex_grass.webp', outerTint: '#9aa890' },
+  night: { sky: '#0c1428', fog: '#101a30', floor: ['#2c4a3a', 35, { blades: true }], outer: ['#1c3028', 30, { blades: true }], sun: '#9fb8ff', hemi: ['#5870b0', '#101810'], sunI: 1.4, tex: 'tex_nightgrass.webp', outerTex: 'tex_nightgrass.webp', outerTint: '#8890a0' },
+  ice: { sky: '#aac8e0', fog: '#b8d4e8', floor: ['#cfe6f2', 25, { cracks: true }], sun: '#ffffff', hemi: ['#e0f0ff', '#406080'], tex: 'tex_snow.webp' },
 };
 
 // Animated lava / water surface.
@@ -240,8 +269,10 @@ export class World {
       // The platform is a unit disc scaled by the live arena radius.
       const geo = new THREE.CylinderGeometry(1, 1.04, 1, 128, 1);
       floorTex.repeat.set(f.r / 2.5, f.r / 2.5);
+      floorTex.userData.units = 5; // UVs span the diameter
       const side = M.mat(map.theme === 'lava' ? '#3a302a' : '#9cc4dc');
       const top = new THREE.MeshStandardMaterial({ map: floorTex, roughness: map.theme === 'ice' ? 0.25 : 0.9, metalness: map.theme === 'ice' ? 0.1 : 0 });
+      if (theme.tex) paint(top, theme.tex);
       const disc = new THREE.Mesh(geo, [side, top, side]);
       disc.position.y = -0.5;
       disc.receiveShadow = true;
@@ -278,13 +309,20 @@ export class World {
     } else {
       const outerTex = noiseTexture(theme.outer[0], theme.outer[1], theme.outer[2]);
       outerTex.repeat.set(30, 30);
-      const outer = new THREE.Mesh(new THREE.PlaneGeometry(240, 240).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: outerTex, roughness: 1 }));
+      outerTex.userData.units = 8;
+      const outerMat = new THREE.MeshStandardMaterial({ map: outerTex, roughness: 1 });
+      if (theme.outerTex) {
+        paint(outerMat, theme.outerTex, 11);
+        outerMat.color.set(theme.outerTint);
+      }
+      const outer = new THREE.Mesh(new THREE.PlaneGeometry(240, 240).rotateX(-Math.PI / 2), outerMat);
       outer.position.y = -0.02;
       outer.receiveShadow = true;
       this.mapGroup.add(outer);
       let floor;
       if (f.shape === 'rect') {
         floorTex.repeat.set(f.w / 5, f.h / 5);
+        floorTex.userData.units = 5;
         floor = new THREE.Mesh(new THREE.PlaneGeometry(f.w, f.h).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.95 }));
         // Stone curb along the border.
         const curb = M.mat('#77726a');
@@ -297,12 +335,14 @@ export class World {
         }
       } else {
         floorTex.repeat.set(f.r / 3, f.r / 3);
+        floorTex.userData.units = 6; // UVs span the diameter
         floor = new THREE.Mesh(new THREE.CircleGeometry(f.r, 96).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.95 }));
         const curb = new THREE.Mesh(new THREE.TorusGeometry(f.r + 0.15, 0.22, 6, 96).rotateX(Math.PI / 2), M.mat('#77726a'));
         curb.position.y = 0.05;
         curb.castShadow = curb.receiveShadow = true;
         this.mapGroup.add(curb);
       }
+      if (theme.tex) paint(floor.material, theme.tex);
       floor.position.y = 0.01;
       floor.receiveShadow = true;
       this.mapGroup.add(floor);
@@ -364,6 +404,14 @@ export class World {
     if (rt <= s[0].t) return [s[0], s[0], 0];
     for (let i = s.length - 1; i >= 0; i--) {
       if (s[i].t <= rt) {
+        if (i === s.length - 1 && i > 0) {
+          // Past the newest snapshot (a late packet): keep moving along the last
+          // step for up to 0.15 s rather than freezing, then hold.
+          const a = s[i - 1];
+          const b = s[i];
+          const span = b.t - a.t || 1 / 15;
+          return [a, b, Math.min(1 + 0.15 / span, (rt - a.t) / span)];
+        }
         const a = s[i];
         const b = s[i + 1] || a;
         const k = b === a ? 0 : (rt - a.t) / (b.t - a.t);
@@ -420,42 +468,48 @@ export class World {
       case 'catapult': obj = M.catapult(!!e.demo); break;
       case 'beastmaster': obj = M.beastmaster(); break;
       case 'lob': {
-        // A lobbed rock: flies from the siege engine to a fixed point. The
-        // ground rings mark the 40 % and 25 % splash tiers.
+        // A lobbed boulder, like WC3's catapult missile: it flies from the
+        // siege engine to a fixed point. On the ground its shadow darkens as
+        // it comes down, and a faint ring marks the 40 % splash tier.
         obj = new THREE.Group();
-        const c = e.oil ? '#ff8a30' : '#ff3a20';
-        const ring = new THREE.Mesh(new THREE.RingGeometry(0.88, 1, 36).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, depthWrite: false }));
-        const outer = new THREE.Mesh(new THREE.RingGeometry(0.96, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.3, depthWrite: false }));
-        const fill = new THREE.Mesh(new THREE.CircleGeometry(1, 36).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.25, depthWrite: false }));
+        const c = e.oil ? '#ffa040' : '#ffe0b0';
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.0, depthWrite: false }));
+        const shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#000000', transparent: true, opacity: 0.0, depthWrite: false }));
         ring.scale.setScalar(e.r);
-        outer.scale.setScalar(e.r2 || e.r);
-        ring.position.y = outer.position.y = fill.position.y = 0.06;
-        const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.28, 0), e.oil ? M.glowMat('#ff7a20') : M.mat('#5a5048'));
+        ring.position.y = 0.06;
+        shadow.position.y = 0.05;
+        const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3, 1), M.boulderMat());
+        rock.castShadow = true;
         this.entGroup.add(rock);
-        obj.add(ring, outer, fill);
-        v.parts = { fill, rock, r: e.r };
+        obj.add(shadow, ring);
+        v.parts = { ring, shadow, rock, r: e.r };
         break;
       }
       case 'oil': {
         obj = new THREE.Group();
-        const fill = new THREE.Mesh(new THREE.CircleGeometry(1, 36).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff6a10', transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }));
+        // Burning oil: a ground glow under WC3-style fire.
+        const fill = new THREE.Mesh(new THREE.CircleGeometry(1, 36).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff5a10', transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending }));
         fill.position.y = 0.07;
         fill.scale.setScalar(e.r);
         obj.add(fill);
+        this.fx.scorch(e.x, e.y, e.r * 1.1, 6);
         v.parts = { fill, r: e.r };
         break;
       }
       case 'firewheel': {
         // Uther Party's Wheel of Fire: a fire at the centre plus four spokes of five.
+        // Each fire is WC3's TownBurningFire: flames from the fire flipbook
+        // over a glowing ember, with a ground glow the size of the kill radius.
         const n = 1 + 4 * e.rs.length;
-        const inst = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), new THREE.MeshBasicMaterial({ color: '#ff6a10', transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), n);
-        const core = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ color: '#fff0b0', toneMapped: false }), n);
-        // The ground disc is the real kill radius (64 WC3 units).
-        const disc = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff5010', transparent: true, opacity: 0.22, depthWrite: false }), n);
-        for (const m of [inst, core, disc]) m.frustumCulled = false;
+        const core = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffd080', toneMapped: false }), n);
+        const disc = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff5a10', transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }), n);
+        for (const m of [core, disc]) m.frustumCulled = false;
         obj = new THREE.Group();
-        obj.add(disc, inst, core);
-        v.parts = { inst, core, disc, n };
+        obj.add(disc, core);
+        const light = new THREE.PointLight('#ff8a30', 18, 14, 1.6);
+        light.position.y = 1.5;
+        obj.add(light);
+        v.parts = { core, disc, n, light };
         break;
       }
       case 'hill': {
@@ -595,8 +649,8 @@ export class World {
 
     for (const a of this.animated) {
       if (a.type === 'torch') {
-        a.obj.userData.flame.scale.set(1, 0.8 + Math.random() * 0.4, 1);
-        if (Math.random() < 0.3) this.fx.trail(a.obj.position.x, 1.9, a.obj.position.z, '#ff9a30', 0.35, 0.5, 0.1);
+        a.obj.userData.flame.scale.setScalar(0.8 + Math.random() * 0.4);
+        for (let n = emit(a, 'fire', 18, dt); n > 0; n--) this.fx.flame(a.obj.position.x, 1.55, a.obj.position.z, 0.5, 0.45, 0.04);
       }
     }
 
@@ -745,7 +799,7 @@ export class World {
         o.rotation.y = -f;
         v.walk = (v.walk || 0) + dt * 10;
         o.userData.body.position.y = Math.abs(Math.sin(v.walk)) * 0.15;
-        if (v.k === 'kodo' && Math.random() < 0.3) this.fx.smoke(x - Math.cos(f) * 1.2, 0.2, z - Math.sin(f) * 1.2, '#8a7a60', 1.2, 0.8);
+        if (v.k === 'kodo' && emit(v, 'dust', 14, dt)) this.fx.smokePuff(x - Math.cos(f) * 1.2, 0.2, z - Math.sin(f) * 1.2, '#8a7a60', 1.1, 0.9, 0.35);
         break;
       }
       case 'catapult': {
@@ -762,30 +816,43 @@ export class World {
         o.position.set(x, 0, z);
         o.rotation.y = -f;
         o.userData.body.position.y = b.on ? Math.abs(Math.sin(this.time * 6)) * 0.08 : 0;
-        if (b.on && Math.random() < 0.15) this.fx.trail(x, 2.1, z, '#9be07a', 0.5, 0.5, 0.3);
+        if (b.on && emit(v, 'chan', 6, dt)) this.fx.trail(x, 2.1, z, '#9be07a', 0.5, 0.5, 0.3);
         break;
       case 'lob': {
-        const t = lerp(a.t ?? 0, b.t ?? 0, k);
+        // Progress is linear in time, so interpolating (and briefly
+        // extrapolating) it gives exact, smooth flight every frame.
+        const t = Math.min(1, Math.max(0, lerp(a.t ?? 0, b.t ?? 0, k)));
         const p = v.parts;
         o.position.set(x, 0, z);
-        p.fill.scale.setScalar(Math.max(0.01, p.r * t));
-        // Parabolic arc from the launcher to the target point.
+        p.shadow.scale.setScalar(0.25 + 0.35 * t);
+        p.shadow.material.opacity = 0.45 * t * t;
+        p.ring.material.opacity = 0.35 * Math.min(1, t * 1.5);
+        // Parabolic arc from the launcher (launch height 1.4) to the target point.
         const sx = b.sx ?? x;
         const sz = b.sy ?? z;
         const d = Math.hypot(x - sx, z - sz);
-        p.rock.position.set(lerp(sx, x, t), 1.4 + 4 * t * (1 - t) * Math.max(3, d * 0.45) - 1.2 * t, lerp(sz, z, t));
+        const apex = Math.max(3, d * 0.45);
+        const ry = 1.4 * (1 - t) + 4 * t * (1 - t) * apex + 0.3 * t;
+        p.rock.visible = o.visible;
+        p.rock.position.set(lerp(sx, x, t), ry, lerp(sz, z, t));
         p.rock.rotation.set(t * 9, t * 7, 0);
-        if (Math.random() < 0.5) this.fx.trail(p.rock.position.x, p.rock.position.y, p.rock.position.z, b.oil ? '#ff8a30' : '#8a7a6a', 0.35, 0.35, 0.05);
+        if (b.oil) {
+          // Demolisher: a burning boulder trailing flame and black smoke.
+          for (let n = emit(v, 'fire', 40, dt); n > 0; n--) this.fx.flame(p.rock.position.x, ry - 0.15, p.rock.position.z, 0.9, 0.35, 0.1);
+          if (emit(v, 'smoke', 14, dt)) this.fx.smokePuff(p.rock.position.x, ry, p.rock.position.z, '#221c1a', 0.7, 1.1, 0.5);
+        } else if (emit(v, 'dust', 16, dt)) this.fx.smokePuff(p.rock.position.x, ry, p.rock.position.z, '#b8a890', 0.45, 0.6, 0.35);
         break;
       }
       case 'oil': {
         o.position.set(x, 0, z);
-        v.parts.fill.material.opacity = 0.25 + Math.min(1, b.t) * 0.15 + Math.sin(this.time * 12) * 0.05;
-        if (Math.random() < 0.7) {
+        const burn = Math.min(1, b.t * 2);
+        v.parts.fill.material.opacity = (0.14 + Math.sin(this.time * 11) * 0.04) * burn;
+        for (let n = emit(v, 'fire', 45 * burn, dt); n > 0; n--) {
           const ang = Math.random() * Math.PI * 2;
-          const rr = Math.sqrt(Math.random()) * v.parts.r;
-          this.fx.trail(x + Math.cos(ang) * rr, 0.3, z + Math.sin(ang) * rr, Math.random() < 0.5 ? '#ff6a10' : '#ffc040', 0.7, 0.6, 0.2);
+          const rr = Math.sqrt(Math.random()) * v.parts.r * 0.9;
+          this.fx.flame(x + Math.cos(ang) * rr, 0.1, z + Math.sin(ang) * rr, 0.9, 0.55, 0);
         }
+        if (emit(v, 'smoke', 5 * burn, dt)) this.fx.smokePuff(x, 1.2, z, '#241e1c', 1.2, 1.6, 0.35);
         break;
       }
       case 'firewheel': {
@@ -798,21 +865,23 @@ export class World {
           for (const r of b.rs) pts.push([Math.cos(sa) * r, Math.sin(sa) * r]);
         }
         pts.forEach(([px, pz], i) => {
-          const flick = 1 + Math.sin(this.time * 13 + i * 1.7) * 0.12;
+          const flick = 1 + Math.sin(this.time * 13 + i * 1.7) * 0.15;
           dummy.position.set(px, 0.06, pz);
-          dummy.scale.setScalar(b.fr);
+          dummy.scale.setScalar(b.fr * 0.85 * flick);
           dummy.updateMatrix();
           p.disc.setMatrixAt(i, dummy.matrix);
-          dummy.position.set(px, 0.8, pz);
-          dummy.scale.set(b.fr * 0.55 * flick, b.fr * 0.75 * flick, b.fr * 0.55 * flick);
-          dummy.updateMatrix();
-          p.inst.setMatrixAt(i, dummy.matrix);
-          dummy.scale.setScalar(b.fr * 0.25 * flick);
+          dummy.position.set(px, 0.35, pz);
+          dummy.scale.setScalar(b.fr * 0.22 * flick);
           dummy.updateMatrix();
           p.core.setMatrixAt(i, dummy.matrix);
-          if (Math.random() < 0.35) this.fx.trail(px, 1 + Math.random() * 0.8, pz, Math.random() < 0.5 ? '#ff7a20' : '#ffd060', 0.8, 0.45, 0.35);
         });
-        p.inst.instanceMatrix.needsUpdate = true;
+        // Spread this frame's flames over the fires; they rise off the moving spokes.
+        for (let n = emit(v, 'fire', 30 * p.n, dt); n > 0; n--) {
+          const [px, pz] = pts[Math.floor(Math.random() * pts.length)];
+          this.fx.flame(px, 0.15, pz, b.fr * 2.6, 0.7, b.fr * 0.3);
+          if (Math.random() < 0.08) this.fx.smokePuff(px, 1.6, pz, '#2a2422', 0.9, 1.2, 0.3);
+        }
+        p.light.intensity = 16 + Math.sin(this.time * 9) * 3;
         p.core.instanceMatrix.needsUpdate = true;
         p.disc.instanceMatrix.needsUpdate = true;
         break;
@@ -957,6 +1026,13 @@ export class World {
     this.focus.z = Math.max(-B, Math.min(B, this.focus.z));
     this.camera.position.set(this.focus.x, this.focus.y + Math.sin(CAM_PITCH) * this.zoom, this.focus.z + Math.cos(CAM_PITCH) * this.zoom);
     this.camera.lookAt(this.focus);
+    // A short camera quake for big explosions (WC3 maps used CameraSetEQNoise).
+    if (this.shake > 0) {
+      this.shake = Math.max(0, this.shake - dt);
+      const q = this.shake * 0.6;
+      this.camera.position.x += (Math.random() - 0.5) * q;
+      this.camera.position.y += (Math.random() - 0.5) * q;
+    }
     if (this.scene.fog) {
       this.scene.fog.near = this.zoom + 20;
       this.scene.fog.far = this.zoom + 95;
@@ -998,6 +1074,33 @@ export class World {
 
   // ------------------------------------------------------------- events
 
+  // Impacts in the style of their WC3 missiles:
+  //  rock - a catapult boulder: dust cloud, flying debris, a shockwave and a small crater
+  //  fire - a demolisher firebomb: a fireball explosion that scorches the ground
+  //  kodo - an exploding stampede beast: a smaller blast of fire and dust
+  impact(e) {
+    const fx = this.fx;
+    const r = e.r || 1.5;
+    if (e.s === 'rock') {
+      fx.dustCloud(e.x, e.y, r * 0.45, '#a08a6c', 12);
+      fx.debrisBurst(e.x, e.y, 10, 5);
+      fx.shockwave(e.x, e.y, r * 0.7, '#ffe8c0', 0.4);
+      fx.scorch(e.x, e.y, r * 0.35, 8);
+      fx.sparks(e.x, 0.4, e.y, 6, 4, '#ffe0a0');
+    } else if (e.s === 'fire') {
+      fx.explosion(e.x, e.y, r * 0.55);
+      fx.debrisBurst(e.x, e.y, 6, 5);
+      fx.shockwave(e.x, e.y, r * 0.8, '#ffb070', 0.45);
+      fx.flash(e.x, e.y, r, '#ff9040', 0.3);
+    } else {
+      fx.explosion(e.x, e.y, r * 0.75, { scorch: false });
+      fx.dustCloud(e.x, e.y, r * 0.5, '#8a7a60', 8);
+      fx.scorch(e.x, e.y, r * 0.5, 5);
+    }
+    if (e.big) this.shake = 0.3;
+    play(e.big ? 'bigboom' : e.s === 'rock' ? 'hit' : 'boom');
+  }
+
   handleEvent(e) {
     const fx = this.fx;
     switch (e.k) {
@@ -1009,6 +1112,10 @@ export class World {
         break;
       }
       case 'boom':
+        if (e.s) {
+          this.impact(e);
+          break;
+        }
         fx.burst(e.x, 0.8, e.y, e.c || '#ff8040', { n: e.big ? 70 : 24, speed: e.big ? 9 : 5, size: e.big ? 1.1 : 0.7, life: e.big ? 0.9 : 0.5 });
         fx.ring(e.x, e.y, e.r || 1, e.c || '#ff8040', e.big ? 0.6 : 0.35);
         if (e.big) {
@@ -1040,22 +1147,35 @@ export class World {
         play('reflect');
         break;
       case 'death':
-        fx.burst(e.x, 1, e.y, '#ff5020', { n: 40, speed: 5, size: 0.8, life: 0.8 });
-        for (let i = 0; i < 6; i++) fx.smoke(e.x, 0.5, e.y, '#302a28', 1.6, 1.5);
+        fx.burst(e.x, 1, e.y, '#ff5020', { n: 24, speed: 5, size: 0.7, life: 0.7 });
+        fx.dustCloud(e.x, e.y, 0.8, '#6a5a4a', 6);
+        for (let i = 0; i < 4; i++) fx.smokePuff(e.x, 0.5, e.y, '#302a28', 1.3, 1.5, 0.5);
         play('death');
         break;
+      case 'purge': {
+        // WC3 Purge: a flash on the caster and a spinning buff on the target while it is slowed.
+        fx.glow(e.x1, 1.2, e.y1, '#9fe8ff', 2, 0.3);
+        fx.sparks(e.x2, 1, e.y2, 14, 4, '#bff4ff');
+        const v = this.views.get(e.u);
+        fx.purgeSwirl(() => (v ? { x: v.x, z: v.z } : null), e.d || 2);
+        play('zap');
+        break;
+      }
       case 'zap':
         fx.burst(e.x, 1, e.y, '#9fe8ff', { n: 40, speed: 5, size: 0.6, life: 0.6 });
         fx.flash(e.x, e.y, 2, '#9fe8ff');
         play('zap');
         break;
       case 'burn':
-        fx.burst(e.x, 1, e.y, '#ff7a20', { n: 40, speed: 5, size: 0.8, life: 0.7 });
-        for (let i = 0; i < 5; i++) fx.smoke(e.x, 0.6, e.y, '#2a2220', 1.5, 1.3);
+        for (let i = 0; i < 18; i++) fx.flame(e.x, 0.2, e.y, 1.3, 0.8, 0.4);
+        fx.sparks(e.x, 1, e.y, 12, 4);
+        for (let i = 0; i < 5; i++) fx.smokePuff(e.x, 0.8, e.y, '#2a2220', 1.3, 1.6, 0.5);
+        fx.scorch(e.x, e.y, 0.9, 6);
         play('death');
         break;
       case 'squish':
-        fx.burst(e.x, 0.3, e.y, '#8a7a60', { n: 30, speed: 4, size: 1, life: 0.8, additive: false });
+        fx.dustCloud(e.x, e.y, 0.9, '#8a7a60', 10);
+        fx.debrisBurst(e.x, e.y, 6, 3);
         play('squish');
         break;
       case 'splash':
@@ -1073,6 +1193,16 @@ export class World {
         break;
     }
   }
+}
+
+// Fixed-rate particle emission: returns how many particles `rate` per second
+// owes this frame, carrying the fraction over (frame-rate independent).
+function emit(v, key, rate, dt) {
+  const acc = (v.emit ??= {});
+  acc[key] = (acc[key] || 0) + rate * dt;
+  const n = Math.floor(acc[key]);
+  acc[key] -= n;
+  return n;
 }
 
 function lerp(a, b, k) {

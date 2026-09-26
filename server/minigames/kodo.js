@@ -93,7 +93,7 @@ export class KodoStampede extends Minigame {
       const hit = [...this.heroes.values()].some((u) => u.alive && dist(u.x, u.y, k.x, k.y) < u.r + BEAST_R);
       if (!hit) continue;
       k.dead = true;
-      this.ev({ k: 'boom', x: round2(k.x), y: round2(k.y), r: BLAST_R, c: '#ffb050' });
+      this.ev({ k: 'boom', s: 'kodo', x: round2(k.x), y: round2(k.y), r: BLAST_R, c: '#ffb050' });
       for (const [pid, u] of this.heroes) {
         if (u.alive && dist(u.x, u.y, k.x, k.y) <= BLAST_R + u.r) this.damage(pid, BLAST_DMG, 'squish');
       }

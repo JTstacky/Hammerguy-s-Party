@@ -2,6 +2,7 @@
 // built from primitives so the game needs no model files. Models face +X.
 
 import * as THREE from 'three';
+import { fxTexture } from './effects.js';
 
 const matCache = new Map();
 export function mat(color, opts = {}) {
@@ -11,6 +12,26 @@ export function mat(color, opts = {}) {
   }
   return matCache.get(key);
 }
+
+// A material with a hand-painted texture (client/public/fx/). Shows `base`
+// until the texture loads, then the texture tinted by `tint`.
+const texCache = new Map();
+export function texMat(file, base, tint = '#ffffff', repeat = 1) {
+  const key = [file, base, tint, repeat].join('|');
+  if (!texCache.has(key)) {
+    const m = new THREE.MeshStandardMaterial({ color: base, roughness: 0.85, metalness: 0.05, flatShading: true });
+    fxTexture(file, (t) => {
+      t.repeat.set(repeat, repeat);
+      m.map = t;
+      m.color.set(tint);
+      m.needsUpdate = true;
+    }, { repeat: true });
+    texCache.set(key, m);
+  }
+  return texCache.get(key);
+}
+
+export const boulderMat = () => texMat('tex_boulder.webp', '#6d6a66', '#d8d2c8');
 
 export function glowMat(color, opacity = 1) {
   return new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity, toneMapped: false });
@@ -142,7 +163,7 @@ export function catapult(demo = false) {
   const g = new THREE.Group();
   const body = new THREE.Group();
   g.add(body);
-  const wood = mat(demo ? '#5a3a24' : '#7a5230');
+  const wood = texMat('tex_wood.webp', demo ? '#5a3a24' : '#7a5230', demo ? '#b89a88' : '#ffffff');
   const dark = mat('#3e2a1a');
   body.add(mesh(scaled(G.box, 1.6, 0.35, 1.0), wood, 0, 0.55, 0));
   for (const [x, z] of [[0.6, 0.6], [0.6, -0.6], [-0.6, 0.6], [-0.6, -0.6]]) {
@@ -221,7 +242,7 @@ export function snowTree(s = 1) {
 }
 
 export function rock(s = 1) {
-  const m = mesh(new THREE.DodecahedronGeometry(s, 0), mat('#6d6a66'), 0, s * 0.4, 0);
+  const m = mesh(new THREE.DodecahedronGeometry(s, 0), boulderMat(), 0, s * 0.4, 0);
   m.scale.y = 0.7;
   m.rotation.set(Math.random(), Math.random() * 6, Math.random());
   const g = new THREE.Group();
@@ -242,7 +263,7 @@ export function torch() {
   const g = new THREE.Group();
   g.add(mesh(scaled(G.cyl, 0.06, 1.4, 0.06), mat('#4a3322'), 0, 0.7, 0));
   g.add(mesh(scaled(G.cyl, 0.15, 0.15, 0.15), mat('#333'), 0, 1.45, 0));
-  const flame = mesh(scaled(G.cone, 0.14, 0.4, 0.14), glowMat('#ffaa33'), 0, 1.7, 0);
+  const flame = mesh(scaled(G.sphere, 0.09), glowMat('#ffcc66'), 0, 1.58, 0);
   flame.castShadow = false;
   g.add(flame);
   g.userData = { flame };

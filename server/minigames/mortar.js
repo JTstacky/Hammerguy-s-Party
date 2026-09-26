@@ -158,7 +158,7 @@ export class MortarMayhem extends Minigame {
       }
     }
     // Only rocks that hit someone shake the camera.
-    this.ev({ k: 'boom', x: round2(r.x), y: round2(r.y), r: TIERS[2][0], c: r.oil ? '#ff7a20' : '#c0a080', big: hit ? 1 : undefined });
+    this.ev({ k: 'boom', s: r.oil ? 'fire' : 'rock', x: round2(r.x), y: round2(r.y), r: TIERS[2][0], c: r.oil ? '#ff7a20' : '#c0a080', big: hit ? 1 : undefined });
     if (r.oil) this.oil.push({ id: newId(), x: r.x, y: r.y, t: 2.51, tick: 0.5 });
   }
 

@@ -124,8 +124,7 @@ export class WispWheel extends Minigame {
 
   purge(u, v) {
     if (!v?.alive) return;
-    this.ev({ k: 'bolt', x1: round2(u.x), y1: round2(u.y), x2: round2(v.x), y2: round2(v.y) });
-    this.ev({ k: 'sfx', s: 'zap' });
+    this.ev({ k: 'purge', x1: round2(u.x), y1: round2(u.y), x2: round2(v.x), y2: round2(v.y), u: v.id, d: 2 });
     v.speedMult = 0;
     this.slows.set(v.owner, 0);
   }
