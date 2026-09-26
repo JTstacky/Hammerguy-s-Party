@@ -303,6 +303,7 @@ class SpriteParticles {
 }
 
 const tmpColor = new THREE.Color();
+const NOTHING = new THREE.Object3D(); // stand-in transient object (never in the scene)
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // Uploads and draws only particles 0..last (the live range). A system with
@@ -351,6 +352,17 @@ export class Effects {
     this.purgeTex = fxTexture('fx_purge.webp');
     this.transients = [];
     this.texts = [];
+    // A fixed pool of point lights, lent to flashes and glowing missiles.
+    // Adding or removing a light changes the light count, which makes three.js
+    // recompile every lit shader (a hitch mid-fight); idle pool lights just
+    // sit at intensity 0. Phones get none.
+    this.lightPool = [];
+    for (let i = 0; i < (LITE ? 0 : 6); i++) {
+      const l = new THREE.PointLight('#ffffff', 0, 1, 2);
+      l.userData = { busy: false, follow: null, dy: 0 };
+      scene.add(l);
+      this.lightPool.push(l);
+    }
     this.ringGeo = new THREE.RingGeometry(0.85, 1, 48);
     this.ringGeo.rotateX(-Math.PI / 2);
   }
@@ -485,12 +497,30 @@ export class Effects {
     this.transients.push({ obj: m, t: 0, dur, update: (k) => { m.scale.setScalar(0.1 + radius * k); m.material.opacity = 0.9 * (1 - k); } });
   }
 
+  // Lends a pool light (null if all are busy, or on phones). With `follow`,
+  // it tracks that object (dy above it) until returned.
+  borrowLight(color, intensity, distance, decay = 2, follow = null, dy = 0) {
+    const l = this.lightPool.find((p) => !p.userData.busy);
+    if (!l) return null;
+    l.color.set(color);
+    l.intensity = intensity;
+    l.distance = distance;
+    l.decay = decay;
+    Object.assign(l.userData, { busy: true, follow, dy });
+    return l;
+  }
+
+  returnLight(l) {
+    if (!l) return;
+    l.intensity = 0;
+    Object.assign(l.userData, { busy: false, follow: null });
+  }
+
   flash(x, z, radius, color, dur = 0.3) {
-    const light = new THREE.PointLight(color, 40, radius * 5, 2);
-    light.visible = !LITE;
+    const light = this.borrowLight(color, 40, radius * 5, 2);
+    if (!light) return;
     light.position.set(x, 1.5, z);
-    this.scene.add(light);
-    this.transients.push({ obj: light, t: 0, dur, update: (k) => (light.intensity = 40 * (1 - k)) });
+    this.transients.push({ obj: NOTHING, t: 0, dur, update: (k) => (light.intensity = 40 * (1 - k)), dispose: () => this.returnLight(light) });
   }
 
   bolt(x1, z1, x2, z2, color = '#bfe6ff') {
@@ -541,6 +571,12 @@ export class Effects {
       }
     }
     this.transients = this.transients.filter((t) => !t.done);
+    for (const l of this.lightPool) {
+      const f = l.userData.follow;
+      if (!f) continue;
+      f.getWorldPosition(l.position);
+      l.position.y += l.userData.dy;
+    }
     const v = new THREE.Vector3();
     for (const t of this.texts) {
       t.t += dt;
@@ -559,7 +595,11 @@ export class Effects {
   }
 
   clear() {
-    for (const tr of this.transients) this.scene.remove(tr.obj);
+    for (const tr of this.transients) {
+      this.scene.remove(tr.obj);
+      tr.dispose?.();
+    }
+    for (const l of this.lightPool) this.returnLight(l);
     this.transients = [];
     for (const t of this.texts) t.el.remove();
     this.texts = [];

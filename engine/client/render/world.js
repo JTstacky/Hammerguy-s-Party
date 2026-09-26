@@ -560,10 +560,8 @@ export class World {
         for (const m of [core, disc]) m.frustumCulled = false;
         obj = new THREE.Group();
         obj.add(disc, core);
-        const light = new THREE.PointLight('#ff8a30', 18, 14, 1.6);
-        light.position.y = 1.5;
-        light.visible = !LITE;
-        obj.add(light);
+        const light = this.fx.borrowLight('#ff8a30', 18, 14, 1.6, obj, 1.5);
+        v.light = light;
         v.parts = { core, disc, n, light };
         break;
       }
@@ -607,9 +605,7 @@ export class World {
             core.scale.setScalar(0.4);
             v.parts = { spin: blade };
           }
-          const light = new THREE.PointLight(c, 6, 6, 2);
-          light.visible = !LITE;
-          obj.add(light);
+          v.light = this.fx.borrowLight(c, 6, 6, 2, obj);
           obj.position.y = 1;
           v.color = c;
           v.spell = spell;
@@ -652,6 +648,7 @@ export class World {
     this.entGroup.remove(v.obj);
     if (v.k === 'lob') this.entGroup.remove(v.parts.rock);
     v.bar?.remove();
+    this.fx.returnLight(v.light);
     v.def?.remove?.(v, this);
     v.obj.traverse((o) => {
       if (o.isInstancedMesh) o.dispose();
@@ -845,17 +842,20 @@ export class World {
           body.rotation.z = Math.min(Math.PI / 2, v.deadT * 4);
           o.position.y = -Math.min(1.5, Math.max(0, v.deadT - 0.8) * 0.8);
           v.sel.visible = false;
-          if (v.bar) v.bar.style.display = 'none';
         } else {
           v.deadT = 0;
           body.rotation.z = 0;
           v.sel.visible = true;
-          if (v.bar) v.bar.style.display = '';
         }
         if (v.hpFill && b.mhp) {
-          const frac = Math.max(0, b.hp / b.mhp);
-          v.hpFill.style.width = `${frac * 100}%`;
-          v.hpFill.style.background = frac > 0.6 ? '#2fdc2f' : frac > 0.3 ? '#e8d020' : '#e82020';
+          // DOM writes only when the value changes: style writes every frame
+          // make the browser restyle, which adds up on phones.
+          const frac = Math.round(Math.max(0, b.hp / b.mhp) * 200) / 200;
+          if (frac !== v.hpFrac) {
+            v.hpFrac = frac;
+            v.hpFill.style.width = `${frac * 100}%`;
+            v.hpFill.style.background = frac > 0.6 ? '#2fdc2f' : frac > 0.3 ? '#e8d020' : '#e82020';
+          }
         }
         v.visibleBar = !b.dead && !(invis && b.o !== this.myId);
         break;
@@ -963,7 +963,7 @@ export class World {
           this.fx.flame(px, 0.15, pz, b.fr * 2.6, 0.7, b.fr * 0.3);
           if (Math.random() < 0.08) this.fx.smokePuff(px, 1.6, pz, '#2a2422', 0.9, 1.2, 0.3);
         }
-        p.light.intensity = 16 + Math.sin(this.time * 9) * 3;
+        if (p.light) p.light.intensity = 16 + Math.sin(this.time * 9) * 3;
         p.core.instanceMatrix.needsUpdate = true;
         p.disc.instanceMatrix.needsUpdate = true;
         break;
@@ -1085,14 +1085,21 @@ export class World {
     const v3 = new THREE.Vector3();
     for (const v of this.views.values()) {
       if (!v.bar) continue;
-      if (!v.visibleBar || !v.obj.visible) {
-        v.bar.style.display = 'none';
-        continue;
+      const show = v.visibleBar && v.obj.visible;
+      if (show !== v.barShown) {
+        v.barShown = show;
+        v.bar.style.display = show ? '' : 'none';
       }
-      v.bar.style.display = '';
+      if (!show) continue;
       v3.set(v.obj.position.x, v.obj.position.y + 3.1, v.obj.position.z);
       v3.project(this.camera);
-      v.bar.style.transform = `translate(-50%, -100%) translate(${((v3.x + 1) / 2) * this.width}px, ${((1 - v3.y) / 2) * this.height}px)`;
+      const x = Math.round(((v3.x + 1) / 2) * this.width * 2) / 2;
+      const y = Math.round(((1 - v3.y) / 2) * this.height * 2) / 2;
+      if (x !== v.barX || y !== v.barY) {
+        v.barX = x;
+        v.barY = y;
+        v.bar.style.transform = `translate(-50%, -100%) translate(${x}px, ${y}px)`;
+      }
     }
   }
 
