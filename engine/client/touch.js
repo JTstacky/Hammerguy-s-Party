@@ -3,8 +3,10 @@
 //  - Left side: a floating joystick. Holding it steers the hero toward a point
 //    just ahead of it ('steer' orders, re-sent while held); letting go stops.
 //  - Right side: a tap is a right-click (move there), or the target of a
-//    spell waiting for one. Holding keeps moving toward the finger. Two
-//    fingers pinch to zoom.
+//    spell waiting for one. Holding keeps moving toward the finger. A second
+//    finger there cancels both (no zoom: each game fixes the camera).
+//  - Ability buttons fire on touch-down (hud-base.js), so they work while
+//    the other thumb is on the joystick.
 //  - The command card becomes big thumb buttons (CSS: body.touch).
 // The camera always follows the hero on touch.
 
@@ -24,7 +26,6 @@ export class TouchControls {
     this.world = input.world;
     this.stick = null; // { id, ox, oy, x, y, dir, sent, last }
     this.fingers = new Map(); // right-side touches: id -> { x, y, x0, y0, t0, hold }
-    this.pinch = null;
     document.body.classList.add('touch');
 
     this.el = document.createElement('div');
@@ -61,12 +62,8 @@ export class TouchControls {
     }
     const f = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), hold: false };
     this.fingers.set(e.pointerId, f);
-    if (this.fingers.size === 2) {
-      // Second finger: pinch zoom, and neither finger counts as a tap.
-      const [a, b] = [...this.fingers.values()];
-      this.pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, z0: this.world.zoom };
-      for (const g of this.fingers.values()) g.hold = 'pinch';
-    }
+    // Two fingers on the right: neither counts as a tap or a hold.
+    if (this.fingers.size > 1) for (const g of this.fingers.values()) g.hold = 'multi';
   }
 
   move(e) {
@@ -93,11 +90,6 @@ export class TouchControls {
     if (!f) return;
     f.x = e.clientX;
     f.y = e.clientY;
-    if (this.pinch && this.fingers.size === 2) {
-      const [a, b] = [...this.fingers.values()];
-      const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-      this.world.zoom = Math.max(14, Math.min(64, this.pinch.z0 * (this.pinch.d0 / d)));
-    }
   }
 
   up(e, cancelled = false) {
@@ -113,7 +105,6 @@ export class TouchControls {
     const f = this.fingers.get(e.pointerId);
     if (!f) return;
     this.fingers.delete(e.pointerId);
-    if (this.fingers.size < 2) this.pinch = null;
     if (cancelled || f.hold || !this.active) return;
     const quick = performance.now() - f.t0 < TAP_MS && Math.hypot(f.x - f.x0, f.y - f.y0) < TAP_PX;
     if (!quick && !this.input.targeting) return;
@@ -146,7 +137,7 @@ export class TouchControls {
     // A held finger on the right keeps moving toward it, like held right-click.
     if (this.fingers.size !== 1 || this.input.targeting || !this.active) return;
     const f = [...this.fingers.values()][0];
-    if (f.hold === 'pinch' || performance.now() - f.t0 < TAP_MS) return;
+    if (f.hold === 'multi' || performance.now() - f.t0 < TAP_MS) return;
     const p = this.world.screenToGround(f.x, f.y);
     if (!p) return;
     this.input.moveTo(p, !f.hold, f.hold ? 'steer' : 'move');

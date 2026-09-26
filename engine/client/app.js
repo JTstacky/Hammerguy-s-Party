@@ -320,6 +320,21 @@ export function startApp(cfg) {
     toastTimer = setTimeout(() => (t.hidden = true), 3500);
   }
 
+  // Fullscreen toggle for phones and tablets (not iPhone Safari, which has no API for it).
+  const fullBtn = $('fullbtn');
+  if (IS_TOUCH && document.fullscreenEnabled) {
+    fullBtn.hidden = false;
+    fullBtn.onclick = () => {
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+      else phoneScreen();
+    };
+    document.addEventListener('fullscreenchange', () => {
+      fullBtn.classList.toggle('on', !!document.fullscreenElement);
+      fullBtn.title = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+      setTimeout(() => world.resize(), 100);
+    });
+  }
+
   // Options modal.
   $('hud-menu').onclick = () => ($('options').hidden = false);
   $('opt-close').onclick = () => ($('options').hidden = true);

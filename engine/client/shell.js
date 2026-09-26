@@ -88,6 +88,7 @@ export function renderShell(cfg) {
       </div>
     </div>
 
+    <button id="fullbtn" class="iconbtn" title="Fullscreen" hidden>⛶</button>
     <div id="rotate"><div>📱↻</div><p>Turn your phone sideways to play.</p></div>
     <div id="tooltip" hidden></div>
     <div id="toast" hidden></div>`);

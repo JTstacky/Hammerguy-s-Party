@@ -37,7 +37,17 @@ export class HudBase {
     this.myId = myId;
     this.cache = {};
     this.tooltip = $('tooltip');
+    let touchedAt = 0;
+    $('cmdcard').addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      const b = e.target.closest('[data-slot]');
+      if (!b) return;
+      e.preventDefault();
+      touchedAt = performance.now();
+      this.onSlot(+b.dataset.slot);
+    });
     $('cmdcard').addEventListener('click', (e) => {
+      if (performance.now() - touchedAt < 800) return;
       const b = e.target.closest('[data-slot]');
       if (b) this.onSlot(+b.dataset.slot);
     });
@@ -45,11 +55,13 @@ export class HudBase {
       if (e.target.closest('#to-lobby')) this.send({ t: 'toLobby' });
     });
     document.addEventListener('mouseover', (e) => {
+      if (IS_TOUCH) return;
       const el = e.target.closest?.('[data-tip]');
       if (!el) return this.hideTip();
       const [kind, id, lvl] = el.dataset.tip.split(':');
       const html = kind === 'text' ? decodeURIComponent(id) : this.tooltipFor(kind, id, +lvl);
       if (html) this.showTip(html, el);
+      this.tipKey = el.dataset.tip;
     });
   }
 
@@ -73,6 +85,7 @@ export class HudBase {
 
   hideTip() {
     this.tooltip.hidden = true;
+    this.tipKey = null;
   }
 
   reset() {
@@ -87,6 +100,13 @@ export class HudBase {
     if (this.cache[id] === html) return;
     this.cache[id] = html;
     $(id).innerHTML = html;
+    // The hovered button was just replaced: keep the tooltip on its successor
+    // if the same button is still there, otherwise (a new minigame) hide it.
+    if (this.tipKey) {
+      const el = [...document.querySelectorAll('[data-tip]')].find((x) => x.dataset.tip === this.tipKey);
+      if (!el) this.hideTip();
+      else if (!el.matches(':hover')) this.hideTip();
+    }
   }
 
   playerRow(id) {

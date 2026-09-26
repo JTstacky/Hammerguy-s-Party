@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import * as M from './models.js';
 import { LITE, FX_DENSITY } from '../device.js';
 import { Effects, fxTexture } from './effects.js';
+import { blendedGround } from './terrain.js';
 import { play } from '../audio.js';
 
 const INTERP_DELAY = 0.11; // seconds behind the newest snapshot
@@ -122,6 +123,15 @@ function paint(material, file, units = TILE_UNITS) {
   tex.userData.waiting = [apply];
   painted.set(file, tex);
 }
+
+// Ground layers for blended arenas: the arena tile, the worn band at its
+// border, and the surrounding tile (see terrain.js).
+const GROUNDS = {
+  grass: { floor: { tex: 'tex_grass.webp', color: '#4f7a34' }, edge: { tex: 'tex_dirt.webp', tint: '#a89c84', color: '#6a5a40' }, outer: { tex: 'tex_grass.webp', tint: '#8c9c80', color: '#3a5a26' }, edgeWidth: 0.85 },
+  dirt: { floor: { tex: 'tex_dirt.webp', color: '#8a6a48' }, edge: { tex: 'tex_dirt.webp', tint: '#8a7c6c', color: '#5e4a34', units: 5 }, outer: { tex: 'tex_grass.webp', tint: '#a0a488', color: '#46663a' }, edgeWidth: 1.4 },
+  stone: { floor: { tex: 'tex_stone.webp', color: '#8e8a80' }, edge: { tex: 'tex_dirt.webp', tint: '#a09888', color: '#7a6040' }, outer: { tex: 'tex_grass.webp', tint: '#9aa890', color: '#46663a' } },
+  night: { floor: { tex: 'tex_dirt.webp', tint: '#b8c4e4', color: '#5a6478' }, edge: { tex: 'tex_dirt.webp', tint: '#7a86a4', color: '#3a4050', units: 5 }, outer: { tex: 'tex_nightgrass.webp', tint: '#7c84a0', color: '#1c3028' }, edgeWidth: 1.3 },
+};
 
 const THEMES = {
   lava: { sky: '#1a0806', fog: '#2a0c06', floor: ['#6f6259', 40, { tiles: true }], sun: '#ffd0a0', hemi: ['#ffb080', '#401008'] },
@@ -308,6 +318,10 @@ export class World {
           this.mapGroup.add(berg);
         }
       }
+    } else if (GROUNDS[map.theme]) {
+      const ground = blendedGround(GROUNDS[map.theme], f);
+      ground.position.y = 0.01;
+      this.mapGroup.add(ground);
     } else {
       const outerTex = noiseTexture(theme.outer[0], theme.outer[1], theme.outer[2]);
       outerTex.repeat.set(30, 30);
@@ -358,6 +372,7 @@ export class World {
     switch (p.t) {
       case 'tree': obj = theme === 'ice' ? M.snowTree(p.s) : M.tree(p.s); break;
       case 'rock': obj = M.rock(p.s); break;
+      case 'bush': obj = M.bush(p.s); break;
       case 'pillar': obj = M.pillar(p.s); break;
       case 'torch': obj = M.torch(); this.animated.push({ type: 'torch', obj }); break;
       case 'moonwell': obj = M.moonwell(); break;
@@ -504,7 +519,7 @@ export class World {
         // over a glowing ember, with a ground glow the size of the kill radius.
         const n = 1 + 4 * e.rs.length;
         const core = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffd080', toneMapped: false }), n);
-        const disc = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff5a10', transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }), n);
+        const disc = new THREE.InstancedMesh(new THREE.PlaneGeometry(2.6, 2.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff6a20', map: fxTexture('fx_flare.webp'), transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), n);
         for (const m of [core, disc]) m.frustumCulled = false;
         obj = new THREE.Group();
         obj.add(disc, core);
@@ -803,6 +818,8 @@ export class World {
         o.rotation.y = -f;
         v.walk = (v.walk || 0) + dt * 10;
         o.userData.body.position.y = Math.abs(Math.sin(v.walk)) * 0.15;
+        // A galloping gait: diagonal pairs of legs swing together.
+        o.userData.legs?.forEach((l, i) => (l.rotation.z = Math.sin(v.walk + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.55));
         if (v.k === 'kodo' && emit(v, 'dust', 14, dt)) this.fx.smokePuff(x - Math.cos(f) * 1.2, 0.2, z - Math.sin(f) * 1.2, '#8a7a60', 1.1, 0.9, 0.35);
         break;
       }
@@ -816,12 +833,25 @@ export class World {
         o.userData.arm.rotation.z = -0.5 + Math.sin(v.swing * Math.PI) * 1.6;
         break;
       }
-      case 'beastmaster':
+      case 'beastmaster': {
         o.position.set(x, 0, z);
         o.rotation.y = -f;
-        o.userData.body.position.y = b.on ? Math.abs(Math.sin(this.time * 6)) * 0.08 : 0;
-        if (b.on && emit(v, 'chan', 6, dt)) this.fx.trail(x, 2.1, z, '#9be07a', 0.5, 0.5, 0.3);
+        const U = o.userData;
+        const pump = b.on ? Math.sin(this.time * 6) : 0;
+        U.body.position.y = b.on ? Math.abs(pump) * 0.06 : 0;
+        // Axes pump toward the lane in time with the drumming.
+        U.arms.forEach((a, i) => (a.rotation.z = 0.35 + (b.on ? Math.sin(this.time * 6 + i * Math.PI) * 0.25 : -0.3)));
+        U.wings.forEach((w, i) => (w.rotation.x = (i ? -1 : 1) * (0.4 + (b.on ? Math.abs(Math.sin(this.time * 14)) * 0.9 : 0))));
+        // The chevrons light up in sequence, running down his lane.
+        v.chan = Math.max(0, Math.min(1, (v.chan || 0) + dt * (b.on ? 3 : -3)));
+        U.chev.children.forEach((c, i) => {
+          const phase = (this.time * 1.6 - i * 0.25) % 1;
+          c.material.opacity = v.chan * (0.25 + 0.6 * Math.max(0, 1 - Math.abs(phase - 0.5) * 3));
+        });
+        U.ring.material.opacity = v.chan * (0.35 + Math.sin(this.time * 6) * 0.15);
+        if (b.on && emit(v, 'chan', 6, dt)) this.fx.trail(x + Math.cos(f) * 0.9, 2.3, z + Math.sin(f) * 0.9, '#9be07a', 0.5, 0.5, 0.3);
         break;
+      }
       case 'lob': {
         // Progress is linear in time, so interpolating (and briefly
         // extrapolating) it gives exact, smooth flight every frame.

@@ -32,6 +32,12 @@ P[fx_scorch_mask]="A single ground scorch mark decal seen from directly above: a
 P[fx_debris]="$STYLE A 2x2 grid of four chunky broken rock and dirt fragments, each centred in its own quarter, grey-brown stone with sharp facets, lit from the top left. On a perfectly flat solid #FF00FF magenta background, one uniform colour, no shadows, no gradients, nothing magenta in the rocks."
 P[fx_flames_sheet]="$STYLE A 4x4 grid sprite sheet of 16 animation frames of a single campfire flame, read left to right then top to bottom: tongues of orange and yellow fire licking upward from a narrow base, flickering and changing shape each frame, tips breaking off into wisps, like the burning-building fire in Warcraft III. Each frame centred low in its own equal square cell with the flame pointing straight up. $BLACK"
 P[fx_shockwave]="$STYLE A single ring-shaped ground shockwave seen from directly above: a thin bright circle of dusty light with a soft inner falloff and faint radial streaks, perfectly round. $BLACK"
+P[tex_fur]="$STYLE $TILE Shaggy brown bear fur pelt: thick painted tufts of warm brown and dark umber hair flowing in one direction, for an orc beastmaster's cloak."
+P[tex_hide]="$STYLE $TILE Kodo beast hide: thick wrinkled grey-brown leathery skin with darker folds, scattered warts and faint scars, like the Warcraft III kodo beast."
+P[tex_leather]="$STYLE $TILE Orcish leather and cloth: stitched dark red-brown leather panels with rough seams, rivets and a few scratches, for armour straps and saddles."
+P[tex_plate]="$STYLE $TILE Human paladin plate armour metal: brushed silver steel with soft painted highlights, faint scratches and a few engraved gold filigree lines, used on armour."
+P[tex_bark]="$STYLE $TILE Pine tree bark: deep vertical furrows of dark brown and grey bark plates with a hint of moss, for tree trunks."
+P[tex_needles]="$STYLE $TILE Dense pine needle foliage seen close up: overlapping clumps of dark green and blue-green needles with lighter tips, painterly, for Lordaeron pine tree canopies."
 
 want=("$@")
 [ ${#want[@]} -eq 0 ] && want=("${!P[@]}")

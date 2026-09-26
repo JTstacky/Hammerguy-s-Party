@@ -197,18 +197,21 @@ export class MortarMayhem extends Minigame {
   }
 }
 
-// The raised banks outside the pit: a rock rim with torches.
+// The banks outside the pit: a tumbled rim of boulders of mixed sizes, a
+// second broken row behind, and torches at the corners.
 function banks() {
   const props = [];
-  const edge = HW + 0.9;
-  for (let i = -8; i <= 8; i++) {
-    const a = (i / 8) * (HW + 0.5);
-    for (const [x, y] of [
-      [a, edge],
-      [a, -edge],
-      [edge, a],
-      [-edge, a],
-    ]) props.push({ t: 'rock', x, y, s: rand(1.1, 1.6) });
+  const edge = HW + 1.1;
+  for (let i = -9; i <= 9; i++) {
+    const a = (i / 9) * (HW + 0.6) + rand(-0.35, 0.35);
+    for (const [nx, ny] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const out = edge + rand(-0.35, 0.5);
+      const px = nx ? nx * out : a;
+      const py = ny ? ny * out : a;
+      props.push({ t: 'rock', x: px, y: py, s: rand(0.7, 1.3) });
+      if (Math.random() < 0.55) props.push({ t: 'rock', x: px + nx * rand(1.3, 2.2) + (ny ? rand(-0.8, 0.8) : 0), y: py + ny * rand(1.3, 2.2) + (nx ? rand(-0.8, 0.8) : 0), s: rand(0.8, 1.5) });
+      if (Math.random() < 0.3) props.push({ t: 'rock', x: px - nx * rand(0.6, 1) + (ny ? rand(-0.5, 0.5) : 0), y: py - ny * rand(0.6, 1) + (nx ? rand(-0.5, 0.5) : 0), s: rand(0.25, 0.45) });
+    }
   }
   for (const [x, y] of [
     [edge, edge],

@@ -37,10 +37,8 @@ export class Input {
       this.mouse.x = e.clientX;
       this.mouse.y = e.clientY;
     });
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      world.zoom = Math.max(14, Math.min(64, world.zoom + Math.sign(e.deltaY) * 3));
-    }, { passive: false });
+    // No zoom: like the WC3 maps, each game fixes the camera distance.
+    canvas.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
     window.addEventListener('keydown', (e) => this.keyDown(e));
     window.addEventListener('keyup', (e) => this.keysDown.delete(e.code));
     this.touch = IS_TOUCH ? new TouchControls(this) : null;

@@ -331,3 +331,9 @@ body.touch #centercard { transform: translate(-50%, -55%); max-height: calc(100d
   .lobby-body { grid-template-columns: 1fr 1fr; gap: 14px; }
   #players li { padding: 4px 8px; }
 }
+
+#fullbtn { position: fixed; top: 8px; right: max(10px, env(safe-area-inset-right)); z-index: 7; font-size: 20px; line-height: 1; }
+#fullbtn.on { border-color: var(--gold); color: var(--gold); }
+body:not(.inlobby) #fullbtn { right: calc(max(8px, env(safe-area-inset-right)) + 42px); top: 4px; }
+body.touch #cmdcard, body.touch #fullbtn, body.touch #hud-menu { touch-action: manipulation; }
+body.touch #cmdcard { touch-action: none; }
