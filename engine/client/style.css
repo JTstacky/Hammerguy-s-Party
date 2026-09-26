@@ -263,3 +263,71 @@ body.targeting canvas { cursor: crosshair; }
 .blurb { margin: -4px 0 12px; }
 #homelink { position: fixed; top: 12px; left: 14px; z-index: 6; color: var(--gold); text-decoration: none; font-weight: 600; text-shadow: 0 1px 3px #000; }
 body:not(.inlobby) #homelink, #homelink[hidden] { display: none; }
+
+/* ---------- touch (phones and tablets; body.touch is set by touch.js) */
+.title-panel, .lobby-panel { max-height: calc(100dvh - 32px); overflow: auto; }
+#rotate { display: none; }
+body.touch { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+body.touch canvas#view { touch-action: none; }
+body.touch #joy { position: absolute; inset: 0; pointer-events: none; }
+body.touch .joy-base {
+  position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%;
+  border: 2px solid rgba(255, 230, 170, 0.35); background: radial-gradient(circle, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.35));
+  transform: translate(max(96px, env(safe-area-inset-left) + 90px), calc(100dvh - 110px)); opacity: 0.45; transition: opacity 0.15s;
+}
+body.touch #joy.on .joy-base { opacity: 1; transition: none; }
+body.touch .joy-knob {
+  position: absolute; left: 32px; top: 32px; width: 52px; height: 52px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f2d27a, #9a7a34 70%); border: 2px solid #000; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+body.touch #console {
+  left: auto; right: max(8px, env(safe-area-inset-right)); bottom: 10px; transform: none;
+  padding: 0; background: none; border: none; box-shadow: none;
+}
+body.touch #console:not(:has(.cmd:not(.empty))) { display: none; }
+body.touch #unitinfo { display: none; }
+body.touch #cmdcard { grid-template-columns: repeat(2, 76px); grid-auto-rows: 76px; gap: 10px; direction: rtl; }
+body.touch .cmd { border-radius: 50%; border-width: 3px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(0, 0, 0, 0.8); }
+body.touch .cmd.empty, body.touch .cmd .hk { display: none; }
+body.touch .cmd .icon { font-size: 34px; }
+body.touch .cmd .pips { bottom: 4px; right: 50%; transform: translateX(50%); }
+body.touch #targethint { bottom: auto; top: 46px; }
+body.touch #chat { bottom: auto; top: 46px; left: max(12px, env(safe-area-inset-left)); width: min(320px, 40vw); }
+body.touch #chatlog { max-height: 22vh; }
+body.touch #chatlog div { font-size: 12px; }
+body.touch.inlobby #chat { top: auto; bottom: 12px; }
+body.touch #multiboard { top: 44px; right: max(8px, env(safe-area-inset-right)); font-size: 11px; min-width: 0; padding: 4px 6px; opacity: 0.9; }
+body.touch #multiboard td { padding: 1px 4px; }
+body.touch .mb-title { display: none; }
+body.touch #topbar { min-width: 0; gap: 12px; padding: 4px 14px; font-size: 12px; }
+body.touch #topbar .phase { font-size: 13px; }
+body.touch #hud-menu { top: 4px; right: max(8px, env(safe-area-inset-right)); }
+body.touch .card { padding: 12px 18px; }
+body.touch .card h1 { font-size: 22px; margin: 4px 0 6px; }
+body.touch .card p { font-size: 13px; margin: 4px auto; }
+body.touch .card .count { font-size: 40px; }
+body.touch .card td { padding: 2px 10px; }
+body.touch #centercard { transform: translate(-50%, -55%); max-height: calc(100dvh - 90px); overflow: auto; }
+@media (orientation: portrait) {
+  body.touch:not(.inlobby) #rotate {
+    display: grid; place-content: center; text-align: center; gap: 8px; position: fixed; inset: 0; z-index: 70;
+    background: #0c0806; color: var(--gold); font-family: Cinzel, serif; font-size: 18px;
+  }
+  body.touch #rotate div { font-size: 54px; }
+}
+@media (max-height: 520px) {
+  .panel { padding: 14px 18px; }
+  .logo { font-size: 30px; }
+  .tag { margin: 2px 0 10px; font-size: 12.5px; }
+  .wip { margin-bottom: 4px; }
+  .field { margin-bottom: 6px; }
+  .field input, .row input { padding: 7px 10px; }
+  .btn.big { padding: 9px 18px; font-size: 15px; }
+  .row { margin-top: 6px; }
+  .modes { display: none; }
+  .fine { margin-top: 8px; }
+  .roomcode { font-size: 28px; }
+  .lobby-head { padding-bottom: 8px; margin-bottom: 8px; }
+  .lobby-body { grid-template-columns: 1fr 1fr; gap: 14px; }
+  #players li { padding: 4px 8px; }
+}

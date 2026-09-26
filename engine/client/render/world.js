@@ -4,6 +4,7 @@
 
 import * as THREE from 'three';
 import * as M from './models.js';
+import { LITE, FX_DENSITY } from '../device.js';
 import { Effects, fxTexture } from './effects.js';
 import { play } from '../audio.js';
 
@@ -169,7 +170,7 @@ export class World {
     this.canvas = canvas;
     this.overlay = overlay;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, LITE ? 1.5 : 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -179,7 +180,7 @@ export class World {
     this.hemi = new THREE.HemisphereLight('#fff', '#333', 1.2);
     this.sun = new THREE.DirectionalLight('#fff', 2.4);
     this.sun.castShadow = true;
-    this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.shadow.mapSize.set(LITE ? 1024 : 2048, LITE ? 1024 : 2048);
     this.sun.shadow.bias = -0.0005;
     this.sun.shadow.normalBias = 0.02;
     this.scene.add(this.hemi, this.sun, this.sun.target);
@@ -295,6 +296,7 @@ export class World {
         }
         const glow = new THREE.PointLight('#ff5a10', 30, 60, 1.2);
         glow.position.set(0, -2, 0);
+        glow.visible = !LITE;
         this.mapGroup.add(glow);
       } else {
         for (let i = 0; i < 18; i++) {
@@ -508,6 +510,7 @@ export class World {
         obj.add(disc, core);
         const light = new THREE.PointLight('#ff8a30', 18, 14, 1.6);
         light.position.y = 1.5;
+        light.visible = !LITE;
         obj.add(light);
         v.parts = { core, disc, n, light };
         break;
@@ -550,6 +553,7 @@ export class World {
             v.parts = { spin: blade };
           }
           const light = new THREE.PointLight(c, 6, 6, 2);
+          light.visible = !LITE;
           obj.add(light);
           obj.position.y = 1;
           v.color = c;
@@ -1199,7 +1203,7 @@ export class World {
 // owes this frame, carrying the fraction over (frame-rate independent).
 function emit(v, key, rate, dt) {
   const acc = (v.emit ??= {});
-  acc[key] = (acc[key] || 0) + rate * dt;
+  acc[key] = (acc[key] || 0) + rate * FX_DENSITY * dt;
   const n = Math.floor(acc[key]);
   acc[key] -= n;
   return n;

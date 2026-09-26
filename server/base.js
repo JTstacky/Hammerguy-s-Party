@@ -117,10 +117,11 @@ export class Minigame {
   command(pid, m) {
     const u = this.heroes.get(pid);
     if (!u || !u.alive || u.finished) return;
-    if (m.c === 'move' || m.c === 'stop') {
+    if (m.c === 'move' || m.c === 'steer' || m.c === 'stop') {
       // Orders given during a cast point wait for it: a right-click does not cancel it.
-      if (u.cast) u.cast.queued = m.c === 'move' ? { x: +m.x || 0, y: +m.y || 0 } : 'stop';
+      if (u.cast) u.cast.queued = m.c === 'stop' ? 'stop' : { x: +m.x || 0, y: +m.y || 0 };
       else if (m.c === 'move') u.order(+m.x || 0, +m.y || 0);
+      else if (m.c === 'steer') u.steer(+m.x || 0, +m.y || 0);
       else u.stop();
     } else if (m.c === 'cast') {
       if (this.shove) this.doShove(pid);

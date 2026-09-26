@@ -2,6 +2,8 @@
 // cast (or quick-cast at the cursor), S to stop, Space to centre the camera.
 
 import { toggleMute, unlockAudio, play } from './audio.js';
+import { IS_TOUCH } from './device.js';
+import { TouchControls } from './touch.js';
 
 // `slots` comes from the game:
 //   slotForKey(event) -> slot index or -1
@@ -41,10 +43,11 @@ export class Input {
     }, { passive: false });
     window.addEventListener('keydown', (e) => this.keyDown(e));
     window.addEventListener('keyup', (e) => this.keysDown.delete(e.code));
+    this.touch = IS_TOUCH ? new TouchControls(this) : null;
     // Holding right-click keeps re-issuing the move order (modern QoL).
     setInterval(() => {
       // Don't let held right-click cancel a spell during its cast point.
-      if (this.active && this.rightHeld && performance.now() > this.holdPause) this.moveToCursor(false);
+      if (this.active && this.rightHeld && performance.now() > this.holdPause) this.moveToCursor(false, 'steer');
     }, 120);
   }
 
@@ -52,10 +55,15 @@ export class Input {
     return this.world.screenToGround(this.mouse.x, this.mouse.y);
   }
 
-  moveToCursor(marker = true) {
+  // A re-issued order ('steer') moves the destination without WC3's stop, so
+  // holding the button (or a touch joystick) doesn't stutter.
+  moveToCursor(marker = true, c = 'move') {
     const p = this.ground();
-    if (!p) return;
-    this.send({ t: 'cmd', c: 'move', x: +p.x.toFixed(2), y: +p.y.toFixed(2) });
+    if (p) this.moveTo(p, marker, c);
+  }
+
+  moveTo(p, marker = true, c = 'move') {
+    this.send({ t: 'cmd', c, x: +p.x.toFixed(2), y: +p.y.toFixed(2) });
     if (marker) this.world.moveMarker(p.x, p.y);
   }
 
@@ -98,11 +106,13 @@ export class Input {
       if (p) this.castAt(a.target, p);
       return;
     }
+    // Pressing the ability again while it waits for a target cancels it.
+    if (this.targeting === a.target) return this.cancelTarget();
     this.targeting = a.target;
     document.body.classList.add('targeting');
     const hint = document.getElementById('targethint');
     hint.hidden = false;
-    hint.textContent = `${a.name}: left-click a target (right-click to cancel)`;
+    hint.textContent = this.touch ? `${a.name}: tap a target (tap the button again to cancel)` : `${a.name}: left-click a target (right-click to cancel)`;
     this.range = a.range ?? null;
   }
 

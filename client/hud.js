@@ -1,7 +1,7 @@
 // Hammerguy's Party HUD: game counter, points multiboard, the single ability
 // button, and the intro / results cards between minigames.
 
-import { HudBase, fmtTime, escapeHtml } from '../engine/client/ui/hud-base.js';
+import { HudBase, fmtTime, escapeHtml, controlsText } from '../engine/client/ui/hud-base.js';
 
 export class PartyHud extends HudBase {
   update(s) {
@@ -32,12 +32,12 @@ export class PartyHud extends HudBase {
     const r = this.playerRow(me);
     this.set('unitinfo', `<div class="portrait" style="--c:${r.color}">🔨</div>
       <div class="uinfo"><div class="uname2" style="color:${r.color}">${r.name}</div><div class="utitle">Hammerguy</div>
-      <div class="ctl">${escapeHtml(s.mg.controls)}</div></div>`);
+      <div class="ctl">${escapeHtml(controlsText(s.mg.controls))}</div></div>`);
 
     let center = '';
     if (s.phase === 'intro') {
       center = `<div class="card intro"><div class="kicker">${s.tiebreak ? 'Tie-breaker: the winner takes the party' : `Minigame ${s.index} of ${s.total}`}</div><h1>${escapeHtml(s.mg.name)}</h1>
-        <p>${escapeHtml(s.mg.desc)}</p><p class="ctl">${escapeHtml(s.mg.controls)}</p><div class="count">${Math.ceil(s.timer)}</div></div>`;
+        <p>${escapeHtml(s.mg.desc)}</p><p class="ctl">${escapeHtml(controlsText(s.mg.controls))}</p><div class="count">${Math.ceil(s.timer)}</div></div>`;
     } else if (s.phase === 'results' && s.results) {
       center = `<div class="card results"><h1>${escapeHtml(s.mg.name)} — Results</h1><table>
         ${s.results.map((res) => { const p = this.playerRow(res.id); return `<tr><td class="place">#${res.place}</td><td style="color:${p.color}">${p.name}</td><td>${res.pts ? `+${res.pts} pts` : ''}</td><td><b>${s.points[res.id]}</b></td></tr>`; }).join('')}

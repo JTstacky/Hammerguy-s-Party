@@ -17,6 +17,12 @@ startApp({
     '<b>Wheel</b> zoom · <b>Arrows</b> pan',
     '<b>Enter</b> chat',
   ],
+  touchHelp: [
+    '<b>Joystick</b> (left thumb) move · let go to stop',
+    '<b>Tap</b> the ground to walk there · <b>hold</b> to keep walking',
+    '<b>Ability button</b> (bottom right) · Purge: tap it, then tap a rival',
+    '<b>Pinch</b> zoom',
+  ],
   quickCast: false,
   Hud: PartyHud,
   slots: {

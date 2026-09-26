@@ -102,6 +102,25 @@ test('wc3: a new order stops translation at once, even straight ahead', () => {
   assert.ok(u.x > x0);
 });
 
+test('steer (joystick, held right-click) moves the destination without the WC3 stop', () => {
+  const u = standing();
+  u.order(20, 0);
+  for (let i = 0; i < 50; i++) stepUnits([u], 0.01);
+  assert.ok(u.walking);
+  // Re-steering every 0.1 s keeps full speed: 1 s covers the full distance.
+  const x0 = u.x;
+  for (let i = 0; i < 100; i++) {
+    if (i % 10 === 0) u.steer(u.x + 2, 0);
+    stepUnits([u], 0.01);
+  }
+  assert.ok(Math.abs(u.x - x0 - wc3(270)) < 1e-6, `moved ${(u.x - x0).toFixed(3)}, full speed ${wc3(270).toFixed(3)}`);
+  // A sharp steer still turns first: the propulsion window applies.
+  u.steer(u.x - 2, 0);
+  u.stepT = WC3.STEP;
+  stepUnits([u], 0.031);
+  assert.equal(u.walking, false);
+});
+
 test('wc3: the model lags the heading, so a 180° turn walks backwards for a moment', () => {
   const u = standing();
   firstWalk(u, 180);

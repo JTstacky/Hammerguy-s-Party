@@ -9,6 +9,7 @@ import { World, escapeHtml } from './render/world.js';
 import { Input } from './input.js';
 import { play, unlockAudio, toggleMute, isMuted } from './audio.js';
 import { renderShell } from './shell.js';
+import { IS_TOUCH } from './device.js';
 import { PLAYER_COLORS } from '../shared/constants.js';
 
 const $ = (id) => document.getElementById(id);
@@ -87,8 +88,18 @@ export function startApp(cfg) {
     return n;
   }
 
+  // On phones, go fullscreen and landscape on the first menu button (it needs a tap).
+  // iPhones don't allow either; the portrait overlay covers that case.
+  function phoneScreen() {
+    if (!IS_TOUCH || document.fullscreenElement) return;
+    document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })
+      .then(() => screen.orientation?.lock?.('landscape'))
+      .catch(() => {});
+  }
+
   $('create').onclick = () => {
     unlockAudio();
+    phoneScreen();
     play('click');
     net.connect({ t: 'create', name: myName() });
   };
@@ -96,6 +107,7 @@ export function startApp(cfg) {
     unlockAudio();
     const code = $('code').value.trim().toUpperCase();
     if (code.length !== 4) return toast('Enter a 4-letter game code.');
+    phoneScreen();
     play('click');
     net.connect({ t: 'join', code, name: myName() });
   };

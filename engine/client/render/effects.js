@@ -2,6 +2,7 @@
 // lightning bolts and WC3-style floating text.
 
 import * as THREE from 'three';
+import { LITE } from '../device.js';
 
 const MAX_PARTICLES = 6000;
 
@@ -460,6 +461,7 @@ export class Effects {
 
   flash(x, z, radius, color, dur = 0.3) {
     const light = new THREE.PointLight(color, 40, radius * 5, 2);
+    light.visible = !LITE;
     light.position.set(x, 1.5, z);
     this.scene.add(light);
     this.transients.push({ obj: light, t: 0, dur, update: (k) => (light.intensity = 40 * (1 - k)) });

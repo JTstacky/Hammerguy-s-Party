@@ -99,6 +99,16 @@ export class Unit {
     this.walking = false;
   }
 
+  // Moves the destination of an order already under way without WC3's stop.
+  // Used when orders are re-issued continuously (a touch joystick, held
+  // right-click), which would otherwise stutter. The next step still turns the
+  // heading and tests the propulsion window as usual.
+  steer(x, y) {
+    if (!this.target) return this.order(x, y);
+    this.target = { x, y };
+    this.faceTo = null;
+  }
+
   stop() {
     this.target = null;
     this.walking = false;

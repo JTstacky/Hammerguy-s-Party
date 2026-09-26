@@ -5,6 +5,7 @@
 
 import { PLAYER_COLORS } from '../../shared/constants.js';
 import { escapeHtml } from '../render/world.js';
+import { IS_TOUCH } from '../device.js';
 
 export const $ = (id) => document.getElementById(id);
 export { escapeHtml };
@@ -12,6 +13,15 @@ export { escapeHtml };
 export function fmtTime(t) {
   t = Math.max(0, Math.ceil(t));
   return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+}
+
+// Rewrites mouse-and-keyboard control hints for touch screens.
+export function controlsText(t) {
+  if (!IS_TOUCH || !t) return t;
+  return t
+    .replace(/Right-click to move/g, 'Use the joystick to move')
+    .replace(/Q, then click (a|an|the) /g, 'Tap the ability, then tap $1 ')
+    .replace(/Q: /g, 'Ability button: ');
 }
 
 export function hpColor(frac) {
