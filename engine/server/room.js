@@ -186,7 +186,7 @@ export class Room {
 
   // WC3-style chat commands for tuning the movement feel live, e.g. while
   // comparing side by side with the real game. Host only.
-  //   -turnrate 0.5   (object-editor radians per 0.03 s frame; engine caps speed at 0.2)
+  //   -turnrate 0.6   (object-editor radians per 0.03 s step; WC3 paladin 0.6)
   //   -propwindow 60  (degrees)
   //   -castpoint 0.2  (seconds, overrides every spell; "-castpoint off" to reset)
   //   -tuning         (show current values)   -tuning reset
@@ -204,7 +204,7 @@ export class Room {
     else if (cmd === 'castpoint') this.tuning.castPoint = arg === 'off' ? undefined : Math.max(0, Math.min(2, v || 0));
     else if (cmd === 'tuning' && arg === 'reset') this.tuning = {};
     const t = this.tuning;
-    this.system(`Tuning — turn rate: ${t.turnRate ?? 'default (0.5)'}, propulsion window: ${t.propWindow != null ? Math.round((t.propWindow * 180) / Math.PI) + '°' : 'default (60°)'}, cast point: ${t.castPoint ?? 'per spell'}`);
+    this.system(`Tuning — turn rate: ${t.turnRate ?? 'default (0.6)'}, propulsion window: ${t.propWindow != null ? Math.round((t.propWindow * 180) / Math.PI) + '°' : 'default (60°)'}, cast point: ${t.castPoint ?? 'per spell'}`);
     return true;
   }
 

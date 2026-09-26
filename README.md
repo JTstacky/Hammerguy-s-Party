@@ -14,16 +14,22 @@ Hammerguy's Party is a party of chaotic minigames for up to 10 friends, in the b
 
 ## Minigames
 
-| Minigame | Goal |
-|---|---|
-| Kodo Stampede | Dodge stampeding kodo beasts. Last one standing wins. |
-| Mortar Mayhem | Get out of the target circles before the shells land. |
-| Wisp Wheel | Slip through the gaps in rotating arms of wisps. |
-| Golem Gauntlet | Race to the finish past patrolling golems. |
-| King of the Hill | Be closest to the centre of the moving circle. **Q** shoves. |
-| Gold Rush | Collect the most gold. **Q** shoves. |
-| Ice Sumo | Shove everyone off a shrinking ice floe. |
-| Sapper Tag | Pass the goblin sapper bomb before it explodes. |
+| Minigame | Goal | Original |
+|---|---|---|
+| Kodo Stampede | Beastmasters in the middle send exploding kodos toward both ends. 700 HP; last one standing wins. | Stampede (#17), rules ported |
+| Mortar Mayhem | Up to 30 catapults on the banks lob rocks into the pit at 400 u/s, with splash tiers and burning oil. 50 HP. | Peon Pandemonium (#1), rules ported |
+| Wisp Wheel | Run with four spokes of fire that speed up and reverse. One Purge (Q, then click) stalls a rival. | Wheel of Fire (#47), rules ported |
+| Golem Gauntlet | Race to the finish past patrolling golems. | Like the "Reach the end!" races |
+| King of the Hill | Be closest to the centre of the moving circle. **Q** shoves. | New |
+| Gold Rush | Collect the most gold. **Q** shoves. | New |
+| Ice Sumo | Shove everyone off a shrinking ice floe. | New |
+| Sapper Tag | Pass the goblin sapper bomb before it explodes. | Like Hot Mortar (#4) |
+
+Games with no timer in the original have none here either: they run until one player is left.
+
+**Scoring follows the original's "ante".** In survival games the first player out gets 9 − N points (N = players), each later one gets one more, and the last one standing gets 8. Players out at the same instant share a value, and if the timer runs out, every survivor gets the current ante. In races, finishers get 8, 7, 6 … and everyone else 0. A match is 8 games, and tied leaders play tie-breaker games.
+
+Practice one minigame: host with `?only=<id>` in the URL, e.g. `?only=wisp`. The ids are kodo, mortar, wisp, race, koth, gold, sumo and potato.
 
 To add a minigame, create a file in `server/minigames/` that extends `Minigame` (see `server/base.js`), then list it in `server/minigames/index.js`.
 
@@ -31,7 +37,16 @@ To add a minigame, create a file in `server/minigames/` that extends `Minigame` 
 
 - **Up to 10 players online.** Peer-to-peer multiplayer with no game server: the host's browser runs the party, and friends join with a 4-letter code or an invite link.
 - **Bots** in every minigame.
-- **Warcraft III feel:** right-click movement with WC3's turn rate and propulsion window.
+- **Warcraft III feel, measured in the real game.** Uther Party 4.0 was played in Warcraft III 1.26a with an instrumented copy of the map, and the engine follows what the logs show:
+  - The heading turns by the turn rate (0.6 rad) every 0.03 s step.
+  - The 60° propulsion window is checked before each turn.
+  - Units walk at full speed at once and stop dead about 11 units short of the click.
+  - A new order stops translation at once.
+  - The model's rotation lags behind the heading, so after a 180° turn the unit walks backwards for a moment.
+  - Walking units steer round each other and never shove idle ones.
+  - Targeted spells turn the caster first and lock it for the cast point.
+
+  `test/wc3.test.js` checks all of this against the measured numbers.
 - **Graphics and sound** are generated in code with Three.js and WebAudio. There are no asset files.
 
 ## Development
@@ -58,7 +73,9 @@ client/   game client: entry (main.js), HUD (hud.js), host worker
 server/   party.js: rotation and scoring; base.js: minigame base class; minigames/
 engine/   shared engine (also used by Arcane Arena):
           sim, rooms, networking, renderer, input, HUD base
-docs/     research.md: findings from the original Uther Party map
+docs/     uther-party/: the original maps researched from the source. Rule sheets for all
+          90 minigames, measured engine behaviour (engine.md), arena maps, tools
+          research.md: early notes from the original Uther Party map
 ```
 
 **Networking.** The host's browser runs the room in a Web Worker, and guests connect over WebRTC via [PeerJS](https://peerjs.com). `server.js` offers the same rooms over WebSockets for self-hosting.

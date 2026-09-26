@@ -1,13 +1,15 @@
 // Hammerguy's Party — a minigame party inspired by the classic Warcraft III
 // map Uther Party. Up to 10 players (the original took 8) play a run of
-// randomly selected minigames. Placing well earns points; most points wins.
+// randomly selected minigames, 8 by default as in the original. Each minigame
+// pays points by Uther Party's ante rules (Minigame.payouts). Most points wins;
+// tied leaders play tie-breaker minigames among themselves, as in the original.
 
 import { shuffle, round1 } from '../engine/server/sim.js';
 import { MINIGAMES } from './minigames/index.js';
 
 const INTRO_TIME = 6;
 const RESULTS_TIME = 6;
-const PLACE_POINTS = [3, 2, 1];
+const MAX_TIEBREAKS = 3;
 
 export class HammerguysParty {
   constructor(room, settings) {
@@ -21,15 +23,23 @@ export class HammerguysParty {
     this.index = 0;
     this.mapV = 0;
     this.queue = [];
+    this.tiebreak = 0;
+    this.tieWinner = null;
     if (settings.only && MINIGAMES.some((m) => m.id === settings.only)) this.queue = Array(this.total).fill(MINIGAMES.find((m) => m.id === settings.only));
     this.nextGame();
   }
 
-  nextGame() {
+  nextGame(pids = this.pids) {
     if (!this.queue.length) this.queue = shuffle([...MINIGAMES]);
-    const Game = this.queue.shift();
-    this.index++;
-    this.mg = new Game(this, this.pids);
+    let Game = this.queue.shift();
+    const tie = pids !== this.pids;
+    // A tie-breaker needs a game that one of the tied players is sure to win.
+    if (tie && Game.ranking !== 'survival') {
+      const alt = this.queue.findIndex((G) => G.ranking === 'survival');
+      if (alt >= 0) [Game] = this.queue.splice(alt, 1, Game);
+    }
+    if (!tie) this.index++;
+    this.mg = new Game(this, pids);
     this.mg.setup();
     this.mapInfo = { ...this.mg.map, v: ++this.mapV };
     this.phase = 'intro';
@@ -53,24 +63,34 @@ export class HammerguysParty {
       if (this.mg.isDone()) this.endGame();
     } else if (this.phase === 'results') {
       if (this.timer <= 0) {
-        if (this.index >= this.total) this.finish();
-        else this.nextGame();
+        if (this.index < this.total) this.nextGame();
+        else {
+          const tied = this.tiedLeaders();
+          if (tied.length > 1 && this.tiebreak < MAX_TIEBREAKS) {
+            this.tiebreak++;
+            this.msg(`Tie-breaker! ${tied.map((p) => this.room.nameOf(p)).join(', ')} play for the win.`);
+            this.nextGame(tied);
+          } else this.finish();
+        }
       }
     }
   }
 
   endGame() {
     const groups = this.mg.ranking();
+    const pays = this.mg.payouts();
     const results = [];
     let place = 0;
     for (const g of groups) {
-      const pts = PLACE_POINTS[place] || 0;
       for (const pid of g) {
+        // Tie-breakers decide the winner only; they pay no points.
+        const pts = this.tiebreak ? 0 : pays.get(pid) || 0;
         this.points.set(pid, this.points.get(pid) + pts);
         results.push({ id: pid, place: place + 1, pts });
       }
       place += g.length;
     }
+    if (this.tiebreak && groups[0]?.length === 1) this.tieWinner = groups[0][0];
     this.lastResults = results;
     this.phase = 'results';
     this.timer = RESULTS_TIME;
@@ -87,8 +107,16 @@ export class HammerguysParty {
     this.ev({ k: 'sfx', s: 'victory' });
   }
 
+  // Players tied for the most points, unless a tie-breaker already split them.
+  tiedLeaders() {
+    if (this.tieWinner != null) return [this.tieWinner];
+    const top = Math.max(...this.points.values());
+    return this.pids.filter((p) => this.points.get(p) === top);
+  }
+
   standings() {
-    return this.pids.map((id) => ({ id, score: this.points.get(id) })).sort((a, b) => b.score - a.score);
+    const w = this.tieWinner;
+    return this.pids.map((id) => ({ id, score: this.points.get(id) })).sort((a, b) => b.score - a.score || (b.id === w) - (a.id === w));
   }
 
   command(pid, m) {
@@ -111,9 +139,12 @@ export class HammerguysParty {
     const snap = {
       mode: 'party',
       phase: this.phase,
-      timer: round1(this.phase === 'play' ? Math.max(0, meta.duration - this.mg.time) : this.timer),
+      // Games with no timer in the original show the time played instead.
+      timer: round1(this.phase !== 'play' ? this.timer : meta.timer === false ? this.mg.time : Math.max(0, meta.duration - this.mg.time)),
+      elapsed: this.phase === 'play' && meta.timer === false ? 1 : undefined,
       index: this.index,
       total: this.total,
+      tiebreak: this.tiebreak || undefined,
       mg: { id: meta.id, name: meta.name, desc: meta.desc, controls: meta.controls },
       points: Object.fromEntries(this.points),
       alive: Object.fromEntries(this.pids.map((p) => [p, this.mg.heroes.get(p)?.alive ?? false])),

@@ -1,6 +1,8 @@
-// Small shared simulation helpers: WC3-style "click to move" units with a
+// Shared simulation helpers: Warcraft III-style "click to move" units with a
 // separate knockback velocity that decays with friction, plus unit-unit
-// collision. Used by Warlock and by every Uther Party minigame.
+// collision. Used by every Hammerguy's Party minigame.
+//
+// Distances are Hammerguy units: 1 unit ≈ 54 WC3 units (speed 5 ≈ 270 u/s).
 
 let nextId = 1;
 export const newId = () => nextId++;
@@ -23,19 +25,32 @@ export const wrapAngle = (a) => {
   return (a < 0 ? a + Math.PI * 2 : a) - Math.PI;
 };
 
-// Warcraft III movement model.
-//  - The engine updates unit facing every 0.03 s "frame". The object-editor
-//    Turn Rate is in radians per frame, but rotation speed is capped at
-//    ~0.2 rad/frame (~382°/s, measured in game); higher values only raise the
-//    angular acceleration. Units ease in and out of turns.
-//  - Propulsion Window (default 60°): a unit only walks while facing within
-//    that angle of where it is going; otherwise it turns on the spot first.
-//    It always walks in the direction it faces, so turns become short arcs.
+// WC3 unit scale: convert WC3 distances and speeds to Hammerguy units.
+export const WU = 54;
+export const wc3 = (u) => u / WU;
+
+// Warcraft III movement model, measured with an instrumented map in WC3 1.26a
+// (see docs/uther-party/engine.md and Arcane Arena's docs/wc3-observations.md).
+//  - Each unit has its own 0.03 s logic step, at a phase of its own, so a new
+//    order waits 0-0.03 s for the unit's next step.
+//  - On each step the logical heading turns by at most the Turn Rate (radians
+//    per step, no easing). The Propulsion Window (60°) is tested against the
+//    heading BEFORE that step's turn; if it passes, the unit walks during the
+//    step along the NEW heading. So a 90° turn starts walking on step 2 and a
+//    180° turn on step 5 (turn rate 0.6).
+//  - Walking is at full speed at once, with no acceleration, and stops dead
+//    about 11 WC3 units short of the clicked point. A new order stops
+//    translation immediately, even one in the same direction.
+//  - The model on screen (GetUnitFacing) is a separate, slower display facing:
+//    0.07 rad, then 0.14 rad, then at most min(turnRate, 0.2) rad per step,
+//    easing out. After a 180° order the unit visibly walks backwards briefly.
 export const WC3 = {
-  FRAME: 0.03,
-  MAX_TURN_PER_FRAME: 0.2,
-  DEFAULT_TURN_RATE: 0.5,
+  STEP: 0.03,
+  DISPLAY_MAX: 0.2,
+  DISPLAY_RAMP: [0.07, 0.14],
+  DEFAULT_TURN_RATE: 0.6,
   DEFAULT_PROP_WINDOW: (60 * Math.PI) / 180,
+  ARRIVE: wc3(11),
 };
 
 export class Unit {
@@ -52,15 +67,19 @@ export class Unit {
     this.vy = 0;
     this.mx = 0; // last movement velocity (for bots / rendering)
     this.my = 0;
-    this.facing = 0;
-    this.angVel = 0;
-    this.turnRate = WC3.DEFAULT_TURN_RATE; // radians per 0.03 s frame (object editor units)
+    this.heading = 0; // logical heading: decides where the unit walks
+    this.facing = 0; // display facing: what the model shows
+    this.dispSteps = 0;
+    this.stepT = Math.random() * WC3.STEP; // this unit's own step phase
+    this.walking = false;
+    this.turnRate = WC3.DEFAULT_TURN_RATE; // radians per 0.03 s step (object editor "Turn Rate")
     this.propWindow = WC3.DEFAULT_PROP_WINDOW;
-    this.faceTo = null; // angle to turn toward when not moving (e.g. while casting)
+    this.faceTo = null; // angle to turn toward without walking (e.g. before a cast)
     this.target = null; // {x, y} move order
     this.alive = true;
     this.hp = hp;
     this.maxHp = hp;
+    this.regen = 0;
     this.stun = 0;
     this.kbResist = 1; // multiplier on knockback received
     this.mass = 1;
@@ -68,32 +87,58 @@ export class Unit {
     this.flags = {};
   }
 
+  // Sets both facings at once (spawning).
+  setFacing(a) {
+    this.heading = a;
+    this.facing = a;
+  }
+
   order(x, y) {
     this.target = { x, y };
     this.faceTo = null;
+    this.walking = false;
   }
 
   stop() {
     this.target = null;
+    this.walking = false;
   }
 
-  // Rotates toward `desired` with WC3-style capped, eased angular velocity.
-  // Returns the remaining angle.
-  turnToward(desired, dt) {
-    const F = WC3.FRAME;
-    const diff = wrapAngle(desired - this.facing);
-    const maxV = Math.min(this.turnRate, WC3.MAX_TURN_PER_FRAME) / F;
-    const acc = (this.turnRate * WC3.MAX_TURN_PER_FRAME) / (F * F);
-    const want = Math.sign(diff) * Math.min(maxV, Math.sqrt(2 * acc * Math.abs(diff)));
-    this.angVel += clamp(want - this.angVel, -acc * dt, acc * dt);
-    const step = this.angVel * dt;
-    if (Math.abs(diff) < 1e-3 || (Math.sign(step) === Math.sign(diff) && Math.abs(step) >= Math.abs(diff))) {
-      this.facing = desired;
-      this.angVel = 0;
-      return 0;
+  // True once the logical heading points at `angle` (within `tol` radians).
+  facingAt(angle, tol = 1e-4) {
+    return Math.abs(wrapAngle(angle - this.heading)) < tol;
+  }
+
+  // One 0.03 s logic step: turn the heading, gate walking on the window.
+  logicStep() {
+    if (this.stun > 0) {
+      this.walking = false;
+    } else if (this.target) {
+      const dx = this.target.x - this.x;
+      const dy = this.target.y - this.y;
+      if (Math.hypot(dx, dy) <= WC3.ARRIVE) {
+        this.target = null;
+        this.walking = false;
+      } else {
+        const diff = wrapAngle(Math.atan2(dy, dx) - this.heading);
+        this.walking = Math.abs(diff) <= this.propWindow + 1e-9;
+        this.heading = wrapAngle(this.heading + clamp(diff, -this.turnRate, this.turnRate));
+      }
+    } else if (this.faceTo != null) {
+      const diff = wrapAngle(this.faceTo - this.heading);
+      this.heading = Math.abs(diff) <= this.turnRate ? this.faceTo : wrapAngle(this.heading + Math.sign(diff) * this.turnRate);
     }
-    this.facing = wrapAngle(this.facing + step);
-    return Math.abs(wrapAngle(desired - this.facing));
+    // The model chases the heading, slower and eased.
+    const rem = wrapAngle(this.heading - this.facing);
+    if (Math.abs(rem) < 0.01) {
+      this.facing = this.heading;
+      this.dispSteps = 0;
+    } else {
+      const cap = Math.min(WC3.DISPLAY_RAMP[this.dispSteps] ?? WC3.DISPLAY_MAX, WC3.DISPLAY_MAX, Math.max(this.turnRate, 0.01));
+      const step = Math.min(cap, Math.max(Math.abs(rem) * 0.65, 0.01));
+      this.facing = wrapAngle(this.facing + Math.sign(rem) * step);
+      this.dispSteps++;
+    }
   }
 
   knock(dx, dy, force) {
@@ -107,47 +152,37 @@ export class Unit {
   }
 }
 
-// Moves every living unit one step. `friction` is the exponential decay rate
+// Moves every living unit one tick. `friction` is the exponential decay rate
 // of knockback velocity; `linear` a constant deceleration so knockback ends.
 export function stepUnits(units, dt, { friction = 2.4, linear = 1.2, controlLoss = true } = {}) {
   for (const u of units) {
     if (!u.alive) continue;
     if (u.stun > 0) u.stun -= dt;
+    if (u.regen && u.maxHp) u.hp = Math.min(u.maxHp, u.hp + u.regen * dt);
 
-    // Movement from orders, WC3 style: turn, then walk along the facing.
-    // Heavy knockback reduces how much control you have (minigames only).
+    u.stepT -= dt;
+    while (u.stepT <= 0) {
+      u.stepT += WC3.STEP;
+      u.logicStep();
+    }
+
+    // Walking: full speed along the heading, no acceleration.
     u.mx = 0;
     u.my = 0;
-    u.turning = false;
-    if (u.target && u.stun <= 0) {
-      const dx = u.target.x - u.x;
-      const dy = u.target.y - u.y;
-      const d = Math.hypot(dx, dy);
+    if (u.walking && u.target && u.stun <= 0) {
+      // Heavy knockback reduces how much control you have (shove games).
       const sp = u.speed * u.speedMult * (controlLoss ? clamp(1 - u.kbSpeed / 18, 0.25, 1) : 1);
-      const step = sp * dt;
-      if (d <= Math.max(step, 0.02)) {
-        u.x = u.target.x;
-        u.y = u.target.y;
+      u.mx = Math.cos(u.heading) * sp;
+      u.my = Math.sin(u.heading) * sp;
+      u.x += u.mx * dt;
+      u.y += u.my * dt;
+      if (dist(u.x, u.y, u.target.x, u.target.y) <= WC3.ARRIVE) {
         u.target = null;
-      } else {
-        const rem = u.turnToward(Math.atan2(dy, dx), dt);
-        u.turning = rem > 0;
-        if (rem <= u.propWindow) {
-          // Close to the goal, head straight in so we never orbit it.
-          const dirX = d < step * 3 ? dx / d : Math.cos(u.facing);
-          const dirY = d < step * 3 ? dy / d : Math.sin(u.facing);
-          u.mx = dirX * sp;
-          u.my = dirY * sp;
-          u.x += u.mx * dt;
-          u.y += u.my * dt;
-        }
+        u.walking = false;
       }
-    } else if (u.faceTo != null && u.stun <= 0) {
-      u.turning = u.turnToward(u.faceTo, dt) > 0;
-      if (!u.turning) u.faceTo = null;
-    } else {
-      u.angVel = 0;
     }
+    // Shuffling round on the spot (for the walk animation).
+    u.turning = !u.walking && (u.target != null || u.faceTo != null || Math.abs(wrapAngle(u.heading - u.facing)) > 0.05);
 
     // Knockback.
     const s = u.kbSpeed;
@@ -163,9 +198,17 @@ export function stepUnits(units, dt, { friction = 2.4, linear = 1.2, controlLoss
   }
 }
 
-// Pushes overlapping solid units apart. Fast-moving (knocked) units transfer
-// part of their momentum, so a warlock flying across the arena can bowl
-// another one over — a very Warlock thing to happen.
+// Unit-unit collision.
+//  - WC3 units do not push each other. A walking unit steers around the unit
+//    in its way (a 40-50 WC3-unit sidestep, losing 0.1-0.3 s), idle units are
+//    never shoved, and passing units may overlap by 20-30 % of their combined
+//    collision radii.
+//  - Knocked units (shoves, explosions) are script motion, not walking: they
+//    push apart and pass on part of their momentum, so a flying hammerguy can
+//    bowl another one over.
+export const PASS_OVERLAP = 0.25;
+const KNOCKED = 1.5;
+
 export function collideUnits(units) {
   for (let i = 0; i < units.length; i++) {
     const a = units[i];
@@ -175,28 +218,74 @@ export function collideUnits(units) {
       if (!b.alive || !b.solid) continue;
       const dx = b.x - a.x;
       const dy = b.y - a.y;
-      const minD = a.r + b.r;
+      const full = a.r + b.r;
       const d2 = dx * dx + dy * dy;
-      if (d2 >= minD * minD) continue;
+      if (d2 >= full * full) continue;
       const d = Math.sqrt(d2) || 0.001;
-      const nx = dx / d;
-      const ny = dy / d;
+      const nx = d2 ? dx / d : 1;
+      const ny = d2 ? dy / d : 0;
+      if (a.kbSpeed > KNOCKED || b.kbSpeed > KNOCKED) {
+        knockedCollision(a, b, nx, ny, full - d);
+        continue;
+      }
+      const minD = full * (1 - PASS_OVERLAP);
+      if (d >= minD) continue;
       const overlap = minD - d;
-      const tm = a.mass + b.mass;
-      a.x -= nx * overlap * (b.mass / tm);
-      a.y -= ny * overlap * (b.mass / tm);
-      b.x += nx * overlap * (a.mass / tm);
-      b.y += ny * overlap * (a.mass / tm);
-      // Exchange knockback momentum along the collision normal.
-      const rel = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
-      if (rel > 2) {
-        const imp = rel * 0.6;
-        a.vx -= nx * imp * (b.mass / tm);
-        a.vy -= ny * imp * (b.mass / tm);
-        b.vx += nx * imp * (a.mass / tm);
-        b.vy += ny * imp * (a.mass / tm);
+      const aw = a.walking;
+      const bw = b.walking;
+      if (aw && !bw) sidestep(a, -nx, -ny, overlap);
+      else if (bw && !aw) sidestep(b, nx, ny, overlap);
+      else if (aw && bw) {
+        sidestep(a, -nx, -ny, overlap / 2);
+        sidestep(b, nx, ny, overlap / 2);
+      } else {
+        // Two idle units overlapping (after a knockback): ease them apart.
+        const s = Math.min(overlap, 0.05) / 2;
+        a.x -= nx * s;
+        a.y -= ny * s;
+        b.x += nx * s;
+        b.y += ny * s;
       }
     }
+  }
+}
+
+// Moves a walking unit out of the way along (ox, oy), the direction away from
+// the other unit, and slides it sideways past it rather than stalling.
+function sidestep(u, ox, oy, overlap) {
+  const hx = Math.cos(u.heading);
+  const hy = Math.sin(u.heading);
+  // Component of the push that is sideways to the unit's heading.
+  const along = ox * hx + oy * hy;
+  let sx = ox - along * hx;
+  let sy = oy - along * hy;
+  const sl = Math.hypot(sx, sy);
+  if (sl < 0.2) {
+    // Dead head-on: pick a side (stable per unit) and step round.
+    const side = u.id % 2 ? 1 : -1;
+    sx = -hy * side;
+    sy = hx * side;
+  } else {
+    sx /= sl;
+    sy /= sl;
+  }
+  u.x += ox * overlap + sx * overlap * 0.6;
+  u.y += oy * overlap + sy * overlap * 0.6;
+}
+
+function knockedCollision(a, b, nx, ny, overlap) {
+  const tm = a.mass + b.mass;
+  a.x -= nx * overlap * (b.mass / tm);
+  a.y -= ny * overlap * (b.mass / tm);
+  b.x += nx * overlap * (a.mass / tm);
+  b.y += ny * overlap * (a.mass / tm);
+  const rel = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+  if (rel > 2) {
+    const imp = rel * 0.6;
+    a.vx -= nx * imp * (b.mass / tm);
+    a.vy -= ny * imp * (b.mass / tm);
+    b.vx += nx * imp * (a.mass / tm);
+    b.vy += ny * imp * (a.mass / tm);
   }
 }
 

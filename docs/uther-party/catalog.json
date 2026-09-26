@@ -1,0 +1,2416 @@
+[
+ {
+  "n": 1,
+  "map": "4.0",
+  "name": "Peon Pandemonium",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Dodge slow lobbed catapult rocks aimed at random pit points; launchers ramp up to 30 and later ones leave burning oil; last peon alive wins.",
+  "controls": "move",
+  "hazard": "catapult rocks, projectile speed 400, splash 25/50/150 at 100/40/25%, a direct hit usually kills",
+  "key_numbers": [
+   "peon HP 50, speed 190",
+   "+1 siege unit every 8 s, cap 30",
+   "projectile speed 400",
+   "splash full within 25, 40% within 50, 25% within 150",
+   "Burning Oil radius 150 for 2.51 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "siege units are re-aimed every 2 s against a 4.5 s cooldown, so they often turn before firing",
+   "line-of-sight blocker ring is moot because fog is off",
+   "spawn teleport effects are never destroyed (harmless leak)"
+  ],
+  "source": "g1.md#Peon Pandemonium"
+ },
+ {
+  "n": 2,
+  "map": "4.0",
+  "name": "The Rat Maze",
+  "variants": [],
+  "type": "winner-take-all",
+  "timer": 120,
+  "goal": "Get the cheese, and return to your circle!",
+  "core": "Run a maze to the single central cheese and carry it home past patrolling one-bite spiders; carrying slows you; first rat home wins everything.",
+  "controls": "move",
+  "hazard": "5 spiders, speed 270, acquisition 275, one bite kills, re-patrol every 10 s",
+  "key_numbers": [
+   "rat speed 270, 190 while carrying the cheese",
+   "spider speed 270, acquisition 275",
+   "19x19 tile maze, 128 u corridors",
+   "finish within 100 u of your own start",
+   "120 s; only the first finisher scores 8"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Gold Rush",
+  "bugs": [
+   "Rat Finish empties KeyUnits before Race Finish, so only the first rat home can ever score",
+   "bot heads to the cheese's item location even while another rat carries it"
+  ],
+  "source": "g1.md#The Rat Maze"
+ },
+ {
+  "n": 3,
+  "map": "4.0",
+  "name": "The Kaboom Room",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Dodge fire wisps that shoot out from the centre in random directions and burn nearby; a dying sapper explodes and can chain-kill neighbours.",
+  "controls": "move",
+  "hazard": "up to 10 fires at speed 350 out to radius 800, burning 10/s within 220; centre burns 10 HP/s within 128",
+  "key_numbers": [
+   "sapper HP 25, speed 270",
+   "fire speed 350, Immolation 10 damage/s within 220",
+   "+1 fire every 10 s, cap 10",
+   "death blast 700 within 150, 300 within 250",
+   "centre flame 10 HP per 1 s within 128"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Wisp Wheel",
+  "bugs": [
+   "centre flame effect is created once and never destroyed (harmless leak)"
+  ],
+  "source": "g1.md#The Kaboom Room"
+ },
+ {
+  "n": 4,
+  "map": "4.0",
+  "name": "Hot Mortar",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Keep passing the mortar on!",
+  "core": "Only the holder can act: lob the mortar to any rival before a hidden 5-25 s fuse ends; whoever holds it or is receiving it dies.",
+  "controls": "click a player to pass",
+  "hazard": "the mortar: fuse uniform 5-25 s, flight distance/900, the receiver dies if the fuse ends mid-flight",
+  "key_numbers": [
+   "fuse uniform 5-25 s per round",
+   "4 s pause before each tower throw",
+   "missile speed 900, range 2000",
+   "cast point 1.0 s",
+   "exactly one elimination per round"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Sapper Tag",
+  "bugs": [
+   "the pass target is one global overwritten by any unit-target order, so a second order during the wind-up might redirect the pass (unverified)"
+  ],
+  "source": "g1.md#Hot Mortar"
+ },
+ {
+  "n": 5,
+  "map": "4.0",
+  "name": "The Clean-up Crew",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Stay on the blight!",
+  "core": "Stay on shrinking blight where you regenerate; off it you lose 20 HP/s; priests punch 200-radius holes at random players every 10 s.",
+  "controls": "move",
+  "hazard": "off-blight drain 20 HP/s (dead in 2.5 s); priest Dispel Magic AoE 200 every 10 s at a random ghoul",
+  "key_numbers": [
+   "ghoul HP 50, regen 20/s on blight, drain 20/s everywhere",
+   "starting blight: 3 discs of radius 512 near the centre",
+   "dispel every 10 s, AoE 200, range 500",
+   "dead ghoul leaves a blight disc of radius 192",
+   "priest speed 270"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Ice Sumo",
+  "bugs": [
+   "nothing in the script removes blight; erosion relies on WC3 Dispel Magic clearing it",
+   "bot dodge moves in a random direction, often off the blight"
+  ],
+  "source": "g1.md#The Clean-up Crew"
+ },
+ {
+  "n": 6,
+  "map": "4.0",
+  "name": "Way of the Bow",
+  "variants": [],
+  "type": "survival",
+  "timer": 120,
+  "goal": "Kill your opponents!",
+  "core": "Archer duel among tree cover: click to fire one-hit-kill arrows with a 0.72 s wind-up; change direction after release to dodge; last archer standing wins.",
+  "controls": "move + attack",
+  "hazard": "players",
+  "key_numbers": [
+   "archer HP 5, speed 270",
+   "range 800, cooldown 1.5 s, damage point 0.72 s",
+   "arrow 16-18 pierce, one hit kills",
+   "acquisition 100, patrol turned into move",
+   "spawn ring radius 1000"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "measured live: arrows aim at the target's predicted position at release and do not home, so a change of course after release dodges; this is engine behaviour, not the script",
+   "simultaneous mutual kills are not ties; one is declared the winner"
+  ],
+  "source": "g1.md#Way of the Bow"
+ },
+ {
+  "n": 7,
+  "map": "4.0",
+  "name": "Roadkill Challenge",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Reach the end!",
+  "core": "Frogger: cross a U-shaped course of lanes where siege engines patrol back and forth; any car within 128 u kills you instantly.",
+  "controls": "move",
+  "hazard": "8 siege engines at speed 220-340, instant kill within 128",
+  "key_numbers": [
+   "murloc speed 270, collision 31",
+   "car speeds 220 to 340",
+   "kill radius 128 from a car's centre",
+   "left lanes 384 apart, right lanes 128 apart",
+   "90 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [],
+  "source": "g1.md#Roadkill Challenge"
+ },
+ {
+  "n": 8,
+  "map": "4.0",
+  "name": "Covert Kitty",
+  "variants": [],
+  "type": "race",
+  "timer": null,
+  "goal": "Elude the Doom Guards!",
+  "core": "Sneak across a tree-strewn field to the exit past roaming Doom Guards; stand still 1.5 s to vanish until dawn at 100 s; Cripple then melee kills.",
+  "controls": "move (stand still to hide)",
+  "hazard": "3 Doom Guards at speed 270, Cripple -75% speed for 30 s, two hits kill",
+  "key_numbers": [
+   "huntress HP 55, speed 270",
+   "Shadowmeld after 1.5 s standing still, night only",
+   "dawn at 100 s",
+   "Cripple cast on huntresses within 400, -75% speed, 30 s",
+   "guard acquisition 600"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "no timer or Race Expire; the game ends only when every huntress finishes or dies"
+  ],
+  "source": "g1.md#Covert Kitty"
+ },
+ {
+  "n": 9,
+  "map": "4.0",
+  "name": "The Polymorph Ring",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Survive speed-matched one-hit Sasquatches spawning from the centre by spending a fixed 400-mana wallet on Slow, Polymorph and self-Invisibility.",
+  "controls": "move + 3 spells",
+  "hazard": "up to 8 Sasquatches, speed 220, acquisition 300, one hit kills",
+  "key_numbers": [
+   "sorceress HP 5, speed 220, 400 mana, no regen",
+   "Polymorph 200 mana, 25 s",
+   "Slow 100 mana, -60% speed for 20 s",
+   "Invisibility 300 mana, 10 s",
+   "+1 Sasquatch every 10 s, cap 8"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Kodo Stampede",
+  "bugs": [
+   "Resistant Skin may block Polymorph between players (engine behaviour, unverified)",
+   "centre and spawn effects are never destroyed (harmless leak)"
+  ],
+  "source": "g1.md#The Polymorph Ring"
+ },
+ {
+  "n": 10,
+  "map": "4.0",
+  "name": "The Tauren Tragedy",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Hold out against an ever-growing footman swarm from a central barracks using Shockwave, War Stomp and melee; the spells also hit rival taurens.",
+  "controls": "move + attack + 2 spells",
+  "hazard": "footmen, 15 HP, 12-13 damage, one per playing slot every 1.5 s, acquisition 1000",
+  "key_numbers": [
+   "tauren about 800 HP, about 240 mana",
+   "Shockwave 75 damage, 800 long, 125 wide, 100 mana",
+   "War Stomp 25 damage, radius 250, 50 mana",
+   "one footman per playing slot every 1.5 s",
+   "cap about 49 footmen"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "spawn rate scales with the starting player count, not players alive",
+   "the unit cap counts the invulnerable barracks"
+  ],
+  "source": "g2.md#The Tauren Tragedy"
+ },
+ {
+  "n": 11,
+  "map": "4.0",
+  "name": "Bomb Baldwin",
+  "variants": [],
+  "type": "race",
+  "timer": 60,
+  "goal": "Find and kill Baldwin!",
+  "core": "Fly over a wandering crowd of 100 identical peasants, hover to find the ones named Baldwin and bomb one; each Baldwin kill finishes you in order.",
+  "controls": "move + attack (hover to inspect)",
+  "hazard": "none; a crowd of 100 decoys plus one Baldwin per player",
+  "key_numbers": [
+   "flying machine speed 400",
+   "bomb range 100, cooldown 2.5 s",
+   "100 decoys plus N Baldwins, 5 HP each",
+   "60 s including a 5 s freeze",
+   "spawn ring radius 700"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "the second 50 decoys are created after the brown recolour, so Baldwins are always among the brown peasants",
+   "the farm has 500 HP but nothing can hit it"
+  ],
+  "source": "g2.md#Bomb Baldwin"
+ },
+ {
+  "n": 12,
+  "map": "4.0",
+  "name": "Dark Forest",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Swap between druid and storm crow to dodge roaming hunters: abominations only hit ground, gargoyles only hit air, each as fast as its prey form.",
+  "controls": "move + 1 ability",
+  "hazard": "abominations (speed 270, 33-39 damage, ground only) and gargoyles (speed 350, 61-70 damage, air only)",
+  "key_numbers": [
+   "druid 100 HP, speed 270; crow 100 HP, speed 350",
+   "morph costs 50 of 200 mana, regen 0.67/s",
+   "wave every 15 s while fewer than 10 hunters",
+   "abomination acquisition 300, gargoyle 400",
+   "hunters attack-move every 4.5 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "the first gargoyle is guaranteed via GetTriggerExecCount"
+  ],
+  "source": "g2.md#Dark Forest"
+ },
+ {
+  "n": 13,
+  "map": "4.0",
+  "name": "Hungry Hungry Kodos",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Eat the pigs to survive the longest!",
+  "core": "Starving kodos lose 15 HP/s; right-click pigs to eat them for 50 HP and children for mana to fire a stunning bolt at rivals.",
+  "controls": "move + click to eat + 1 ability",
+  "hazard": "starvation 15 HP/s from 1000; rivals' Regurgitate 100 damage and 2 s stun",
+  "key_numbers": [
+   "kodo 1000 HP, regen -15/s (starves in 66.7 s)",
+   "pig +50 HP, child +100 mana",
+   "pig roll 50% per living kodo every 10 s, none while 10+ pigs",
+   "Regurgitate 100 mana, 100 damage, 2 s stun, range 800",
+   "kodo speed 220"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Gold Rush",
+  "bugs": [
+   "when the pig roll fails, GetLastCreatedUnit still points at the previous unit, so the last player's kodo can be yanked to a random point",
+   "a kodo may be able to devour an enemy kodo (unverified)"
+  ],
+  "source": "g2.md#Hungry Hungry Kodos"
+ },
+ {
+  "n": 14,
+  "map": "4.0",
+  "name": "Raider Relay",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Reach the end!",
+  "core": "Sprint past a bear, board your zeppelin, fly through faster hippogryphs and unload onto an air-only island finish; one snare per player.",
+  "controls": "move + 1 ability + load/unload",
+  "hazard": "bears (speed 270, one hit kills the raider) and hippogryphs (speed 400, one hit kills the zeppelin)",
+  "key_numbers": [
+   "raider speed 350, 25 HP",
+   "zeppelin speed 270, 25 HP",
+   "Ensnare range 500, 10 s, single use",
+   "hippogryph speed 400, acquisition 300",
+   "bear acquisition 400"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "Ensnare is removed when the cast begins, which may abort the cast (verify in game)",
+   "the bot spams unloadall at empty zeppelins"
+  ],
+  "source": "g2.md#Raider Relay"
+ },
+ {
+  "n": 15,
+  "map": "4.0",
+  "name": "Treant Valley",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Dodge slow treants that burst one by one from glowing trees; two hits kill, but you outrun them 270 to 220.",
+  "controls": "move",
+  "hazard": "treants, speed 220, 15-17 damage, acquisition 200, one every 10 s up to 12",
+  "key_numbers": [
+   "gnoll 25 HP, speed 270",
+   "treant speed 220, two hits kill",
+   "2 s green glow before each spawn",
+   "one spawn every 10 s, cap 12 (the tree count)",
+   "treants attack-move every 2.5 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [],
+  "source": "g2.md#Treant Valley"
+ },
+ {
+  "n": 16,
+  "map": "4.0",
+  "name": "The Skeleton Sonata",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Skeletons pour endlessly from marked corpses and chase you; a 200-radius Dispel on an 8 s cooldown wipes nearby skeletons, including those near rivals.",
+  "controls": "move + 1 ability",
+  "hazard": "skeletons, speed 270, 14-15 damage every 2 s, 3 per 2.5 s with no cap",
+  "key_numbers": [
+   "priest 290 HP, speed 270",
+   "Dispel cooldown 8 s, area 200, 75 mana",
+   "3 skeletons every 2.5 s, no cap",
+   "4 corpse markers, each replaced at a random point after use",
+   "skeleton acquisition 1000"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [],
+  "source": "g2.md#The Skeleton Sonata"
+ },
+ {
+  "n": 17,
+  "map": "4.0",
+  "name": "Stampede",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Dodge the stampede as long as possible!",
+  "core": "Dodge exploding lizard streams charging along the arena from centre-column Beastmasters that grow from one to eight, soon from both directions.",
+  "controls": "move",
+  "hazard": "Stampede lizards, 60 damage within 100, 2 per second per Beastmaster",
+  "key_numbers": [
+   "grunt 700 HP, speed 270",
+   "60 damage per lizard, radius 100",
+   "2 lizards/s per Beastmaster",
+   "+1 Beastmaster every 20 s, cap 8",
+   "arena 1408x768"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Kodo Stampede",
+  "bugs": [],
+  "source": "g2.md#Stampede"
+ },
+ {
+  "n": 18,
+  "map": "4.0",
+  "name": "Stop and Go",
+  "variants": [],
+  "type": "race",
+  "timer": null,
+  "goal": "Stop on red, and go on green!",
+  "core": "Creep a very slow seal up a lane toward the finish, moving only on green; towers shoot any visible moving seal on red.",
+  "controls": "move + 1 ability",
+  "hazard": "10 spirit towers, 27-32 pierce, range 700, active only on red",
+  "key_numbers": [
+   "seal speed 75, 15 HP",
+   "red 5-9 s, green 3-5 s, yellow 1 s",
+   "track 1024 u",
+   "Purge: one cast, 5 s slow plus 1 s stop, range 700",
+   "night ends about 100 s in"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "no timer; after dawn Shadowmeld stops working, so the next red should kill everyone left",
+   "the Stop AI trigger is enabled at init, before the first red"
+  ],
+  "source": "g2.md#Stop and Go"
+ },
+ {
+  "n": 19,
+  "map": "4.0",
+  "name": "Push the Ogre",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Get the ogre to your circle!",
+  "core": "Body-shove a slow invulnerable ogre into your own goal circle while dodging the lethal gas cloud it releases right behind itself.",
+  "controls": "move",
+  "hazard": "gas cloud radius 192, 1500 HP/s for 1.5 s, 64 u behind the ogre every 8.5-10.5 s",
+  "key_numbers": [
+   "knight speed 350, collision 32",
+   "ogre speed 75, collision 48",
+   "8 goals 192x192, 689 u from centre",
+   "1 s telegraph, then a 192 u cloud for 1.5 s",
+   "one gas every 8.5-10.5 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Ice Sumo",
+  "bugs": [
+   "a finisher's circle is never removed; the ogre re-entering it runs Race Finish on a null unit and drops the ante",
+   "the destructable restore targets the Peon Pandemonium arena",
+   "bots flee the gas in random directions"
+  ],
+  "source": "g3.md#Push the Ogre"
+ },
+ {
+  "n": 20,
+  "map": "4.0",
+  "name": "The Spike Pit",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Stay off the spikes!",
+  "core": "Stay inside a safe spot that wanders and accelerates across a spike grid; any raised spike within 128 u kills instantly.",
+  "controls": "move",
+  "hazard": "raised spikes kill within 128; the safe disc (about 272) moves at 3.2t u/s",
+  "key_numbers": [
+   "safe point speed 3.2t u/s (270 at about 84 s)",
+   "spikes lowered within 400 of the point, raised beyond 512",
+   "kill radius 128, checked every 0.25 s",
+   "heading drifts 0-5 degrees per tick, counter-clockwise",
+   "militia speed 270"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "King of the Hill",
+  "bugs": [
+   "no timer; the round ends only through the speed ramp",
+   "the 400 per tick speed cap is dead code in practice"
+  ],
+  "source": "g3.md#The Spike Pit"
+ },
+ {
+  "n": 21,
+  "map": "4.0",
+  "name": "The Salamander Sizzle",
+  "variants": [],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Shoot with 'S' and kill your opponents!",
+  "core": "Fire straight fireballs along your facing that kill within 100 u and burn anyone nearby; mushroom cover blocks fireballs and is destroyed by them.",
+  "controls": "move + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "salamander 25 HP, speed 270",
+   "fireball 75 mana; 200 max, starts at 0, regen 10/s",
+   "fireball speed 350, lasts about 6.1 s",
+   "kill radius 100, burn 10/s within 220",
+   "150 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "the shooter may take one burn tick from its own fireball",
+   "dead fires may still kill during their 1 s death (unverified)",
+   "simultaneous deaths are not tied"
+  ],
+  "source": "g3.md#The Salamander Sizzle"
+ },
+ {
+  "n": 22,
+  "map": "4.0",
+  "name": "Obey Archimonde",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Do what Archimonde tells you!",
+  "core": "Simon Says: repeat Archimonde's order with the matching hotkey inside a shrinking window; any wrong order at any time kills you.",
+  "controls": "4 hotkeys (2 self-targeted), no movement",
+  "hazard": "response window shrinking from 5.5 s to 1.5 s; any wrong order is instant death",
+  "key_numbers": [
+   "4 moves: roar, stomp, bloodlust, unholy frenzy",
+   "window 5.5 s, minus 0.5 per command, down to 1.5 s",
+   "move set grows at command 5 and command 10",
+   "about 2.0-2.25 s gap between commands",
+   "warlock speed 0"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "any order in the 2 s before the first command kills, because the command is still unset",
+   "War Stomp area is 0",
+   "unused Survival Draw helpers left in Obey Command"
+  ],
+  "source": "g3.md#Obey Archimonde"
+ },
+ {
+  "n": 23,
+  "map": "4.0",
+  "name": "Whack-a-Fiend",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Kill 10 crypt fiends!",
+  "core": "Whack-a-mole: hit crypt fiends as they pop up; first to 10 kills finishes, with a stun bolt and slowing clap to disrupt rivals.",
+  "controls": "move + attack + 2 spells",
+  "hazard": "none; rivals' Storm Bolt stuns",
+  "key_numbers": [
+   "10 kills (30 XP each to level 3)",
+   "N fiends; 1 burrows and 2 surface every 1 s",
+   "Storm Bolt range 600, 3 s stun on heroes, 75 mana",
+   "Thunder Clap radius 250, 50% slow, 90 mana",
+   "hero speed 270"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Gold Rush",
+  "bugs": [
+   "Whack Swap checks for fewer than 16 ghouls, which is always true (copied from Clean Crew)",
+   "a Thunder Clap multi-kill can finish a hero from 9 kills"
+  ],
+  "source": "g3.md#Whack-a-Fiend"
+ },
+ {
+  "n": 24,
+  "map": "4.0",
+  "name": "Horse Race",
+  "variants": [],
+  "type": "race",
+  "timer": 60,
+  "goal": "Press 'B' to speed up, but don't overdo it!",
+  "core": "Race down a private lane where speed decays constantly; each of your four boosts resets speed to 320, so timing them decides the race.",
+  "controls": "move + 1 ability",
+  "hazard": "none; speed decays 40 u/s per second to a floor of 60",
+  "key_numbers": [
+   "boost resets speed to 320; 4 boosts (100 of 400 mana)",
+   "decay 40 u/s per second, floor 60",
+   "track 4544 u",
+   "no-boost run needs 61.7 s and cannot finish",
+   "optimum about 18.4 s with boosts every 3.6 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "the 60 s timer includes the 6 s start pause",
+   "the Berserk move-speed field was left at 0.2 (unclear hidden bonus)"
+  ],
+  "source": "g3.md#Horse Race"
+ },
+ {
+  "n": 25,
+  "map": "4.0",
+  "name": "The Masquerade",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Feed, and return to your den before sunrise!",
+  "core": "Kill villagers at night to refill HP, then hide in your den before day; sunlight drains 140 HP/s outside, and food is always short.",
+  "controls": "move + attack",
+  "hazard": "daylight drain 40 HP/s in your den, 140 HP/s outside",
+  "key_numbers": [
+   "max HP 600, starts at 135, a kill heals to full",
+   "night 1 lasts 22 s, then 12 s days and 24 s nights",
+   "day drain 40 HP/s everywhere plus 100 HP/s outside dens",
+   "villagers 60 HP, speed 190",
+   "villagers per night: vampires alive minus 1 (N on night 1)"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Gold Rush",
+  "bugs": [
+   "night 1 spawns N villagers, not N-1 as the quest text says",
+   "no ties, so simultaneous dawn deaths are ordered arbitrarily"
+  ],
+  "source": "g3.md#The Masquerade"
+ },
+ {
+  "n": 26,
+  "map": "4.0",
+  "name": "Crab Island",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Hold out against an escalating crab horde; spend limited mana to possess a crab and become it, or shield crabs to deny rivals.",
+  "controls": "move + 2 spells",
+  "hazard": "crabs every 10 s up to 30, speeds 350/320/270, melee; 1-in-8 Behemoth once 5 or more exist",
+  "key_numbers": [
+   "banshee 285 HP, speed 270, 400 mana, no regen",
+   "Possession 250 mana, range 200",
+   "Anti-magic Shell 50 mana, 20 s",
+   "one crab every 10 s, cap 30",
+   "Behemoth 850 HP, 24-27 damage"
+  ],
+  "bots": true,
+  "remake_fit": 3,
+  "hp_match": "Kodo Stampede",
+  "bugs": [
+   "no time limit, so a staller can drag the game out",
+   "scoring depends on the change-owner event firing before the banshee's death",
+   "possessed crabs still count toward the Behemoth condition"
+  ],
+  "source": "g4.md#Crab Island"
+ },
+ {
+  "n": 27,
+  "map": "4.0",
+  "name": "Blinky the Bear",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Reach the end!",
+  "core": "Blink across wall bands through a lattice of one-tile lanes past patrolling polar bears; one hit or leaving the arena kills.",
+  "controls": "move + 1 ability",
+  "hazard": "10 patrolling bears, speed 300, acquisition 128, one hit kills",
+  "key_numbers": [
+   "Blinky speed 320, 5 HP",
+   "Blink range 512, cooldown 0.5 s",
+   "walls 256 u, lanes 128 u",
+   "bear speed 300, acquisition 128",
+   "leaving the arena rect kills"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "bots blink at random +-90 degrees and can blink out of bounds",
+   "the kill-on-leave rule also applies to bears (harmless)"
+  ],
+  "source": "g4.md#Blinky the Bear"
+ },
+ {
+  "n": 28,
+  "map": "4.0",
+  "name": "The Abombinations",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Keep away from the Abombinations!",
+  "core": "Shoot homing abominations with an arena-wide gun so they explode next to rivals, not you; each blast kills within 150 u and chains.",
+  "controls": "move + attack",
+  "hazard": "abominations, speed 400, 20 s life, death blast 700 within 150 and 300 within 250",
+  "key_numbers": [
+   "rifleman 535 HP, speed 270",
+   "rifle 18-24, cooldown 1.5, range 2000",
+   "abomination speed 400, 100 HP, -5 HP/s",
+   "blast 700 within 150, 300 within 250",
+   "+1 every 10 s up to 10; deaths replaced after 1-3 s"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Sapper Tag",
+  "bugs": [
+   "human riflemen have acquisition 100, so they may auto-shoot a bomb hugging them",
+   "abominations can be sent after a dead rifleman's corpse"
+  ],
+  "source": "g4.md#The Abombinations"
+ },
+ {
+  "n": 29,
+  "map": "4.0",
+  "name": "Sleepy Time",
+  "variants": [],
+  "type": "reverse-race",
+  "timer": 120,
+  "goal": "Be the first to die!",
+  "core": "Be the first to die: taunt wandering rock golems onto your giant so they beat you to death before rivals steal them away.",
+  "controls": "move + 1 ability",
+  "hazard": "10 rock golems (your tool), about 27.8 DPS each, acquisition 100",
+  "key_numbers": [
+   "giant 1600 HP, no regen, speed 270",
+   "Taunt radius 450, cooldown 15 s",
+   "10 golems, 29-33 damage, cooldown 1.35",
+   "about 5.8 s to die with all 10 golems on you",
+   "survivors at 120 s score 0"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "golems have Spell Immunity yet the game depends on Taunt pulling them (works in WC3, unverified in engine)"
+  ],
+  "source": "g4.md#Sleepy Time"
+ },
+ {
+  "n": 30,
+  "map": "4.0",
+  "name": "Nature's Circle",
+  "variants": [],
+  "type": "survival",
+  "timer": 120,
+  "goal": "Counter and kill your opponents!",
+  "core": "Rock-paper-scissors brawl: morph into bear, quillbeast or hawk, each strong against one form, and fight rivals; mana refills a morph every 6.7 s.",
+  "controls": "move + attack + 3 forms",
+  "hazard": "players",
+  "key_numbers": [
+   "bear speed 320, 300 HP, melee 19-21, cannot hit air",
+   "quillbeast speed 300, 200 HP, range 550",
+   "hawk speed 350, 150 HP, range 300",
+   "morph costs 100 mana, regen 15/s (6.7 s)",
+   "each counter kills its prey in about 7 hits"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "bot counter checks include the bot itself, so bots cycle Quill, Bear, Hawk instead of countering"
+  ],
+  "source": "g4.md#Nature's Circle"
+ },
+ {
+  "n": 31,
+  "map": "4.0",
+  "name": "The Skull of Gul'dan",
+  "variants": [],
+  "type": "winner-take-all",
+  "timer": 240,
+  "goal": "Obtain the skull of Gul'dan, and escape!",
+  "core": "Co-op dungeon: press two plates to free a boss and kill it, then everyone turns hostile racing to carry the skull out; only the carrier scores.",
+  "controls": "move + attack + 3 abilities + items",
+  "hazard": "player-scaled creeps, a Pit Lord or Dreadlord boss, then 2 escort demons",
+  "key_numbers": [
+   "enemy HP x(1 + 0.2 per player)",
+   "Demon Hunter level 3, about 675 HP",
+   "finish to boss spawn 2624 u",
+   "boss gets map-wide aggro 10 s after spawning",
+   "Potion of Healing 20 g, Potion of Mana 10 g"
+  ],
+  "bots": true,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "Skull Lose removes the carrier marker on any item drop, not just the skull",
+   "the skull is only marked on pickup",
+   "Skull Obtain compares against Item_Special, which is only set when the boss spawns"
+  ],
+  "source": "g4.md#The Skull of Gul'dan"
+ },
+ {
+  "n": 32,
+  "map": "4.0",
+  "name": "Minotaur Maze",
+  "variants": [],
+  "type": "race",
+  "timer": 180,
+  "goal": "Claim the Shimmerweed!",
+  "core": "Navigate a tight maze to grab the single Shimmerweed, which respawns elsewhere after each pickup, while faster minotaurs roam and kill on contact.",
+  "controls": "move",
+  "hazard": "4 minotaurs, speed 270, range and acquisition 64, one hit kills",
+  "key_numbers": [
+   "skink speed 200, 15 HP",
+   "minotaur speed 270, acquisition 64",
+   "maze on a 64 u grid with no dead ends",
+   "first weed 640 u from centre at t=4",
+   "minotaurs patrol to a random point every 10 s"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Gold Rush",
+  "bugs": [
+   "the respawned weed can land inside a wall cell",
+   "the first weed ring sits close to the minotaurs' corner starts"
+  ],
+  "source": "g4.md#Minotaur Maze"
+ },
+ {
+  "n": 33,
+  "map": "4.0",
+  "name": "Quillboar Mile",
+  "variants": [],
+  "type": "race",
+  "timer": 60,
+  "goal": "Reach the end!",
+  "core": "Dash up a corridor past six fixed quillboar turrets whose slow quills kill in one hit; keep changing course to make them miss.",
+  "controls": "move",
+  "hazard": "6 turrets, quill speed 400, cooldown 1.6 s, reach about 446, one hit kills",
+  "key_numbers": [
+   "pig speed 190, 10 HP",
+   "quill projectile speed 400",
+   "turret range 400, cooldown 1.6 s, wind-up 0.6 s",
+   "corridor 512 u wide, about 1856 u long",
+   "60 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "the bot's random jink is its only dodge logic",
+   "how the engine aims the quills cannot be read from the script (check in game)"
+  ],
+  "source": "g5.md#Quillboar Mile"
+ },
+ {
+  "n": 34,
+  "map": "4.0",
+  "name": "The Unseen",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Evade hidden enemies and reach the end!",
+  "core": "Cross a band of 20 invisible stationary guards to the finish, using short-lived sentry wards to reveal them or stasis traps to stun them.",
+  "controls": "move + 2 spells",
+  "hazard": "20 invisible guards, reach about 132, one hit kills",
+  "key_numbers": [
+   "witch doctor 5 HP, speed 270, 200 mana, no regen",
+   "Sentry Ward 50 mana, reveals 500 for 10 s",
+   "Stasis Trap 100 mana, arms after 5 s, 6 s stun within 400",
+   "guards cover roughly 64% of the zone",
+   "start to finish 2048 u"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "the quest log says wards last 5 s but the object data says 10 s",
+   "the bot reads the invisible guards' positions"
+  ],
+  "source": "g5.md#The Unseen"
+ },
+ {
+  "n": 35,
+  "map": "4.0",
+  "name": "Destruction's Dance",
+  "variants": [],
+  "type": "survival",
+  "timer": 120,
+  "goal": "Use speed and finesse to kill your opponents!",
+  "core": "Blademasters can only blink: each click teleports up to 400 u, and clicking a rival blinks you beside them and swings; hit and run.",
+  "controls": "blink-move + attack",
+  "hazard": "players",
+  "key_numbers": [
+   "HP 250, armour 5.2",
+   "blink range 400, cooldown 0, 2 mana",
+   "a swing about every 2.03 s",
+   "about 9 hits to kill",
+   "arena 1024x1024"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "blink and attack are issued back to back and rely on cast point 0 so the blink resolves first",
+   "bots presumably walk and melee instead of blinking (unverified)"
+  ],
+  "source": "g5.md#Destruction's Dance"
+ },
+ {
+  "n": 36,
+  "map": "4.0",
+  "name": "Pork the Piggy",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Be the first to skewer the piggy!",
+  "core": "From a fixed spot, throw spears at ground points to lead and hit a wandering pig; each kill finishes the thrower and a new pig spawns.",
+  "controls": "click to throw (stationary)",
+  "hazard": "none; the target pig moves at 100 u/s",
+  "key_numbers": [
+   "reload 2.31 s",
+   "spear splash radius 10",
+   "pig speed 100, 15 HP, new heading every 4 s or less",
+   "new pig 2 s after each kill",
+   "throwers stand 128 u apart in a row"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "Ground Target also catches the pig's own move orders (presumably rejected)"
+  ],
+  "source": "g5.md#Pork the Piggy"
+ },
+ {
+  "n": 37,
+  "map": "4.0",
+  "name": "The Plague",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Avoid contact with the plague!",
+  "core": "Run from zombies that match your speed; each dead player rises as a zombie they control and hunts the survivors; two hits kill.",
+  "controls": "move",
+  "hazard": "zombies, speed 220, 15-16.5 per hit, two hits kill",
+  "key_numbers": [
+   "acolyte 25 HP, speed 220, no regen",
+   "zombie speed 220, 240 HP",
+   "patient zero killed at t=6, zombie rises about t=9-11",
+   "zombie attack cooldown 1.35 s",
+   "arena 1280x1280 at night"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Sapper Tag",
+  "bugs": [
+   "no timeout",
+   "killed zombies respawn",
+   "acolytes can kill each other in 2 hits, possibly unintended",
+   "the decay trigger reacts to every decaying unit on the map"
+  ],
+  "source": "g5.md#The Plague"
+ },
+ {
+  "n": 38,
+  "map": "4.0",
+  "name": "Troubled Waters",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Reach the end!",
+  "core": "Run a three-lane track toward the finish while rows of tidal waves sweep toward you, always leaving at least one lane open.",
+  "controls": "move",
+  "hazard": "tidal waves, speed 320, kill within 64, a row every 2.5 s",
+  "key_numbers": [
+   "crab speed 200, 15 HP",
+   "wave speed 320, rows 800 u apart",
+   "kill radius 64 (the lane half-width)",
+   "3 lanes of 128 u",
+   "start to finish about 3392 u"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Kodo Stampede",
+  "bugs": [
+   "Troubled Dissipate removes 'hwat' units but the waves are 'h005', so waves are never cleaned up (harmless leak)"
+  ],
+  "source": "g5.md#Troubled Waters"
+ },
+ {
+  "n": 39,
+  "map": "4.0",
+  "name": "The Sheep Shearers",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Reach the end!",
+  "core": "Cross a rectangular loop swept by two fast blades that reverse every 15-20 s, and stop on its far edge where the finish sits.",
+  "controls": "move",
+  "hazard": "2 blades at speed 400, kill radius 160, reversing every 15 s plus 0-5 s",
+  "key_numbers": [
+   "sheep speed 200",
+   "blade speed 400, kill radius 160",
+   "lap 10.24 s; each point swept every 5.12 s",
+   "loop 1536x512",
+   "reversal every 15 s plus 0-5 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Wisp Wheel",
+  "bugs": [],
+  "source": "g5.md#The Sheep Shearers"
+ },
+ {
+  "n": 40,
+  "map": "4.0",
+  "name": "Doggy Hell",
+  "variants": [],
+  "type": "race",
+  "timer": 120,
+  "goal": "Fetch the stick, and return to the circle of power!",
+  "core": "Walk a one-tile serpentine lava maze to fetch a stick and bring it home, timing gaps in fixed artillery that shells five chokepoints each way.",
+  "controls": "move",
+  "hazard": "10 meat wagons, splash 64, cooldown 2.0 s (1.5 s after the first pickup), one shell kills; lava is instant death",
+  "key_numbers": [
+   "dog speed 190, 15 HP",
+   "shell splash 64, cooldown 2.0 s then 1.5 s",
+   "corridors 128 u wide",
+   "one way about 2900 u",
+   "always 8 sticks"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "computer dogs fly straight across lava and die about t=5.7 (unverified)"
+  ],
+  "source": "g5.md#Doggy Hell"
+ },
+ {
+  "n": 41,
+  "map": "4.0",
+  "name": "Ancient Punisher",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Get a cloak, and hide!",
+  "core": "Musical chairs: grab one of too few cloaks by day, then stand still at night to stay invisible while the Ancient hunts; one item is a fake.",
+  "controls": "move (pick up item, stand still to hide)",
+  "hazard": "Ancient Punisher, speed 320, collision 144, reach about 300, one hit kills",
+  "key_numbers": [
+   "Dark Ranger 30 HP, speed 320",
+   "24 s day: items 8:00, hunt 18:00 to 4:00, items wiped 6:00",
+   "alive minus 1 cloaks plus 1 decoy",
+   "Shadowmeld after 1.5 s standing still",
+   "hunter speed 320, reach about 300"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "the bot keeps moving while cloaks remain, which prevents its own Shadowmeld",
+   "with no cloaks on the ground the bot walks toward the map origin (0,0)"
+  ],
+  "source": "g5.md#Ancient Punisher"
+ },
+ {
+  "n": 42,
+  "map": "4.0",
+  "name": "Spell Breaker Blood",
+  "variants": [],
+  "type": "survival",
+  "timer": 240,
+  "goal": "Use summons to kill your opponents!",
+  "core": "Mind-control summons pouring from a central gate, paying mana equal to 45% of their current HP, and turn your growing army on rivals.",
+  "controls": "move + attack + 2 spells + army control",
+  "hazard": "hostile summons from the gate every 7-9 s, cap 30",
+  "key_numbers": [
+   "Spell Breaker 200 HP, speed 300",
+   "mana 500 max, starts at 0, regen 5/s",
+   "Control Magic costs 45% of the target's current HP, range 700",
+   "spawn every 7 s, cap 30 units",
+   "Infernal 0.7%, Doom Guard 0.3% per spawn"
+  ],
+  "bots": true,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "the spawn point is inside the gate's solid pathing",
+   "the immobile burrowed scarab spawn still counts toward the cap",
+   "bots cannot play the core mechanic"
+  ],
+  "source": "g6.md#Spell Breaker Blood"
+ },
+ {
+  "n": 43,
+  "map": "4.0",
+  "name": "Dune Worm Distress",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Dig a home, and keep away from the predator!",
+  "core": "Bite tunnels through a solid rock grid for 40 s and plug them with your one barricade before a fast Wildkin arrives to hunt worms.",
+  "controls": "move + attack + build",
+  "hazard": "Wildkin from t=40, speed 300, one hit kills, breaks a barricade in about 12-13 s",
+  "key_numbers": [
+   "worm speed 100, 15 HP",
+   "14x14 rock grid at 128 u, rock HP 5",
+   "one barricade: 100 lumber, 10 s build, 100 HP",
+   "Wildkin speed 300, acquisition 500",
+   "Wildkin retargets with 50% chance every 4 s"
+  ],
+  "bots": true,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "no time limit",
+   "worms can bite each other"
+  ],
+  "source": "g6.md#Dune Worm Distress"
+ },
+ {
+  "n": 44,
+  "map": "4.0",
+  "name": "Tides of Darkness",
+  "variants": [],
+  "type": "race",
+  "timer": 120,
+  "goal": "Kill one enemy ship!",
+  "core": "Allied frigates fight evasive orc destroyers with slow, dodgeable artillery; landing the killing blow on any orc ship finishes you.",
+  "controls": "move + attack",
+  "hazard": "orc destroyers with the same stats, 55-69 artillery, range 600, kiting and sidestepping",
+  "key_numbers": [
+   "frigate 200 HP, speed 350, turn rate 0.2",
+   "shells 55-69, range 600, projectile speed 600",
+   "splash 25/35/50",
+   "+1 destroyer every 10 s, cap 7",
+   "3-4 hits kill"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "kill credit is last hit only",
+   "a splash that kills two orcs credits only one"
+  ],
+  "source": "g6.md#Tides of Darkness"
+ },
+ {
+  "n": 45,
+  "map": "4.0",
+  "name": "Flight of the Footmen",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Reach the end, but defend when you have to!",
+  "core": "Run a U-shaped track under towers: toggle Defend to shrug off arrows at 60% speed, dodge cannon shells, and stand still to vanish.",
+  "controls": "move + 1 ability",
+  "hazard": "5 guard towers (pierce, cooldown 0.9, range 440) and 2 cannon towers (90-111 siege, two hits kill)",
+  "key_numbers": [
+   "footman 125 HP, speed 270",
+   "Defend: 5% of pierce damage, 60% speed",
+   "guard tower 23-27 pierce, cooldown 0.9, range 440",
+   "cannon 90-111 siege, splash 50/100/125",
+   "route about 6700 u"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "the outbound lane has no cannons, so danger ramps up on the way home"
+  ],
+  "source": "g6.md#Flight of the Footmen"
+ },
+ {
+  "n": 46,
+  "map": "4.0",
+  "name": "Tower Defense",
+  "variants": [],
+  "type": "race",
+  "timer": 150,
+  "goal": "Complete your tower!",
+  "core": "Power-build an Arcane Tower with all eight peasants while an immobile Archmage and his Water Elemental shoot your workers and the construction.",
+  "controls": "build + multi-unit control",
+  "hazard": "Archmage, range 450, 27-33 per hit; Water Elemental at about 17 s",
+  "key_numbers": [
+   "build time 240 s solo",
+   "8 peasants, powerbuild rate 0.6 (about 46 s)",
+   "Archmage range 450",
+   "Water Elemental 525 HP at about 17 s",
+   "100 lumber, exactly one tower"
+  ],
+  "bots": false,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "Blizzard is never learned, so the t=37 Blizzard order most likely does nothing"
+  ],
+  "source": "g6.md#Tower Defense"
+ },
+ {
+  "n": 47,
+  "map": "4.0",
+  "name": "Wheel of Fire",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Run with four spinning spokes of fire that accelerate and reverse with growing peaks; touching any fire kills; one Purge slows a rival.",
+  "controls": "move + 1 ability",
+  "hazard": "21 fires, kill within 64, spin-up to 40 degrees/s then reversals with rising peaks",
+  "key_numbers": [
+   "satyr speed 270",
+   "4 spokes of 5 fires at 128 u spacing plus a centre fire",
+   "kill radius 64, checked at 20 Hz",
+   "first reversal about 31.6 s, peak 42 degrees/s",
+   "Purge: one cast, speed recovers over 2 s"
+  ],
+  "bots": true,
+  "remake_fit": 1,
+  "hp_match": "Wisp Wheel",
+  "bugs": [
+   "tangent kill circles leave pinch points that a precise crossing may slip through"
+  ],
+  "source": "g6.md#Wheel of Fire"
+ },
+ {
+  "n": 48,
+  "map": "4.0",
+  "name": "The Death Trap",
+  "variants": [],
+  "type": "race",
+  "timer": 90,
+  "goal": "Reach the end!",
+  "core": "Cross a pillar grid whose lane segments each hold a spike that rises or drops at random every 2.5 s; wait at safe junctions.",
+  "controls": "move",
+  "hazard": "40 spikes, kill within 64, each re-rolled 50/50 every 2.5 s",
+  "key_numbers": [
+   "troll speed 270",
+   "spike kill radius 64, checked every 0.1 s",
+   "toggle every 2.5 s from t=5, 50/50 each",
+   "lanes 128 u, pillars 256x256",
+   "shortest routes cross about 6-7 spiked segments"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "a spike rising under you kills instantly with no telegraph"
+  ],
+  "source": "g6.md#The Death Trap"
+ },
+ {
+  "n": 49,
+  "map": "4.0",
+  "name": "Clandestine Kitty",
+  "variants": [],
+  "type": "race",
+  "timer": 150,
+  "goal": "Obtain a vial, and return to safety!",
+  "core": "Sneak up a long corridor for a vial and bring it back past crippling Doom Guards; charm a guard to use its spells, which rivals can steal.",
+  "controls": "move + 2 abilities + charmed unit",
+  "hazard": "3 Doom Guards, speed 270, two hits kill, Cripple -75% from 400",
+  "key_numbers": [
+   "priestess about 50 HP, speed 320",
+   "Charm 125 mana, cooldown 20, range 700",
+   "vials about 2600 u from the start",
+   "Cripple lasts 10 s on heroes",
+   "150 s"
+  ],
+  "bots": true,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "the clock is frozen at 00:00, so Dawn never fires and the bot's dawn-rush branch is unreachable"
+  ],
+  "source": "g6.md#Clandestine Kitty"
+ },
+ {
+  "n": 50,
+  "map": "4.0",
+  "name": "Battle for the Bottle",
+  "variants": [],
+  "type": "survival",
+  "timer": 180,
+  "goal": "Kill your opponents!",
+  "core": "Drunken melee free-for-all between Brewmasters using Breath of Fire and Drunken Haze, grabbing mana runes, under camera sway and blinding colour flashes.",
+  "controls": "move + attack + 2 spells",
+  "hazard": "players",
+  "key_numbers": [
+   "Brewmaster 375 HP, speed 270, 26-36 damage about every 1.71 s",
+   "Breath of Fire 65 damage, 375 cone, 70 mana, 10 s cooldown",
+   "Drunken Haze radius 200, 45% miss, 5 s",
+   "mana rune every 10 s, +125 mana",
+   "screen flash every 3.25 s"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "reachable only in post-match Free Play (the normal roll covers 1-49)",
+   "human Brewmasters have acquisition 100, bots 500",
+   "no tie handling"
+  ],
+  "source": "g7.md#Battle for the Bottle"
+ },
+ {
+  "n": 51,
+  "map": "4.0",
+  "name": "Fel Orc Fiasco",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Harder Peon Pandemonium: dodge a fast-growing catapult barrage, optionally building one burrow shelter that holds only you.",
+  "controls": "move + build",
+  "hazard": "catapults, +1 per second to 30, splash 25/50/150, re-aimed every 2 s",
+  "key_numbers": [
+   "peon 50 HP, speed 190",
+   "+1 siege unit every 1.0 s, cap 30 (26 catapults, 4 demolishers)",
+   "burrow 75 lumber, 10 s build, 200 HP",
+   "projectile speed 400",
+   "about 6.7 shells/s at full strength"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "reachable only in Free Play after a secret Bloodlust unlock",
+   "re-aiming every 1-2 s may cancel shots before the damage point (unverified)"
+  ],
+  "source": "g7.md#Fel Orc Fiasco"
+ },
+ {
+  "n": 52,
+  "map": "4.0",
+  "name": "Sea Combat",
+  "variants": [],
+  "type": "survival",
+  "timer": 120,
+  "goal": "Kill your opponents!",
+  "core": "Battleship artillery duel on open sea: order lobbed shots at rivals every 2 s and sidestep theirs despite very sluggish turning.",
+  "controls": "move + attack",
+  "hazard": "players",
+  "key_numbers": [
+   "battleship 400 HP, speed 270, turn rate 0.1",
+   "attack 78-105, cooldown 2.0, range 900",
+   "splash full 100, 50% 150, 25% 250",
+   "about 6 direct hits to sink",
+   "spawn ring radius 896"
+  ],
+  "bots": true,
+  "remake_fit": 2,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "reachable only in Free Play after a hidden unlock that may be effectively unreachable"
+  ],
+  "source": "g7.md#Sea Combat"
+ },
+ {
+  "n": 31,
+  "map": "ultx",
+  "name": "Domination",
+  "variants": [],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Kill all your opponents! Immolate to damage. Mana Burn to disable.",
+  "core": "Demon Hunters toggle a 250-radius burn aura and use a range-300 disable to switch rivals' auras off; standing near burning enemies kills you.",
+  "controls": "move + 2 abilities",
+  "hazard": "players",
+  "key_numbers": [
+   "Demon Hunter 100 HP, no regen, speed 320",
+   "Immolation 10 damage/s within 250, free toggle",
+   "Mana Burn range 300 switches the target's Immolation off",
+   "start ring radius 200",
+   "two 256x256 pillars"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "hero spell-damage reduction may stretch the kill time to about 13-14 s (flag)"
+  ],
+  "source": "u1.md#Domination"
+ },
+ {
+  "n": 51,
+  "map": "ultx",
+  "name": "The Sword Weaver",
+  "variants": [],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Kill all your opponents! Press \"S\" to weave your sword.",
+  "core": "Melee brawl: press S to slash a 100-radius circle 150 u ahead for 75 damage every 0.35 s; corner zappers punish camping.",
+  "controls": "move + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "paladin 475 HP, speed 350, armour 3.9",
+   "slash 75 damage, radius 100, centred 150 u ahead",
+   "cooldown 0.35 s, cast point 0.5 s",
+   "about 8 hits to kill",
+   "arena 960x960"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "whether the 200% animation speed shortens the cast point is unverified"
+  ],
+  "source": "u1.md#The Sword Weaver"
+ },
+ {
+  "n": 52,
+  "map": "ultx",
+  "name": "Mule Race",
+  "variants": [],
+  "type": "race",
+  "timer": 50,
+  "goal": "Press 'DOWN ARROW' key as fast as you can to speed up!",
+  "core": "Mash a key to add speed to your mule as it auto-walks to the finish; speed never decays, so early tapping pays most.",
+  "controls": "key mashing",
+  "hazard": "none",
+  "key_numbers": [
+   "+3.9 speed per press, cap 525",
+   "base speed 1",
+   "track about 4545-4570 u",
+   "about 44 s of racing",
+   "5 presses/s finishes in about 22 s"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "nothing stops a player right-clicking to steer",
+   "gold set to 100 is an unused leftover"
+  ],
+  "source": "u1.md#Mule Race"
+ },
+ {
+  "n": 53,
+  "map": "ultx",
+  "name": "Tornado Naga Madness",
+  "variants": [
+   "Reversed"
+  ],
+  "type": "survival",
+  "timer": null,
+  "goal": "Avoid the Tornado and try to survive!",
+  "core": "Dodge a multiplying swarm of bouncing tornadoes, some aimed at players, in an open basin; a tornado's centre kills within 100 u.",
+  "controls": "move",
+  "hazard": "tornadoes, speed 220, kill within 100 of the centre, doubling every 5 s to 10, cap 50",
+  "key_numbers": [
+   "naga speed 370",
+   "tornado speed 220, kill radius 100",
+   "doubling every 5 s up to 10, then 1/3 chance each, cap 50",
+   "15 Mur'gul body-blockers at speed 400",
+   "basin 3104x1568"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Kodo Stampede",
+  "bugs": [],
+  "source": "u1.md#Tornado Naga Madness"
+ },
+ {
+  "n": 54,
+  "map": "ultx",
+  "name": "The Grim Reapage",
+  "variants": [],
+  "type": "race",
+  "timer": 150,
+  "goal": "Be the first to level up. Press \"W\" to cloak.",
+  "core": "Invisible one-hit wraiths hunt wandering children for XP and ambush each other; killed wraiths revive after 10 s; first to 300 XP wins.",
+  "controls": "move + attack + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "wraith 10 HP, 16 damage, speed 320",
+   "Night Merge cloak cooldown 5 s, attacking reveals",
+   "kid kill +25 XP, wraith kill +40 XP, 300 XP needed",
+   "revive after 10 s at a random point",
+   "no shared vision"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "relies on AddHeroXP ignoring the 0% XP handicap"
+  ],
+  "source": "u1.md#The Grim Reapage"
+ },
+ {
+  "n": 55,
+  "map": "ultx",
+  "name": "Typing Terror",
+  "variants": [
+   "Typing Catastrophe"
+  ],
+  "type": "survival",
+  "timer": null,
+  "goal": "Type what Mannoroth tells you! (DO NOT TYPE ANYTHING ELSE)",
+  "core": "Type Mannoroth's random string in chat within 5.5 s; strings grow by two characters each round and any other message kills you.",
+  "controls": "typing",
+  "hazard": "5.5 s deadline; any wrong chat message is instant death",
+  "key_numbers": [
+   "string length 1, 3, 5, 7, 9...",
+   "5.5 s window that never shrinks",
+   "cycle about 7.6 s",
+   "23-letter pool (no j, x, z)",
+   "hard pool 43 characters"
+  ],
+  "bots": false,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "the letter pool index skips characters, so j, x and z never appear",
+   "this init does not clear the Catastrophe flag (Next Event does)"
+  ],
+  "source": "u1.md#Typing Terror / Typing Catastrophe"
+ },
+ {
+  "n": 56,
+  "map": "ultx",
+  "name": "Rampage With Wolves",
+  "variants": [
+   "Hyper Canine"
+  ],
+  "type": "race",
+  "timer": 120,
+  "goal": "Fetch the grass, and return to the circle of power! Avoid the Wolves.",
+  "core": "Sheep run north past 28 wandering wolves to grab grass and carry it back to the circle; any wolf within 80 u kills.",
+  "controls": "move",
+  "hazard": "28 wolves, speed 350, kill within 80, one redirected every 2 s (0.25 s in Hyper Canine)",
+  "key_numbers": [
+   "sheep speed 190, 15 HP",
+   "wolf speed 350, kill radius 80",
+   "one random wolf redirected every 2 s",
+   "round trip about 5150 u",
+   "always 8 grass patches"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "computer players get no sheep and score 0"
+  ],
+  "source": "u1.md#Rampage With Wolves / Hyper Canine"
+ },
+ {
+  "n": 57,
+  "map": "ultx",
+  "name": "Tower Attack",
+  "variants": [
+   "Take your time, Doby"
+  ],
+  "type": "survival",
+  "timer": 210,
+  "goal": "Build towers to kill your opponents.",
+  "core": "Build short-lived arrow, siege and magic towers that counter each other to kill rival builders; your 25 HP builder dies easily.",
+  "controls": "move + build + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "builder 25 HP, speed 190",
+   "Arrow: 6 s build, 26 s life, range 225",
+   "Siege: 14 s build, 34 s life, range 550",
+   "Magic: 11 s build, 31 s life, range 800",
+   "Anti-Magic Shield 10 s, cooldown 20 s"
+  ],
+  "bots": false,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "the build list names o003, which does not exist in the map",
+   "siege splash probably hurts your own towers"
+  ],
+  "source": "u1.md#Tower Attack / Take your time, Doby"
+ },
+ {
+  "n": 58,
+  "map": "ultx",
+  "name": "Stomp of Doom",
+  "variants": [
+   "At least 100 Stomps of Doom"
+  ],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Stomp to kill your opponents.",
+  "core": "Permanently invisible stompers hunt each other; a stomp kills everyone within 150 u but flashes your position, and decoy flashes mislead.",
+  "controls": "move + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "stomper speed 200, 1000 HP",
+   "stomp radius 150, 5000 damage, cooldown 10 s",
+   "decoy flash: 25% chance every 4 s, 300-500 u from centre",
+   "duel at 2 alive: cooldown 1.5 s, speed 300",
+   "arena 960x960"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "harass destroys the last created effect, which a real stomp may have overwritten (cosmetic leak)"
+  ],
+  "source": "u2.md#Stomp of Doom / At least 100 Stomps of Doom"
+ },
+ {
+  "n": 59,
+  "map": "ultx",
+  "name": "Wild East Duel",
+  "variants": [],
+  "type": "score",
+  "timer": null,
+  "goal": "LEFT-Click the tower as soon as you believe the time has passed up.",
+  "core": "Count silently and click the tower when you think the shown N seconds have passed since BEGIN; the largest errors are eliminated first.",
+  "controls": "click target",
+  "hazard": "none; timing error",
+  "key_numbers": [
+   "target N = 4 to 10 s",
+   "15 s click window after BEGIN",
+   "one click per player",
+   "worst error eliminated every 3 s",
+   "equal errors die together"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "clicks before BEGIN are accepted and score error N",
+   "the counter is a 0.01 s tick counter that drifts under load"
+  ],
+  "source": "u2.md#Wild East Duel"
+ },
+ {
+  "n": 60,
+  "map": "ultx",
+  "name": "Mosquito Swarm",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Be the last one standing. Attack the ogre to recover HP!",
+  "core": "Mosquitoes lose 25 HP/s and must bite a huge regenerating ogre to heal, while it swats its current attacker for 200.",
+  "controls": "move + attack",
+  "hazard": "drain 25 HP/s; ogre hits 200 every 3.5 s at reach 80",
+  "key_numbers": [
+   "mosquito 1000 HP, speed 350",
+   "drain 25 HP/s (40 s unfed)",
+   "each bite heals +20 HP, about one bite per 0.6 s",
+   "ogre 200 damage, cooldown 3.5 s, speed 30",
+   "bite range 130"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "the effective bite rate depends on WC3's cooldown vs damage-point rule (flag)"
+  ],
+  "source": "u2.md#Mosquito Swarm"
+ },
+ {
+  "n": 61,
+  "map": "ultx",
+  "name": "Ghostly Gambit",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Be the last one standing. Right-click neutral banshees to regain HP!",
+  "core": "Immobile ghosts drain 20 HP/s; jump into an unclaimed neutral banshee within 250 u to reset to 100 HP, using that body up.",
+  "controls": "click target",
+  "hazard": "HP leech 20/s; the neutral pool only shrinks",
+  "key_numbers": [
+   "100 HP, drain 20 HP/s",
+   "possess range 250, cast point 0.5 s",
+   "40 neutral banshees",
+   "speed 1 (immobile)",
+   "about 10 pieces within 250 at the start"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "Restrict also rewrites the dummy's attack order (the rewrite fails, harmless)"
+  ],
+  "source": "u2.md#Ghostly Gambit"
+ },
+ {
+  "n": 62,
+  "map": "ultx",
+  "name": "The Soul Exchange",
+  "variants": [],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Survive as long as possible!",
+  "core": "Melee brawl without regen where a 3 s channelled swap trades your battered body for a rival's healthier one, cooldown included.",
+  "controls": "move + attack + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "revenant 250 HP, no regen, speed 300",
+   "attack 25-29, cooldown 1.35",
+   "Soul Displace range 600, 3 s cast, cooldown 10 s",
+   "HP, position and cooldown stay with the body",
+   "150 s"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [],
+  "source": "u2.md#The Soul Exchange"
+ },
+ {
+  "n": 63,
+  "map": "ultx",
+  "name": "Winter's Equinox",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "Dodge telegraphed flame strikes cast at random points by a growing number of invulnerable spirits; blink away and avoid lingering fire.",
+  "controls": "move + 1 ability",
+  "hazard": "Flame Strike radius 170 after a 1 s warning, about 15 damage/s plus lingering flames",
+  "key_numbers": [
+   "icicle 50 HP, no regen, speed 270",
+   "Blink 400 u, cooldown 3 s",
+   "Flame Strike radius 170, 1 s cast",
+   "one strike per spirit per 1.6 s",
+   "+1 spirit every 15 s, max 8"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [],
+  "source": "u2.md#Winter's Equinox"
+ },
+ {
+  "n": 64,
+  "map": "ultx",
+  "name": "The Assassin's Cove",
+  "variants": [
+   "The Assassin's Creed"
+  ],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Kill your opponents. Stand behind them and Assassinate them.",
+  "core": "One-shot back-stab duel: blink behind a rival and Assassinate from their 90-degree rear cone; arena edges and corners chip you.",
+  "controls": "move + 2 abilities",
+  "hazard": "players",
+  "key_numbers": [
+   "assassin 100 HP, no regen, speed 320",
+   "Assassinate range 100, cooldown 3 s, rear 90-degree cone",
+   "Blink 500 u, cooldown 5 s",
+   "corner bumpers 51-52 pierce, range 90",
+   "edge bumpers 11-12 pierce, range 50"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "facings are compared without wrap-around: the Cove cone is clipped near east, and in Creed a target facing over 225 degrees cannot be killed"
+  ],
+  "source": "u2.md#The Assassin's Cove / The Assassin's Creed"
+ },
+ {
+  "n": 65,
+  "map": "ultx",
+  "name": "Energy Blitz",
+  "variants": [
+   "Energy Madden",
+   "Energy Within"
+  ],
+  "type": "survival",
+  "timer": 180,
+  "goal": "Kill your opponents. Attack by pushing the Energy Bolt.",
+  "core": "Walk into a resting energy ball to launch it along your facing; it bounces off walls and damages any dragon it touches by its current speed.",
+  "controls": "move",
+  "hazard": "energy bolt: damage equals its speed (500 at launch) within 150, bounces off walls",
+  "key_numbers": [
+   "dragon 500 HP, regen 1/s, speed 350",
+   "push launches at speed 500 when the ball is below 50",
+   "contact radius 150, -100 speed per hit",
+   "moves 4 x speed u/s with stepped friction",
+   "second bolt at 60 s"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "the 0.5 s contact lockout is global across all bolts",
+   "a push has no owner, so a bolt can hit its pusher after a bounce"
+  ],
+  "source": "u2.md#Energy Blitz / Energy Madden / Energy Within"
+ },
+ {
+  "n": 66,
+  "map": "ultx",
+  "name": "One Bomb Too Many",
+  "variants": [
+   "One Bomb was enough"
+  ],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Kill your opponents. Your mines blow up in 3 seconds.",
+  "core": "Lay timed mines that explode after 5 s, killing everyone within 300 u including you and chaining to other mines within 400 u.",
+  "controls": "move + 1 ability",
+  "hazard": "timed mines: 2000 damage within 300, chain within 400, 5 s fuse",
+  "key_numbers": [
+   "Tinker 575 HP, speed 270",
+   "mine cast range 325, cooldown 0.5 s",
+   "fuse 5 s (the text says 3)",
+   "blast 2000 within 300, chain within 400",
+   "2-player deathmatch: a random mine every 1.4 s"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "mines last 5 s though the text says 3 (variant 8 s vs 10)",
+   "the deathmatch spawn effect is drawn at a stale location, so there is no telegraph",
+   "in a 2-player start, deathmatch can begin during the 5 s freeze"
+  ],
+  "source": "u3.md#One Bomb Too Many / One Bomb was enough"
+ },
+ {
+  "n": 67,
+  "map": "ultx",
+  "name": "Hexxing Havoc",
+  "variants": [],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Kill your opponents. The units randomly morph into critters.",
+  "core": "Everyone morphs into random critters every 5-8 s while one rotating player becomes the Furbolg hunter, the only unit that can attack.",
+  "controls": "move + attack (as hunter) + critter perk",
+  "hazard": "the hunter Furbolg, 11-14 damage, cooldown 1.35 s, speed 150",
+  "key_numbers": [
+   "morph period 5-8 s, fixed for the session",
+   "chicken 50 HP speed 200; crab 75 HP speed 90",
+   "frog Jump 400, cooldown 3",
+   "hunter 100 HP, speed 150, acquisition 500",
+   "HP % carries across morphs"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": "Sapper Tag",
+  "bugs": [
+   "the hunter's morph effect plays at the last critter's position"
+  ],
+  "source": "u3.md#Hexxing Havoc"
+ },
+ {
+  "n": 68,
+  "map": "ultx",
+  "name": "A Taxing Situation",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Pay enough tax to appease the lord, don't be the cheapest, or else! You only have 100 gold to last through the whole game.",
+  "core": "Sealed-bid rounds: secretly pay 1, 5 or 10 gold from a 100-gold wallet each 20 s round; the cheapest bidders die.",
+  "controls": "3 bid buttons",
+  "hazard": "the lowest bid each round is eliminated",
+  "key_numbers": [
+   "100 gold for the whole game",
+   "bids of 1, 5 or 10",
+   "20 s bidding window",
+   "about 12 s of reveal per round",
+   "everyone tied for lowest dies"
+  ],
+  "bots": false,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "the script spells it payed"
+  ],
+  "source": "u3.md#A Taxing Situation"
+ },
+ {
+  "n": 69,
+  "map": "ultx",
+  "name": "Keep Away!",
+  "variants": [
+   "How I wish you were here"
+  ],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible! Stay away from the sapper.",
+  "core": "A sapper chases the nearest player, gaining 25 u/s every second; it explodes within 120 u, killing that player, then respawns slow.",
+  "controls": "move + 1 ability",
+  "hazard": "sapper, speed 10 + 25/s up to about 522, kill within 120",
+  "key_numbers": [
+   "Mathog speed 240, 340 HP",
+   "Blink range 650, cooldown 3 s",
+   "sapper retargets the nearest Mathog every 0.1 s",
+   "kill radius 120",
+   "respawn within 500 of centre, 3 s pause"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Sapper Tag",
+  "bugs": [
+   "the variant flag is never set, so How I wish you were here is unreachable",
+   "a respawned sapper can appear within 120 u of someone",
+   "one pass can kill two players and leave an orphaned paused sapper as a static kill zone"
+  ],
+  "source": "u3.md#Keep Away!"
+ },
+ {
+  "n": 70,
+  "map": "ultx",
+  "name": "Strike and Light Galore",
+  "variants": [
+   "how do i shot lightning?"
+  ],
+  "type": "survival",
+  "timer": 120,
+  "goal": "Kill your opponents by pushing them into the fence.",
+  "core": "Anonymous seers use a 350 u knockback bolt and a rooting Purge to push rivals out of a fenced ring that shrinks at two players.",
+  "controls": "move + 2 abilities",
+  "hazard": "players",
+  "key_numbers": [
+   "seer 100 HP, speed 250",
+   "knockback 350 u, range 900, cooldown 5",
+   "Purge root and slow 5 s, cooldown 6",
+   "ring 1120x1056, 960x896 in deathmatch",
+   "everyone renamed Seer and coloured brown"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": "Ice Sumo",
+  "bugs": [
+   "the east fence column lies on the rect edge and is probably missing in normal mode"
+  ],
+  "source": "u3.md#Strike and Light Galore / how do i shot lightning?"
+ },
+ {
+  "n": 71,
+  "map": "ultx",
+  "name": "Elemental Clash",
+  "variants": [
+   "Unstable Elements"
+  ],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Kill your opponents! Press \"E\" to cast a spell, depending on the terrain.",
+  "core": "Brawl on a tiled floor where E casts a different spell depending on the tile you stand on: heal, armour, roots, boulder stun or Starfall.",
+  "controls": "move + attack + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "Geomancer 500 HP, no regen, speed 250",
+   "E cooldown 4 s",
+   "grass: roots 3 s within 400; rock: 75 damage, 1 s stun within 400",
+   "soil: +100 HP; ice: +15 armour for 15 s",
+   "marble: Starfall 50 damage/s within 1000"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "the effect fires on spell cast, so Stop during the cast point might skip the cooldown (inferred)"
+  ],
+  "source": "u3.md#Elemental Clash / Unstable Elements"
+ },
+ {
+  "n": 72,
+  "map": "ultx",
+  "name": "Wall Street Traffic",
+  "variants": [],
+  "type": "score",
+  "timer": 50,
+  "goal": "Earn more gold than your opponents to win. Be sure to sell all your stocks before time runs out!",
+  "core": "Trade four shared stocks with buy and sell buttons; buys push a price up 3, sells down 2, with random drift every 4 s; most gold wins.",
+  "controls": "8 trade buttons",
+  "hazard": "none; market drift and rivals' trades",
+  "key_numbers": [
+   "100 starting gold, all prices start at 5",
+   "buy moves the price +3, sell -2 (floor 1)",
+   "every 4 s each stock has a 1/3 chance of -10 to +4",
+   "50 s session",
+   "unsold shares are worth 0"
+  ],
+  "bots": false,
+  "remake_fit": 3,
+  "hp_match": null,
+  "bugs": [
+   "if every survivor has over 1000 gold nobody is eliminated and the round loops forever"
+  ],
+  "source": "u4.md#Wall Street Traffic"
+ },
+ {
+  "n": 73,
+  "map": "ultx",
+  "name": "Milton's Misery",
+  "variants": [],
+  "type": "score",
+  "timer": null,
+  "goal": "Be the last one to activate your shield! Activate it before the bomb goes off.",
+  "core": "Chicken: Milton hits a 13 HP barrel every 2 s until a hidden threshold; raise your one-shot shield as late as you dare before it blows.",
+  "controls": "1 ability",
+  "hazard": "barrel explodes at a hidden HP of 1-10, killing everyone unshielded",
+  "key_numbers": [
+   "barrel 13 HP, one hit every 2 s",
+   "hidden threshold 1 to 10",
+   "blast between about 12.5 s and 30.5 s",
+   "earliest shielders eliminated every 2 s",
+   "shield cooldown 3 s"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "a shield value of 0 is never ranked, and two such players would loop Sort forever (unreachable in practice)"
+  ],
+  "source": "u4.md#Milton's Misery"
+ },
+ {
+  "n": 74,
+  "map": "ultx",
+  "name": "Fetch!",
+  "variants": [],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Felhounds: Kill the child. Child: Use pass ability to tag someone else.",
+  "core": "Reverse tag: the slow Child must pass its curse with a 1 s cast before fast invulnerable felhounds bite it; the Child's death eliminates its owner.",
+  "controls": "move + attack + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "hound speed 350, child speed 190",
+   "child 15 HP, one bite kills",
+   "Pass range 2000, 1 s cast",
+   "swap delay distance/1400 s",
+   "a new child after a death gets 3 s of invulnerability"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": "Sapper Tag",
+  "bugs": [
+   "the visual missile (700 u/s) is slower than the scripted swap (1400 u/s)",
+   "player colour index 12 may not render in the 1.24 palette"
+  ],
+  "source": "u4.md#Fetch!"
+ },
+ {
+  "n": 75,
+  "map": "ultx",
+  "name": "Over Nine Thousand",
+  "variants": [],
+  "type": "score",
+  "timer": 25,
+  "goal": "Click sludges to create of your own. Player with the most after 20 seconds wins.",
+  "core": "Click foreign sludges on a diagonal lattice: each click clears one and spawns three of yours plus one neutral on its diagonal neighbours.",
+  "controls": "click targets",
+  "hazard": "none; rivals overwrite your pieces",
+  "key_numbers": [
+   "20 s of clicking",
+   "neighbours 100 u away on the diagonals",
+   "about 100 lattice sites",
+   "3 of the 4 new pieces are yours",
+   "zero-piece players get 8-k"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "WC3 may nudge pieces off the lattice near walls",
+   "zero-piece players all get 8-k, more generous than normal ties"
+  ],
+  "source": "u4.md#Over Nine Thousand"
+ },
+ {
+  "n": 76,
+  "map": "ultx",
+  "name": "Lost & Found",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "In darkness with 250 u vision, flee a growing horde of slow invulnerable zerglings; lightning briefly reveals the map and dead players become hunters.",
+  "controls": "move",
+  "hazard": "zerglings, speed 150, 10.5-12 per bite, cooldown 5 s, +1 every 4 s",
+  "key_numbers": [
+   "marine speed 240, 15 HP, no regen",
+   "night sight 250",
+   "zergling speed 150, two bites kill",
+   "+1 zergling every 4 s; all retarget the nearest marine",
+   "map reveal for 0.2 s every 4 s"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "no time cap, so the game can stall"
+  ],
+  "source": "u4.md#Lost & Found"
+ },
+ {
+  "n": 77,
+  "map": "ultx",
+  "name": "Titanic Panic",
+  "variants": [
+   "One does not simply ram into Mordor"
+  ],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Kill your opponents by ramming into them!",
+  "core": "Bumper boats: anything within 100 u of the point 125 u ahead of your bow takes 100 damage and is knocked 270 u; leaving the arena kills.",
+  "controls": "move + 1 ability",
+  "hazard": "players",
+  "key_numbers": [
+   "boat 500 HP, speed 320, turn rate 0.4",
+   "ram point 125 ahead, radius 100, every 0.66 s",
+   "victim -100 HP, rammer +15 HP",
+   "knockback 270 u, recoil 70 u",
+   "landing 300 damage within 50"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Ice Sumo",
+  "bugs": [
+   "the variant flags are only ever set to false, so both variants are dead code",
+   "the knockback helper swaps its arguments: 300 damage in a 50 radius instead of 50 in 300"
+  ],
+  "source": "u4.md#Titanic Panic / One does not simply ram into Mordor"
+ },
+ {
+  "n": 78,
+  "map": "ultx",
+  "name": "Great Naval Enmity",
+  "variants": [],
+  "type": "survival",
+  "timer": 150,
+  "goal": "Fire missiles to sink your opponents!",
+  "core": "Battleships lob shells with travel time and a charged Big One at rivals; lead moving targets and keep clear of sinking ships' death bursts.",
+  "controls": "move + 2 abilities",
+  "hazard": "players",
+  "key_numbers": [
+   "battleship 700 HP, speed 300",
+   "Fire range 1200, cooldown 1 s, shell 400 u/s",
+   "splash 300 within 25, 150 within 150, 45 within 250",
+   "Big One 4 s cast, cooldown 20 s",
+   "a sinking ship fires 6 shells 280 u out"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "splash has no allegiance filter, so it may hurt the firer (assumption)"
+  ],
+  "source": "u4.md#Great Naval Enmity"
+ },
+ {
+  "n": 159,
+  "map": "ultx",
+  "name": "Bad Fur Day",
+  "variants": [],
+  "type": "race",
+  "timer": 130,
+  "goal": "Be the first to level up. Run over rabbits to kill them.",
+  "core": "Drive an invulnerable, slow-turning car to run over fast wandering rabbits; each kill gives 13 XP and the first to level (16 kills) finishes.",
+  "controls": "move (car steering)",
+  "hazard": "none; rival cars body-block (collision 40)",
+  "key_numbers": [
+   "car speed 250, turn rate 0.1",
+   "kill aura 60 damage within 100",
+   "16 kills to level (13 XP each, 200 needed)",
+   "10 rabbits at speed 525; each kill respawns one",
+   "130 s"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": "Gold Rush",
+  "bugs": [
+   "relies on AddHeroXP ignoring the 0% XP handicap",
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Bad Fur Day"
+ },
+ {
+  "n": 161,
+  "map": "ultx",
+  "name": "Drink and Bow",
+  "variants": [],
+  "type": "survival",
+  "timer": 160,
+  "goal": "Kill your opponents!",
+  "core": "Drunk Way of the Bow: a one-hit-kill archer duel with manual targeting under heavy camera wobble and random colour flashes every 3.25 s.",
+  "controls": "move + attack",
+  "hazard": "players",
+  "key_numbers": [
+   "archer HP 5, speed 270",
+   "attack 16-18, range 800, cooldown 1.5, attack point 0.72",
+   "homing missile speed 900",
+   "camera noise 800, colour flash every 3.25 s",
+   "spawn ring radius 1000"
+  ],
+  "bots": false,
+  "remake_fit": 2,
+  "hp_match": null,
+  "bugs": [
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Drink and Bow"
+ },
+ {
+  "n": 162,
+  "map": "ultx",
+  "name": "Chicken Stampede",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Dodge the stampede as long as possible!",
+  "core": "Dodge streams of fast exploding chickens from Beastmasters that appear every 4 s up to 12, each firing north, south, east or west.",
+  "controls": "move",
+  "hazard": "chickens at 600 u/s, 25 damage within 100, 3 per second per caster",
+  "key_numbers": [
+   "grunt 700 HP, speed 270",
+   "25 damage per chicken, radius 100",
+   "3 chickens/s per caster, missile speed 600",
+   "+1 Beastmaster every 4 s while under 12 units",
+   "about 28 hits kill a grunt"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Kodo Stampede",
+  "bugs": [
+   "the spawn if/else has two identical branches (leftover)",
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Chicken Stampede"
+ },
+ {
+  "n": 163,
+  "map": "ultx",
+  "name": "Sick Peon Pandemonium",
+  "variants": [],
+  "type": "reverse-race",
+  "timer": null,
+  "goal": "Be the first one to die!",
+  "core": "Inverted Peon Pandemonium: run into randomly aimed catapult impacts to die first; death order scores 8, 7, 6 and the last survivor least.",
+  "controls": "move",
+  "hazard": "catapult rocks (your tool), 84-144 siege, splash 25/50/150, +1 launcher every 8 s",
+  "key_numbers": [
+   "sick peon 150 HP, speed 190",
+   "direct hit 42-72, about 3 hits kill",
+   "+1 catapult every 8 s, cap 30",
+   "projectile speed 400",
+   "splash full 25, 40% at 50, 25% at 150"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "Sleepy_Expire is enabled but no timer is started, so there is no time limit",
+   "TiesPossible is set but Race_Finish ignores it",
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Sick Peon Pandemonium"
+ },
+ {
+  "n": 164,
+  "map": "ultx",
+  "name": "Piggy Pandemonium",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Survive as long as possible!",
+  "core": "One-hit pigs dodge spears and shells from a ring of invulnerable throwers that grows every 1.5 s, plus one aimed shot every 1.5 s.",
+  "controls": "move",
+  "hazard": "troll hunter spears at 1200 u/s, splash 10, then demolishers; any hit kills",
+  "key_numbers": [
+   "pig 10 HP, speed 190",
+   "+1 shooter about every 1.5 s, 40 hunters then demolishers up to 60",
+   "spear speed 1200, splash 10",
+   "random barrage every 2 s, aimed shot every 1.5 s",
+   "demolisher splash 25/50/150"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Mortar Mayhem",
+  "bugs": [
+   "player pigs have Wander and may move on their own",
+   "a leftover attack-peon order has no target",
+   "SetGameSpeed slow is called without unlocking the speed, so it probably does nothing",
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Piggy Pandemonium"
+ },
+ {
+  "n": 166,
+  "map": "ultx",
+  "name": "Wild Clicking Duel",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "Do not stop LEFT-Clicking the Tower.",
+  "core": "Keep clicking the tower: at least one click inside every 0.5 s window, repeating every 0.75 s; anyone who misses a window is out.",
+  "controls": "click target",
+  "hazard": "none; a missed 0.5 s window eliminates you",
+  "key_numbers": [
+   "0.5 s check window",
+   "0.75 s cycle",
+   "clicks in the 0.25 s gap do nothing",
+   "loop starts at t=8",
+   "misses in the same check share a score"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "the Bored Shaman is created at GetUnitLoc(null) = (0,0), so the loser's toy never shows",
+   "no timer, so two diligent players could click forever",
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Wild Clicking Duel"
+ },
+ {
+  "n": 167,
+  "map": "ultx",
+  "name": "???",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "No objective line; the second line quotes a song chorus (not reproduced).",
+  "core": "Helpless peons stand in a tiny mock DotA lane while two creep armies walk in and kill them in slow motion; last peon alive wins.",
+  "controls": "move",
+  "hazard": "Player 12 creeps (Tree of Life, treants, archer, invulnerable cultists) with acquisition 1000 after 2 s",
+  "key_numbers": [
+   "peon 50 HP, speed 190",
+   "arena 352x288",
+   "creeps engage after 2 s",
+   "cultists 25 HP, 9+1d2, speed 240, invulnerable",
+   "game speed set to slowest"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "unreachable in the shipped map: no unit ever gets UserData 167",
+   "the goal text is stored with mojibake"
+  ],
+  "source": "u5.md#??? — DotA joke"
+ },
+ {
+  "n": 168,
+  "map": "ultx",
+  "name": "Underground Run",
+  "variants": [],
+  "type": "race",
+  "timer": 60,
+  "goal": "Reach the end, burrowing to heal yourself! Press \"B\" to burrow.",
+  "core": "Race a long U-course while draining 13.3 HP/s; burrowing heals fully but costs about 1.45 s each way; dodge wide patrolling spiders.",
+  "controls": "move + 1 ability",
+  "hazard": "HP drain 2 per 0.15 s; 10 den spiders with collision 60 body-blocking the lanes",
+  "key_numbers": [
+   "spider 125 HP, no regen, speed 300",
+   "drain 2 HP per 0.15 s (125 HP lasts 9.4 s)",
+   "burrow morph 1.45 s, heals to full both ways",
+   "course about 7000 u",
+   "60 s (about 55 s of play)"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": "Golem Gauntlet",
+  "bugs": [
+   "after unburrowing you do not drain until your next order",
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Underground Run"
+ },
+ {
+  "n": 169,
+  "map": "ultx",
+  "name": "Wild West Duel",
+  "variants": [],
+  "type": "survival",
+  "timer": null,
+  "goal": "LEFT-Click the tower AFTER you hear the sound.",
+  "core": "Reaction duel: after a random 4-9 s delay a buzzer sounds; clicking early kills you, and the slowest clicker each round is eliminated.",
+  "controls": "click target",
+  "hazard": "none; false starts and the slowest reaction are eliminated",
+  "key_numbers": [
+   "buzzer after a random 4-9 s",
+   "5 s to click after the buzzer",
+   "2 s pause between rounds",
+   "normally one elimination per round",
+   "loser's reflex time shown to 0.1 s"
+  ],
+  "bots": false,
+  "remake_fit": 1,
+  "hp_match": null,
+  "bugs": [
+   "reachable only through a Free Play secret"
+  ],
+  "source": "u5.md#Wild West Duel"
+ }
+]

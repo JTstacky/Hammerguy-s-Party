@@ -1,0 +1,281 @@
+<title>Uther Party Field Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #eef1f4;
+  --surface: #f8f9fb;
+  --raised: #ffffff;
+  --ink: #1b2230;
+  --muted: #5b6576;
+  --faint: #8a93a2;
+  --rule: #d5dbe3;
+  --gold: #9a6f12;
+  --gold-soft: #f1e3bf;
+  --blue: #2a4d8f;
+  --blue-soft: #dfe7f5;
+  --fit1: #2f7a4a;
+  --fit2: #a06a0c;
+  --fit3: #a3423a;
+  --shadow: 0 1px 2px rgba(27, 34, 48, .06), 0 4px 16px rgba(27, 34, 48, .05);
+  --display: "Marcellus", "Trajan Pro", Georgia, serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #12161d; --surface: #181d26; --raised: #1e2530; --ink: #e6eaf0; --muted: #a0a9b8; --faint: #717b8b;
+    --rule: #2c3441; --gold: #d9a93f; --gold-soft: #3a3120; --blue: #8fb0ea; --blue-soft: #1f2c44;
+    --fit1: #6cc08c; --fit2: #e0a948; --fit3: #e58a80; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #12161d; --surface: #181d26; --raised: #1e2530; --ink: #e6eaf0; --muted: #a0a9b8; --faint: #717b8b;
+  --rule: #2c3441; --gold: #d9a93f; --gold-soft: #3a3120; --blue: #8fb0ea; --blue-soft: #1f2c44;
+  --fit1: #6cc08c; --fit2: #e0a948; --fit3: #e58a80; --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); padding-inline: 16px; padding-block: 28px 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; min-width: 0; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere; }
+.panel, .row, .head > *, .detail > * { min-width: 0; }
+a { color: var(--blue); }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+
+header.top { display: grid; gap: 10px; }
+.eyebrow { font: 600 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+h1 { font: 400 clamp(34px, 5vw, 52px)/1.05 var(--display); margin: 0; letter-spacing: .01em; text-wrap: balance; }
+.lede { margin: 0; max-width: 64ch; color: var(--muted); font-size: 17px; }
+
+.panels { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; }
+@media (max-width: 820px) { .panels { grid-template-columns: 1fr; } }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; }
+.panel h2 { font: 400 21px/1.2 var(--display); margin: 0; }
+.panel p { margin: 0; color: var(--muted); font-size: 15px; max-width: 62ch; }
+.ante { width: 100%; height: auto; display: block; }
+.ante text { fill: var(--muted); font: 11px var(--body); }
+.ante .num { fill: var(--ink); font: 500 12px var(--mono); }
+.facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.facts li { display: grid; grid-template-columns: 112px 1fr; gap: 12px; font-size: 15px; }
+.facts b { font: 500 12px/1.6 var(--mono); color: var(--gold); text-transform: uppercase; letter-spacing: .04em; }
+.facts span { color: var(--ink); }
+@media (max-width: 520px) { .facts li { grid-template-columns: 1fr; gap: 2px; } }
+
+.controls { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.group > .lab { font: 600 11px/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-right: 2px; }
+.chip { font: 600 13px/1 var(--body); padding: 7px 11px; border-radius: 999px; border: 1px solid var(--rule); background: var(--raised); color: var(--muted); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.chip .c { font: 500 11px var(--mono); opacity: .75; margin-left: 4px; }
+input[type="search"] { font: 15px var(--body); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--rule); background: var(--raised); color: var(--ink); min-width: 0; width: 220px; max-width: 100%; }
+.count { margin-left: auto; font: 500 13px var(--mono); color: var(--faint); }
+
+.list { display: grid; gap: 8px; }
+.row { background: var(--raised); border: 1px solid var(--rule); border-radius: 10px; }
+.row.short { border-left: 3px solid var(--gold); }
+.head { all: unset; cursor: pointer; display: grid; grid-template-columns: 58px minmax(0, 1.25fr) minmax(0, 2.4fr) 118px; gap: 16px; align-items: start; padding: 14px 16px; width: 100%; box-sizing: border-box; }
+.head:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; border-radius: 10px; }
+.n { font: 500 13px/1.3 var(--mono); color: var(--faint); padding-top: 3px; }
+.n .map { display: block; font-size: 10px; letter-spacing: .06em; color: var(--muted); }
+.title { display: grid; gap: 6px; }
+.title strong { font: 400 19px/1.2 var(--display); }
+.title .var { font-size: 13px; color: var(--muted); font-style: italic; }
+.pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.pill { font: 600 11px/1 var(--body); letter-spacing: .04em; padding: 4px 7px; border-radius: 4px; background: var(--blue-soft); color: var(--blue); text-transform: uppercase; }
+.pill.t { background: var(--gold-soft); color: var(--gold); font-family: var(--mono); letter-spacing: 0; text-transform: none; }
+.pill.live { background: transparent; border: 1px solid var(--rule); color: var(--muted); }
+.core { font-size: 15px; color: var(--ink); }
+.core small { display: block; color: var(--faint); font-size: 13px; margin-top: 4px; }
+.fit { display: grid; gap: 5px; justify-items: end; text-align: right; }
+.pips { display: flex; gap: 3px; }
+.pips i { width: 16px; height: 6px; border-radius: 2px; background: var(--rule); }
+.fit[data-f="1"] .pips i:nth-child(-n+3) { background: var(--fit1); }
+.fit[data-f="2"] .pips i:nth-child(-n+2) { background: var(--fit2); }
+.fit[data-f="3"] .pips i:nth-child(-n+1) { background: var(--fit3); }
+.fit span { font-size: 12px; color: var(--muted); line-height: 1.3; }
+@media (max-width: 760px) {
+  .head { grid-template-columns: 44px 1fr; gap: 8px 12px; }
+  .core { grid-column: 2; }
+  .fit { grid-column: 2; justify-items: start; text-align: left; }
+}
+
+.detail { border-top: 1px solid var(--rule); padding: 16px; display: grid; grid-template-columns: 300px 1fr; gap: 22px; }
+.detail.noimg { grid-template-columns: 1fr; }
+@media (max-width: 760px) { .detail { grid-template-columns: 1fr; } }
+.detail figure { margin: 0; display: grid; gap: 6px; }
+.detail figure img { width: 100%; max-width: 100%; border-radius: 6px; border: 1px solid var(--rule); image-rendering: pixelated; }
+.detail figcaption { font-size: 12px; color: var(--faint); }
+.dl { display: grid; grid-template-columns: 128px 1fr; gap: 8px 16px; margin: 0; font-size: 15px; }
+.dl dt { font: 600 11px/1.9 var(--body); letter-spacing: .09em; text-transform: uppercase; color: var(--faint); }
+.dl dd { margin: 0; }
+.dl ul { margin: 0; padding-left: 18px; }
+.mono { font-family: var(--mono); font-size: 13.5px; }
+.goal { font-family: var(--display); font-size: 17px; }
+.livebox { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; font-size: 14px; display: grid; gap: 4px; }
+.livebox .scores { display: flex; gap: 3px; flex-wrap: wrap; margin-top: 2px; }
+.livebox .scores span { font: 500 12px/1 var(--mono); padding: 4px 6px; border-radius: 3px; color: #fff; }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+footer { color: var(--faint); font-size: 13px; max-width: 80ch; }
+@media (prefers-reduced-motion: no-preference) { .row { transition: border-color .15s; } .row:hover { border-color: var(--faint); } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Research for Hammerguy's Party · Warcraft III 1.26a</div>
+    <h1>Uther Party Field Guide</h1>
+    <p class="lede">All 90 minigames from Uther Party 4.0 and Uther Party Ultima-X, written up from the maps' own scripts, object data and terrain. The 4.0 games were also played live with 8 computer players in a logging copy of the map.</p>
+  </header>
+
+  <section class="panels" aria-label="How Uther Party works">
+    <div class="panel">
+      <h2>One scoring rule for every game</h2>
+      <svg class="ante" viewBox="0 0 440 150" role="img" aria-label="Points by finishing place with 8 players: first out 1 point, then 2, 3, up to 8 for the winner">
+        <g id="bars"></g>
+      </svg>
+      <p>Each game starts with an ante of 9 − players. In a survival game every death pays the current ante and raises it by one, so with 8 players the order of death pays 1 to 7 and the survivor takes 8. Players who die in the same instant share a value. Races pay 8, 7, 6 … in finishing order; anyone who dies or runs out of time scores 0.</p>
+    </div>
+    <div class="panel">
+      <h2>Engine behaviour, measured live</h2>
+      <ul class="facts">
+        <li><b>Movement</b><span>Full speed instantly, no acceleration. Units stand still during an attack wind-up.</span></li>
+        <li><b>Collision</b><span>Units steer around each other (40–50 u sidestep, 0.1–0.3 s lost) and never shove idle units.</span></li>
+        <li><b>Melee</b><span>A swing that starts at 255 u still lands at 350 u. The hit is decided when the swing begins.</span></li>
+        <li><b>Missiles</b><span>Arrows follow their target, but a runner that reversed 0.6–1.0 s into the archer's draw was hit 0 times in 60. Reversing earlier dodged almost none (20 of 24 hit).</span></li>
+        <li><b>Chases</b><span>A melee pursuer as fast as its prey never swings while the prey runs straight. Stop or turn, and it connects.</span></li>
+        <li><b>Artillery</b><span>Rocks fly at 400 u/s. Splash is exactly 1 / 0.4 / 0.25 within 25 / 50 / 150 u of the victim's edge.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-label="Minigame catalog" style="display:grid;gap:12px">
+    <div class="controls" role="toolbar" aria-label="Filters">
+      <div class="group" id="g-map"><span class="lab">Map</span></div>
+      <div class="group" id="g-type"><span class="lab">Type</span></div>
+      <div class="group" id="g-fit"><span class="lab">Fit</span></div>
+      <div class="group"><button class="chip" id="shortlist" aria-pressed="false">Shortlist</button></div>
+      <input type="search" id="q" placeholder="Search names and mechanics" aria-label="Search minigames">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <footer>
+    Fit: <b>1</b> fits Hammerguy's Party's one-paladin-plus-Q model directly; <b>2</b> needs a new unit or a modest new mechanic; <b>3</b> needs a system the remake does not have (typing, building, economy, possession).
+    Distances are Warcraft III units (1 tile = 128; about 54 per Hammerguy's Party unit); times are game seconds at Fast speed.
+    Arena maps are drawn from each arena's pathing grid: dark cells are unwalkable, and outlines mark the script's regions (spawn slots, goals).
+    Full rule sheets and the method are in <span class="mono">docs/uther-party/</span> of the Hammerguy's Party repository.
+  </footer>
+</div>
+
+<script>
+const GAMES = /*__DATA__*/[];
+const PC = ["#ff0303", "#0042ff", "#1ce6b9", "#540081", "#fffc01", "#fe8a0e", "#20c000", "#e55bb0"];
+const FIT = { 1: "Direct fit", 2: "New unit or mechanic", 3: "Needs a new system" };
+const state = { map: "all", type: "all", fit: "all", short: false, q: "", open: new Set() };
+try { const s = JSON.parse(localStorage.getItem("upfg") || "{}"); Object.assign(state, { map: s.map || "all", type: s.type || "all", fit: s.fit || "all", short: !!s.short }); } catch (e) {}
+const save = () => { try { localStorage.setItem("upfg", JSON.stringify({ map: state.map, type: state.type, fit: state.fit, short: state.short })); } catch (e) {} };
+const el = (t, a = {}, ...kids) => { const n = document.createElement(t); for (const [k, v] of Object.entries(a)) { if (k === "class") n.className = v; else if (k === "html") n.innerHTML = v; else n.setAttribute(k, v); } for (const c of kids) if (c != null) n.append(c); return n; };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// ante chart
+(function () {
+  const g = document.getElementById("bars");
+  const W = 440, base = 118, bw = 40, gap = 12, x0 = 6, unit = 11.5;
+  const labels = ["1st out", "2nd", "3rd", "4th", "5th", "6th", "7th", "Winner"];
+  let s = "";
+  for (let i = 0; i < 8; i++) {
+    const h = (i + 1) * unit, x = x0 + i * (bw + gap);
+    s += `<rect x="${x}" y="${base - h}" width="${bw}" height="${h}" rx="3" fill="${PC[i]}" opacity="${i === 7 ? 1 : 0.85}"/>`;
+    s += `<text class="num" x="${x + bw / 2}" y="${base - h - 5}" text-anchor="middle">${i + 1}</text>`;
+    s += `<text x="${x + bw / 2}" y="${base + 16}" text-anchor="middle">${labels[i]}</text>`;
+  }
+  s += `<line x1="0" x2="${W}" y1="${base + 0.5}" y2="${base + 0.5}" stroke="var(--rule)"/>`;
+  g.innerHTML = s;
+})();
+
+function chips(id, key, items) {
+  const box = document.getElementById(id);
+  for (const [val, label, count] of items) {
+    const b = el("button", { class: "chip", "aria-pressed": String(state[key] === val), "data-v": val }, label);
+    if (count != null) b.append(el("span", { class: "c" }, String(count)));
+    b.addEventListener("click", () => { state[key] = val; save(); box.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.v === val))); render(); });
+    box.append(b);
+  }
+}
+const cnt = (f) => GAMES.filter(f).length;
+chips("g-map", "map", [["all", "All", GAMES.length], ["4.0", "4.0", cnt((g) => g.map === "4.0")], ["ultx", "Ultima-X", cnt((g) => g.map === "ultx")]]);
+const types = [...new Set(GAMES.map((g) => g.type))];
+chips("g-type", "type", [["all", "All"], ...types.map((t) => [t, t.replace(/-/g, " "), cnt((g) => g.type === t)])]);
+chips("g-fit", "fit", [["all", "All"], ["1", "1", cnt((g) => g.remake_fit === 1)], ["2", "2", cnt((g) => g.remake_fit === 2)], ["3", "3", cnt((g) => g.remake_fit === 3)]]);
+const sl = document.getElementById("shortlist");
+sl.setAttribute("aria-pressed", String(state.short));
+sl.append(el("span", { class: "c" }, String(cnt((g) => g.short))));
+sl.addEventListener("click", () => { state.short = !state.short; sl.setAttribute("aria-pressed", String(state.short)); save(); render(); });
+document.getElementById("q").addEventListener("input", (e) => { state.q = e.target.value.trim().toLowerCase(); render(); });
+
+function liveBox(L) {
+  const box = el("div", { class: "livebox" });
+  const bits = [];
+  if (L.dur != null) bits.push(`Lasted <b>${L.dur.toFixed(0)} s</b> with 8 computer players`);
+  if (L.end === "game") bits.push("played to the end");
+  box.append(el("div", { html: bits.join(" · ") }));
+  if (L.note) box.append(el("div", { html: esc(L.note) }));
+  if (L.scores && L.scores.length) {
+    const s = el("div", { class: "scores", "aria-label": "Points scored, in the order they were awarded" });
+    for (const [p, pts] of L.scores) s.append(el("span", { style: `background:${PC[p - 1]};${p === 5 ? "color:#1b2230;" : ""}`, title: `Player ${p}: ${pts} points` }, String(pts)));
+    box.append(el("div", { style: "font-size:12px;color:var(--faint)" }, "Points per player, highest first (colour = player):"), s);
+  }
+  return box;
+}
+
+function detail(g) {
+  const d = el("div", { class: "detail" + (g.img ? "" : " noimg") });
+  if (g.img) d.append(el("figure", {}, el("img", { src: g.img, alt: `Arena map of ${g.name}`, loading: "lazy" }), el("figcaption", {}, "Arena from the pathing grid; grid = 128 u")));
+  const dl = el("dl", { class: "dl" });
+  const add = (k, v) => { dl.append(el("dt", {}, k)); const dd = el("dd"); if (typeof v === "string") dd.innerHTML = v; else dd.append(v); dl.append(dd); };
+  add("In-game text", `<span class="goal">${esc(g.goal)}</span>`);
+  add("Controls", esc(g.controls));
+  add("Main threat", esc(g.hazard));
+  const ul = el("ul", { class: "mono" }); g.key_numbers.forEach((k) => ul.append(el("li", {}, k))); add("Key numbers", ul);
+  add("Computer players", g.bots ? "The original has trigger-based bot logic for this game" : "No bot logic in the original: computer players idle or auto-attack");
+  add("Closest existing", g.hp_match ? esc(g.hp_match) : "Nothing like it in Hammerguy's Party yet");
+  if (g.bugs.length) { const b = el("ul"); g.bugs.forEach((x) => b.append(el("li", {}, x))); add("Bugs & oddities", b); }
+  if (g.live) add("Live run", liveBox(g.live));
+  d.append(dl);
+  return d;
+}
+
+function render() {
+  const list = document.getElementById("list");
+  list.textContent = "";
+  const q = state.q;
+  const shown = GAMES.filter((g) => (state.map === "all" || g.map === state.map) && (state.type === "all" || g.type === state.type) && (state.fit === "all" || String(g.remake_fit) === state.fit) && (!state.short || g.short) &&
+    (!q || (g.name + " " + g.variants.join(" ") + " " + g.core + " " + g.hazard + " " + (g.hp_match || "")).toLowerCase().includes(q)));
+  document.getElementById("count").textContent = `${shown.length} of ${GAMES.length}`;
+  if (!shown.length) { list.append(el("div", { class: "empty" }, "No minigame matches these filters. Clear the search or pick All.")); return; }
+  for (const g of shown) {
+    const key = g.map + g.n;
+    const open = state.open.has(key);
+    const row = el("article", { class: "row" + (g.short ? " short" : "") });
+    const head = el("button", { class: "head", "aria-expanded": String(open) });
+    head.append(el("div", { class: "n" }, `#${g.n}`, el("span", { class: "map" }, g.map === "4.0" ? "4.0" : "ULTIMA-X")));
+    const title = el("div", { class: "title" }, el("strong", {}, g.name));
+    if (g.variants.length) title.append(el("span", { class: "var" }, "also " + g.variants.join(", ")));
+    const pills = el("div", { class: "pills" }, el("span", { class: "pill" }, g.type.replace(/-/g, " ")), el("span", { class: "pill t" }, g.timer ? `${g.timer} s` : "no timer"));
+    if (g.live) pills.append(el("span", { class: "pill live" }, "played live"));
+    title.append(pills);
+    head.append(title);
+    head.append(el("div", { class: "core" }, g.core, el("small", {}, g.controls)));
+    const fit = el("div", { class: "fit", "data-f": String(g.remake_fit) }, el("div", { class: "pips", "aria-hidden": "true" }, el("i"), el("i"), el("i")), el("span", {}, `Fit ${g.remake_fit} · ${FIT[g.remake_fit]}`));
+    if (g.short) fit.append(el("span", { style: "color:var(--gold);font-weight:600" }, "Shortlisted"));
+    head.append(fit);
+    head.addEventListener("click", () => { if (state.open.has(key)) state.open.delete(key); else state.open.add(key); render(); });
+    row.append(head);
+    if (open) row.append(detail(g));
+    list.append(row);
+  }
+}
+render();
+</script>

@@ -137,6 +137,52 @@ export function golem() {
   return g;
 }
 
+// An orc catapult (or, with `demo`, a demolisher with a burning-oil pot).
+export function catapult(demo = false) {
+  const g = new THREE.Group();
+  const body = new THREE.Group();
+  g.add(body);
+  const wood = mat(demo ? '#5a3a24' : '#7a5230');
+  const dark = mat('#3e2a1a');
+  body.add(mesh(scaled(G.box, 1.6, 0.35, 1.0), wood, 0, 0.55, 0));
+  for (const [x, z] of [[0.6, 0.6], [0.6, -0.6], [-0.6, 0.6], [-0.6, -0.6]]) {
+    const w = mesh(scaled(G.cyl, 0.35, 0.14, 0.35), dark, x, 0.35, z);
+    w.rotation.x = Math.PI / 2;
+    body.add(w);
+  }
+  body.add(mesh(scaled(G.box, 0.2, 0.9, 0.2), dark, -0.3, 1.1, 0.4), mesh(scaled(G.box, 0.2, 0.9, 0.2), dark, -0.3, 1.1, -0.4));
+  const arm = new THREE.Group();
+  arm.position.set(-0.3, 1.4, 0);
+  arm.add(mesh(scaled(G.box, 1.7, 0.14, 0.14), wood, 0.2, 0, 0));
+  arm.add(mesh(scaled(G.sphereLo, 0.28), demo ? glowMat('#ff7a20') : mat('#777'), 1.0, 0.2, 0));
+  arm.rotation.z = -0.5;
+  body.add(arm);
+  if (demo) body.add(mesh(scaled(G.cone, 0.12, 0.5, 0.12), mat('#b0b0b0', { metalness: 0.6 }), 0.95, 0.6, 0));
+  g.userData = { body, arm, kind: 'siege' };
+  return g;
+}
+
+// An orc Beastmaster, channelling with raised axes.
+export function beastmaster() {
+  const g = new THREE.Group();
+  const body = new THREE.Group();
+  g.add(body);
+  const skin = mat('#5f8a3a');
+  body.add(mesh(scaled(G.cyl, 0.14, 0.6, 0.14), mat('#4a3020'), 0, 0.3, 0.16), mesh(scaled(G.cyl, 0.14, 0.6, 0.14), mat('#4a3020'), 0, 0.3, -0.16));
+  body.add(mesh(scaled(G.sphereLo, 0.42, 0.5, 0.48), skin, 0, 1.0, 0));
+  body.add(mesh(scaled(G.sphereLo, 0.2), skin, 0.1, 1.55, 0));
+  body.add(mesh(scaled(G.box, 0.35, 0.3, 0.7), mat('#6b4a2a'), -0.1, 1.2, 0));
+  for (const s of [1, -1]) {
+    body.add(mesh(scaled(G.cone, 0.06, 0.35, 0.06), mat('#eee6d0'), 0, 1.72, 0.12 * s));
+    const arm = mesh(scaled(G.cyl, 0.1, 0.7, 0.1), skin, 0.1, 1.55, 0.45 * s);
+    arm.rotation.x = -0.5 * s;
+    body.add(arm);
+    body.add(mesh(scaled(G.box, 0.08, 0.35, 0.3), mat('#aaa', { metalness: 0.6 }), 0.1, 1.95, 0.6 * s));
+  }
+  g.userData = { body, kind: 'beast' };
+  return g;
+}
+
 export function coin() {
   const g = new THREE.Group();
   const c = mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.08, 16), mat('#ffcc33', { metalness: 0.9, roughness: 0.25, emissive: '#553300' }), 0, 0.6, 0);

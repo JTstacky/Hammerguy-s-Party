@@ -417,6 +417,47 @@ export class World {
         v.parts = { inst, n };
         break;
       }
+      case 'catapult': obj = M.catapult(!!e.demo); break;
+      case 'beastmaster': obj = M.beastmaster(); break;
+      case 'lob': {
+        // A lobbed rock: flies from the siege engine to a fixed point. The
+        // ground rings mark the 40 % and 25 % splash tiers.
+        obj = new THREE.Group();
+        const c = e.oil ? '#ff8a30' : '#ff3a20';
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.88, 1, 36).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, depthWrite: false }));
+        const outer = new THREE.Mesh(new THREE.RingGeometry(0.96, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.3, depthWrite: false }));
+        const fill = new THREE.Mesh(new THREE.CircleGeometry(1, 36).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.25, depthWrite: false }));
+        ring.scale.setScalar(e.r);
+        outer.scale.setScalar(e.r2 || e.r);
+        ring.position.y = outer.position.y = fill.position.y = 0.06;
+        const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.28, 0), e.oil ? M.glowMat('#ff7a20') : M.mat('#5a5048'));
+        this.entGroup.add(rock);
+        obj.add(ring, outer, fill);
+        v.parts = { fill, rock, r: e.r };
+        break;
+      }
+      case 'oil': {
+        obj = new THREE.Group();
+        const fill = new THREE.Mesh(new THREE.CircleGeometry(1, 36).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff6a10', transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending }));
+        fill.position.y = 0.07;
+        fill.scale.setScalar(e.r);
+        obj.add(fill);
+        v.parts = { fill, r: e.r };
+        break;
+      }
+      case 'firewheel': {
+        // Uther Party's Wheel of Fire: a fire at the centre plus four spokes of five.
+        const n = 1 + 4 * e.rs.length;
+        const inst = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), new THREE.MeshBasicMaterial({ color: '#ff6a10', transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }), n);
+        const core = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ color: '#fff0b0', toneMapped: false }), n);
+        // The ground disc is the real kill radius (64 WC3 units).
+        const disc = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 28).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff5010', transparent: true, opacity: 0.22, depthWrite: false }), n);
+        for (const m of [inst, core, disc]) m.frustumCulled = false;
+        obj = new THREE.Group();
+        obj.add(disc, inst, core);
+        v.parts = { inst, core, disc, n };
+        break;
+      }
       case 'hill': {
         obj = new THREE.Group();
         const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ffd24a', transparent: true, opacity: 0.9, depthWrite: false }));
@@ -496,6 +537,7 @@ export class World {
 
   removeView(v) {
     this.entGroup.remove(v.obj);
+    if (v.k === 'lob') this.entGroup.remove(v.parts.rock);
     v.bar?.remove();
     v.obj.traverse((o) => {
       if (o.isInstancedMesh) o.dispose();
@@ -704,6 +746,75 @@ export class World {
         v.walk = (v.walk || 0) + dt * 10;
         o.userData.body.position.y = Math.abs(Math.sin(v.walk)) * 0.15;
         if (v.k === 'kodo' && Math.random() < 0.3) this.fx.smoke(x - Math.cos(f) * 1.2, 0.2, z - Math.sin(f) * 1.2, '#8a7a60', 1.2, 0.8);
+        break;
+      }
+      case 'catapult': {
+        o.position.set(x, 0, z);
+        o.rotation.y = -f;
+        // Swing the arm when it fires, then winch it back.
+        if (b.fire && !v.fired) v.swing = 1;
+        v.fired = !!b.fire;
+        v.swing = Math.max(0, (v.swing || 0) - dt * 2.5);
+        o.userData.arm.rotation.z = -0.5 + Math.sin(v.swing * Math.PI) * 1.6;
+        break;
+      }
+      case 'beastmaster':
+        o.position.set(x, 0, z);
+        o.rotation.y = -f;
+        o.userData.body.position.y = b.on ? Math.abs(Math.sin(this.time * 6)) * 0.08 : 0;
+        if (b.on && Math.random() < 0.15) this.fx.trail(x, 2.1, z, '#9be07a', 0.5, 0.5, 0.3);
+        break;
+      case 'lob': {
+        const t = lerp(a.t ?? 0, b.t ?? 0, k);
+        const p = v.parts;
+        o.position.set(x, 0, z);
+        p.fill.scale.setScalar(Math.max(0.01, p.r * t));
+        // Parabolic arc from the launcher to the target point.
+        const sx = b.sx ?? x;
+        const sz = b.sy ?? z;
+        const d = Math.hypot(x - sx, z - sz);
+        p.rock.position.set(lerp(sx, x, t), 1.4 + 4 * t * (1 - t) * Math.max(3, d * 0.45) - 1.2 * t, lerp(sz, z, t));
+        p.rock.rotation.set(t * 9, t * 7, 0);
+        if (Math.random() < 0.5) this.fx.trail(p.rock.position.x, p.rock.position.y, p.rock.position.z, b.oil ? '#ff8a30' : '#8a7a6a', 0.35, 0.35, 0.05);
+        break;
+      }
+      case 'oil': {
+        o.position.set(x, 0, z);
+        v.parts.fill.material.opacity = 0.25 + Math.min(1, b.t) * 0.15 + Math.sin(this.time * 12) * 0.05;
+        if (Math.random() < 0.7) {
+          const ang = Math.random() * Math.PI * 2;
+          const rr = Math.sqrt(Math.random()) * v.parts.r;
+          this.fx.trail(x + Math.cos(ang) * rr, 0.3, z + Math.sin(ang) * rr, Math.random() < 0.5 ? '#ff6a10' : '#ffc040', 0.7, 0.6, 0.2);
+        }
+        break;
+      }
+      case 'firewheel': {
+        const ang = lerpAngle(a.a, b.a, k);
+        const p = v.parts;
+        const dummy = new THREE.Object3D();
+        const pts = [[0, 0]];
+        for (let s = 0; s < 4; s++) {
+          const sa = ang + (s * Math.PI) / 2;
+          for (const r of b.rs) pts.push([Math.cos(sa) * r, Math.sin(sa) * r]);
+        }
+        pts.forEach(([px, pz], i) => {
+          const flick = 1 + Math.sin(this.time * 13 + i * 1.7) * 0.12;
+          dummy.position.set(px, 0.06, pz);
+          dummy.scale.setScalar(b.fr);
+          dummy.updateMatrix();
+          p.disc.setMatrixAt(i, dummy.matrix);
+          dummy.position.set(px, 0.8, pz);
+          dummy.scale.set(b.fr * 0.55 * flick, b.fr * 0.75 * flick, b.fr * 0.55 * flick);
+          dummy.updateMatrix();
+          p.inst.setMatrixAt(i, dummy.matrix);
+          dummy.scale.setScalar(b.fr * 0.25 * flick);
+          dummy.updateMatrix();
+          p.core.setMatrixAt(i, dummy.matrix);
+          if (Math.random() < 0.35) this.fx.trail(px, 1 + Math.random() * 0.8, pz, Math.random() < 0.5 ? '#ff7a20' : '#ffd060', 0.8, 0.45, 0.35);
+        });
+        p.inst.instanceMatrix.needsUpdate = true;
+        p.core.instanceMatrix.needsUpdate = true;
+        p.disc.instanceMatrix.needsUpdate = true;
         break;
       }
       case 'coin':
@@ -937,6 +1048,11 @@ export class World {
         fx.burst(e.x, 1, e.y, '#9fe8ff', { n: 40, speed: 5, size: 0.6, life: 0.6 });
         fx.flash(e.x, e.y, 2, '#9fe8ff');
         play('zap');
+        break;
+      case 'burn':
+        fx.burst(e.x, 1, e.y, '#ff7a20', { n: 40, speed: 5, size: 0.8, life: 0.7 });
+        for (let i = 0; i < 5; i++) fx.smoke(e.x, 0.6, e.y, '#2a2220', 1.5, 1.3);
+        play('death');
         break;
       case 'squish':
         fx.burst(e.x, 0.3, e.y, '#8a7a60', { n: 30, speed: 4, size: 1, life: 0.8, additive: false });

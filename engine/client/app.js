@@ -12,6 +12,9 @@ import { renderShell } from './shell.js';
 import { PLAYER_COLORS } from '../shared/constants.js';
 
 const $ = (id) => document.getElementById(id);
+// ?only=<minigame id> makes every game in the party that minigame (practice).
+// Read at load: hosting rewrites the URL.
+const ONLY = new URLSearchParams(location.search).get('only') || undefined;
 
 export function startApp(cfg) {
   const transport = new URLSearchParams(location.search).get('transport') || import.meta.env?.VITE_TRANSPORT || 'p2p';
@@ -43,7 +46,9 @@ export function startApp(cfg) {
     onChatKey: toggleChat,
     onMenu: () => ($('options').hidden = !$('options').hidden),
   });
-  input.quickCast = store('quick') !== '0';
+  // WC3's default is hotkey, then click the target; a game can default to quick-cast.
+  const quick = store('quick');
+  input.quickCast = quick != null ? quick !== '0' : cfg.quickCast !== false;
   world.onMessage = (e) => addChat(e.text, { color: e.c, system: !e.c });
 
   function showBackdrop() {
@@ -117,7 +122,7 @@ export function startApp(cfg) {
   $('addbot').onclick = () => send({ t: 'addBot' });
   $('start').onclick = () => {
     unlockAudio();
-    send({ t: 'start' });
+    send({ t: 'start', only: ONLY });
   };
   $('players').addEventListener('click', (e) => {
     const kick = e.target.closest('[data-kick]');

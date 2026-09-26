@@ -110,6 +110,7 @@ const SOUNDS = {
   splash: () => noise({ dur: 0.7, gain: 0.35, f0: 3000, f1: 200, type: 'bandpass', q: 0.6 }),
   squish: () => noise({ dur: 0.3, gain: 0.4, f0: 400, f1: 60 }),
   kodo: () => tone({ type: 'sawtooth', f0: 90, f1: 60, dur: 0.5, gain: 0.12 }),
+  mortar: () => noise({ dur: 0.25, gain: 0.12, f0: 300, f1: 90 }),
   smack: () => noise({ dur: 0.2, gain: 0.35, f0: 800, f1: 100 }),
   shove: () => {
     tone({ type: 'sine', f0: 180, f1: 60, dur: 0.25, gain: 0.3 });
