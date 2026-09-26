@@ -17,7 +17,7 @@ const TICK = 0.05;
 
 export class WispWheel extends Minigame {
   static id = 'wisp';
-  static name = 'Wisp Wheel';
+  static name = 'Wheel of Fire';
   static desc = 'Four spokes of wisp fire turn round the glade, faster and faster, then reverse. Touch a flame and you are out. Run with the wheel! Last one standing wins.';
   static controls = 'Right-click to move. Q, then click a rival: Purge (once per game) slows them to a crawl.';
   static duration = 300;

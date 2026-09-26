@@ -75,6 +75,7 @@ export class Unit {
     this.turnRate = WC3.DEFAULT_TURN_RATE; // radians per 0.03 s step (object editor "Turn Rate")
     this.propWindow = WC3.DEFAULT_PROP_WINDOW;
     this.faceTo = null; // angle to turn toward without walking (e.g. before a cast)
+    this.skin = null; // hero look other than the paladin (client/views registers it)
     this.target = null; // {x, y} move order
     this.alive = true;
     this.hp = hp;
@@ -321,6 +322,7 @@ export function unitSnap(u, extra = {}) {
     s.mhp = u.maxHp;
   }
   if (!u.alive) s.dead = 1;
+  if (u.skin) s.sk = u.skin;
   if (u.mx || u.my) s.mv = 1;
   else if (u.turning) s.tn = 1;
   return Object.assign(s, extra);

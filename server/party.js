@@ -5,7 +5,7 @@
 // tied leaders play tie-breaker minigames among themselves, as in the original.
 
 import { shuffle, round1 } from '../engine/server/sim.js';
-import { MINIGAMES } from './minigames/index.js';
+import { MINIGAMES, ROLL } from './minigames/index.js';
 
 const INTRO_TIME = 6;
 const RESULTS_TIME = 6;
@@ -30,7 +30,7 @@ export class HammerguysParty {
   }
 
   nextGame(pids = this.pids) {
-    if (!this.queue.length) this.queue = shuffle([...MINIGAMES]);
+    if (!this.queue.length) this.queue = shuffle([...ROLL]);
     let Game = this.queue.shift();
     const tie = pids !== this.pids;
     // A tie-breaker needs a game that one of the tied players is sure to win.

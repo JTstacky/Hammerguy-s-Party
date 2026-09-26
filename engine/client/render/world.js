@@ -3,10 +3,13 @@
 // Warcraft III-style camera (56° angle of attack, following your hero).
 
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import * as M from './models.js';
 import { LITE, FX_DENSITY } from '../device.js';
 import { Effects, fxTexture } from './effects.js';
 import { blendedGround } from './terrain.js';
+import { VIEWS, SKINS, EVENTS, THEMES_EXTRA, MAP_BUILDERS } from './registry.js';
+import './basics.js';
 import { play } from '../audio.js';
 
 const INTERP_DELAY = 0.11; // seconds behind the newest snapshot
@@ -186,6 +189,12 @@ export class World {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.scene = new THREE.Scene();
+    // A soft studio environment so metal and glossy surfaces have something
+    // to reflect (plate, silver hammers, gold trim); otherwise they read as grey.
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.scene.environmentIntensity = 0.45;
+    pmrem.dispose();
     this.camera = new THREE.PerspectiveCamera(50, 1, 0.5, 400);
     this.hemi = new THREE.HemisphereLight('#fff', '#333', 1.2);
     this.sun = new THREE.DirectionalLight('#fff', 2.4);
@@ -253,7 +262,9 @@ export class World {
     this.liquids = [];
     this.animated = [];
     this.floorMesh = null;
-    const theme = THEMES[map.theme] || THEMES.grass;
+    const extra = THEMES_EXTRA.get(map.theme);
+    const theme = extra?.theme || THEMES[map.theme] || THEMES.grass;
+    const groundLayers = GROUNDS[map.theme] || extra?.ground;
     this.scene.background = new THREE.Color(theme.sky);
     this.scene.fog = new THREE.Fog(theme.fog, 45, 110);
     this.hemi.color.set(theme.hemi[0]);
@@ -318,8 +329,8 @@ export class World {
           this.mapGroup.add(berg);
         }
       }
-    } else if (GROUNDS[map.theme]) {
-      const ground = blendedGround(GROUNDS[map.theme], f);
+    } else if (groundLayers) {
+      const ground = blendedGround(groundLayers, f);
       ground.position.y = 0.01;
       this.mapGroup.add(ground);
     } else {
@@ -365,6 +376,7 @@ export class World {
     }
 
     for (const p of map.props || []) this.addProp(p, map.theme);
+    for (const name of map.build || []) MAP_BUILDERS.get(name)?.(map, this);
   }
 
   addProp(p, theme) {
@@ -446,7 +458,10 @@ export class World {
     const v = { id: e.id, k: e.k, owner: e.o, deadT: 0 };
     switch (e.k) {
       case 'warlock': obj = M.warlock(color); break;
-      case 'paladin': obj = M.paladin(color); break;
+      case 'paladin':
+        v.sk = e.sk;
+        obj = e.sk && SKINS.has(e.sk) ? SKINS.get(e.sk)(color) : M.paladin(color);
+        break;
       case 'kodo': obj = M.kodo(); break;
       case 'golem': obj = M.golem(); break;
       case 'coin': obj = M.coin(); break;
@@ -553,7 +568,10 @@ export class World {
         break;
       }
       default:
-        if (e.k.startsWith('p_')) {
+        if (VIEWS.has(e.k)) {
+          v.def = VIEWS.get(e.k);
+          obj = v.def.make(e, this, v);
+        } else if (e.k.startsWith('p_')) {
           const spell = e.k.slice(2);
           const c = this.spellColors[spell] || '#fff';
           obj = new THREE.Group();
@@ -578,7 +596,7 @@ export class World {
         }
     }
     // Models are drawn larger than their collision size, as in WC3.
-    if (e.k === 'warlock' || e.k === 'paladin') obj.userData.body.scale.setScalar(1.45);
+    if (e.k === 'warlock' || (e.k === 'paladin' && !v.sk)) obj.userData.body.scale.setScalar(1.45);
     v.obj = obj;
     this.entGroup.add(obj);
 
@@ -612,6 +630,7 @@ export class World {
     this.entGroup.remove(v.obj);
     if (v.k === 'lob') this.entGroup.remove(v.parts.rock);
     v.bar?.remove();
+    v.def?.remove?.(v, this);
     v.obj.traverse((o) => {
       if (o.isInstancedMesh) o.dispose();
     });
@@ -651,6 +670,11 @@ export class World {
       for (const [id, eb] of b.ents) {
         const ea = a.ents.get(id) || eb;
         let v = this.views.get(id);
+        // A hero whose look changed (polymorphed, transformed) gets a new model.
+        if (v && v.k === 'paladin' && (eb.sk || undefined) !== (v.sk || undefined)) {
+          this.removeView(v);
+          v = null;
+        }
         if (!v) {
           v = this.makeView(eb);
           this.views.set(id, v);
@@ -768,7 +792,7 @@ export class World {
         v.raise = Math.max(0, Math.min(1, (v.raise || 0) + dt * (windup ? 8 : -5)));
         if (v.castT > 0) v.castT -= dt;
         const swing = v.castT > 0 ? Math.sin((v.castT / 0.3) * Math.PI) : 0;
-        o.userData.staff.rotation.x = -(v.raise * 0.9 + swing * 0.6);
+        if (o.userData.staff) o.userData.staff.rotation.x = -(v.raise * 0.9 + swing * 0.6);
         // Sinks a little when standing in lava.
         const inLava = fx.includes('burn');
         const targetY = inLava ? -0.3 : 0;
@@ -979,6 +1003,14 @@ export class World {
         o.position.set(x, 0, z);
         break;
       default:
+        if (v.def) {
+          v.f = f;
+          o.position.x = x;
+          o.position.z = z;
+          o.rotation.y = -f;
+          v.def.update?.(v, a, b, k, dt, this);
+          break;
+        }
         if (v.spell) {
           o.position.x = x;
           o.position.z = z;
@@ -1225,6 +1257,8 @@ export class World {
       case 'sfx':
         play(e.s);
         break;
+      default:
+        EVENTS.get(e.k)?.(e, this);
     }
   }
 }

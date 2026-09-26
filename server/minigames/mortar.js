@@ -26,7 +26,7 @@ const DEMOLISHER = { base: 71, dice: 3, sides: 18 };
 
 export class MortarMayhem extends Minigame {
   static id = 'mortar';
-  static name = 'Mortar Mayhem';
+  static name = 'Peon Pandemonium';
   static desc = 'Catapults on the banks lob rocks into the pit, and more arrive every few seconds. Watch the rocks and keep moving. Last one standing wins.';
   static controls = 'Right-click to move. You have 50 HP: near misses only hurt, direct hits kill.';
   static duration = 300;

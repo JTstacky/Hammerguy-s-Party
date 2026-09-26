@@ -337,3 +337,4 @@ body.touch #centercard { transform: translate(-50%, -55%); max-height: calc(100d
 body:not(.inlobby) #fullbtn { right: calc(max(8px, env(safe-area-inset-right)) + 42px); top: 4px; }
 body.touch #cmdcard, body.touch #fullbtn, body.touch #hud-menu { touch-action: manipulation; }
 body.touch #cmdcard { touch-action: none; }
+#topbar .hudlabel { color: #ffe38a; font-weight: 700; }

@@ -3,7 +3,7 @@
 // A minigame decides how many points each player earns using Uther Party's
 // "ante" rules (see payouts()).
 
-import { Unit, stepUnits, collideUnits, dist, rand, round1, round2, unitSnap, wc3 } from '../engine/server/sim.js';
+import { Unit, stepUnits, collideUnits, dist, rand, round1, round2, unitSnap, wc3, newId } from '../engine/server/sim.js';
 
 export const SHOVE = { cd: 3, radius: 2.6, force: 11 };
 
@@ -27,6 +27,18 @@ export class Minigame {
     this.bots = new Map(pids.filter((p) => party.room.isBot(p)).map((p) => [p, { think: rand(0, 0.3), mem: { skill: rand(0.45, 0.9) } }]));
     this.shove = null; // set to {cd, radius, force} to enable the Q ability
     this.spell = null; // or a targeted spell: {name, icon, desc, cd, charges, range, castPoint, cast(pid, u, x, y)}
+    // Or up to four abilities on Q W E R (see useAbility). Each:
+    //   { name, icon, desc, kind: 'instant' | 'point' | 'unit', cd, charges, range, castPoint,
+    //     pickTarget(pid, u, x, y) -> {x, y, u?} | null, cast(pid, u, tgt), available(pid) -> bool }
+    // 'instant' fires at once (or after castPoint) on the caster; 'point' and 'unit' turn
+    // to face the target first, WC3 style. Per-player cooldowns and charges are kept here.
+    this.abilities = [];
+    this.acd = new Map(pids.map((p) => [p, [0, 0, 0, 0]]));
+    this.acharges = new Map();
+    // WC3 attacks: right-click on something attackable to attack it (see stepAttacks).
+    //   { range, cd, point (damage point, s), dmg, missile (speed, or 0 for melee), art }
+    this.attack = null;
+    this.missiles = [];
     this.charges = new Map();
     this.friction = 2.4;
   }
@@ -47,6 +59,7 @@ export class Minigame {
       this.heroes.set(pid, u);
     });
     if (this.spell?.charges) for (const pid of this.pids) this.charges.set(pid, this.spell.charges);
+    for (const pid of this.pids) this.acharges.set(pid, this.abilities.map((a) => a.charges ?? null));
   }
 
   ringPositions(radius) {
@@ -117,6 +130,15 @@ export class Minigame {
   command(pid, m) {
     const u = this.heroes.get(pid);
     if (!u || !u.alive || u.finished) return;
+    if (this.attack && (m.c === 'move' || m.c === 'stop')) {
+      // A right-click on something attackable is an attack order; anything else cancels it.
+      const tgt = m.c === 'move' ? this.attackTargetAt(pid, +m.x || 0, +m.y || 0) : null;
+      u.attackOrder = tgt;
+      if (tgt) {
+        if (u.cast) u.cast.queued = null;
+        return;
+      }
+    } else if (m.c === 'steer') u.attackOrder = null;
     if (m.c === 'move' || m.c === 'steer' || m.c === 'stop') {
       // Orders given during a cast point wait for it: a right-click does not cancel it.
       if (u.cast) u.cast.queued = m.c === 'stop' ? 'stop' : { x: +m.x || 0, y: +m.y || 0 };
@@ -124,6 +146,7 @@ export class Minigame {
       else if (m.c === 'steer') u.steer(+m.x || 0, +m.y || 0);
       else u.stop();
     } else if (m.c === 'cast') {
+      if (this.abilities.length) return this.useAbility(pid, slotOf(m), +m.x || 0, +m.y || 0);
       if (this.shove) this.doShove(pid);
       else if (this.spell) this.castSpell(pid, +m.x || 0, +m.y || 0);
     }
@@ -144,12 +167,43 @@ export class Minigame {
     u.faceTo = u.cast.angle;
   }
 
+  // Uses ability `slot` (0-3 = Q W E R) at the clicked point.
+  useAbility(pid, slot, x, y) {
+    const u = this.heroes.get(pid);
+    const ab = this.abilities[slot];
+    if (!ab || !u?.alive || u.cast) return;
+    if ((this.acd.get(pid)?.[slot] || 0) > 0) return;
+    const left = this.acharges.get(pid)?.[slot];
+    if (left != null && left <= 0) return;
+    if (ab.available && !ab.available(pid)) return;
+    if (ab.kind === 'instant' || ab.kind === 'self') {
+      const tgt = { x: u.x, y: u.y, u };
+      if (!ab.castPoint) return this.finishAbility(pid, u, ab, slot, tgt);
+      u.stop();
+      u.cast = { tgt, angle: u.heading, t: 0, ab, slot };
+      return;
+    }
+    const tgt = ab.pickTarget ? ab.pickTarget(pid, u, x, y) : { x, y };
+    if (!tgt) return;
+    u.stop();
+    u.attackOrder = null;
+    u.cast = { tgt, angle: Math.atan2(tgt.y - u.y, tgt.x - u.x), t: -1, ab, slot };
+    u.faceTo = u.cast.angle;
+  }
+
+  finishAbility(pid, u, ab, slot, tgt) {
+    this.acd.get(pid)[slot] = ab.cd || 0;
+    const ch = this.acharges.get(pid);
+    if (ch && ch[slot] != null) ch[slot]--;
+    ab.cast(pid, u, tgt);
+  }
+
   stepCasts(dt) {
-    const sp = this.spell;
-    if (!sp) return;
     for (const [pid, u] of this.heroes) {
       const c = u.cast;
       if (!c || !u.alive) continue;
+      const sp = c.ab || this.spell;
+      if (!sp) continue;
       if (c.t < 0) {
         // Keep facing a moving unit target while turning.
         if (c.tgt.u) {
@@ -164,11 +218,14 @@ export class Minigame {
         continue;
       }
       c.t += dt;
-      if (c.t < sp.castPoint) continue;
+      if (c.t < (sp.castPoint || 0)) continue;
       u.cast = null;
-      this.cds.set(pid, sp.cd || 0);
-      if (sp.charges) this.charges.set(pid, this.charges.get(pid) - 1);
-      sp.cast(pid, u, c.tgt);
+      if (c.ab) this.finishAbility(pid, u, c.ab, c.slot, c.tgt);
+      else {
+        this.cds.set(pid, sp.cd || 0);
+        if (sp.charges) this.charges.set(pid, this.charges.get(pid) - 1);
+        sp.cast(pid, u, c.tgt);
+      }
       if (c.queued === 'stop') u.stop();
       else if (c.queued) u.order(c.queued.x, c.queued.y);
     }
@@ -188,8 +245,110 @@ export class Minigame {
   }
 
   // Standard per-tick hero update. Subclasses call this from tick().
+  // Everything a hero may attack: other living heroes by default. Games with
+  // attackable creatures override this to add them (units with hp).
+  attackables(pid) {
+    return [...this.heroes.values()].filter((v) => v.alive && v.owner !== pid);
+  }
+
+  // The attackable unit under a right-click, if any (a generous click radius).
+  attackTargetAt(pid, x, y) {
+    let best = null;
+    let bd = Infinity;
+    for (const v of this.attackables(pid)) {
+      const d = dist(x, y, v.x, v.y) - v.r;
+      if (d < 0.9 && d < bd) {
+        bd = d;
+        best = v;
+      }
+    }
+    return best;
+  }
+
+  // WC3 attack orders: walk into range, turn to face, then swing. The hit is
+  // decided when the swing starts (engine.md: melee commits), and lands after
+  // the damage point; ranged attacks fire a homing missile then.
+  stepAttacks(dt) {
+    const A = this.attack;
+    if (!A) return;
+    for (const [pid, u] of this.heroes) {
+      if (u.atkCd > 0) u.atkCd -= dt;
+      if (u.swing) {
+        u.swing.t += dt;
+        if (u.swing.t >= (A.point ?? 0.3)) {
+          const tgt = u.swing.tgt;
+          u.swing = null;
+          if (A.missile) this.missiles.push({ id: newId(), x: u.x, y: u.y, tgt, pid, speed: A.missile, art: A.art || 'arrow' });
+          else if (tgt.alive) this.attackHit(pid, u, tgt);
+        }
+        continue;
+      }
+      const t = u.attackOrder;
+      if (!t) continue;
+      if (!u.alive || !t.alive || u.cast) {
+        if (!t.alive) u.attackOrder = null;
+        continue;
+      }
+      const gap = dist(u.x, u.y, t.x, t.y) - u.r - t.r;
+      if (gap > (A.range ?? 0.4)) {
+        if (u.target) u.steer(t.x, t.y);
+        else u.order(t.x, t.y);
+        continue;
+      }
+      if (u.target) u.stop();
+      const ang = Math.atan2(t.y - u.y, t.x - u.x);
+      if (!u.facingAt(ang, 0.35)) {
+        u.faceTo = ang;
+        continue;
+      }
+      u.faceTo = null;
+      if (u.atkCd > 0) continue;
+      u.atkCd = A.cd ?? 1.5;
+      u.swing = { t: 0, tgt: t };
+      this.ev({ k: 'swing', u: u.id });
+    }
+    for (const m of this.missiles) {
+      const tx = m.tgt.x - m.x;
+      const ty = m.tgt.y - m.y;
+      const d = Math.hypot(tx, ty);
+      const step = m.speed * dt;
+      if (d <= step || !m.tgt.alive) {
+        m.done = true;
+        if (m.tgt.alive) this.attackHit(m.pid, this.heroes.get(m.pid), m.tgt);
+        continue;
+      }
+      m.x += (tx / d) * step;
+      m.y += (ty / d) * step;
+      m.f = Math.atan2(ty, tx);
+    }
+    this.missiles = this.missiles.filter((m) => !m.done);
+  }
+
+  // An attack lands. Heroes take damage through damage(); other units lose hp
+  // and call onUnitKilled when it runs out. Games override for special rules.
+  attackHit(pid, u, tgt) {
+    const dmg = this.attack.dmg ?? 10;
+    this.ev({ k: 'hit', x: round1(tgt.x), y: round1(tgt.y) });
+    if (tgt.kind === 'paladin' && this.heroes.get(tgt.owner) === tgt) return this.damage(tgt.owner, dmg);
+    tgt.hp -= dmg;
+    if (dmg >= 1) this.ev({ k: 'dmg', x: round1(tgt.x), y: round1(tgt.y), n: Math.round(dmg) });
+    if (tgt.hp <= 0 && tgt.alive) {
+      tgt.alive = false;
+      this.onUnitKilled(tgt, pid);
+    }
+  }
+
+  onUnitKilled(unit) {
+    this.ev({ k: 'death', x: round1(unit.x), y: round1(unit.y), u: unit.id });
+  }
+
+  missileEnts() {
+    return this.missiles.map((m) => ({ id: m.id, k: 'missile', x: round2(m.x), y: round2(m.y), f: round2(m.f || 0), m: m.art }));
+  }
+
   stepHeroes(dt) {
     for (const [pid, cd] of this.cds) if (cd > 0) this.cds.set(pid, cd - dt);
+    for (const cds of this.acd.values()) for (let i = 0; i < 4; i++) if (cds[i] > 0) cds[i] -= dt;
     for (const [pid, b] of this.bots) {
       const u = this.heroes.get(pid);
       if (!u?.alive || u.finished) continue;
@@ -200,6 +359,7 @@ export class Minigame {
       }
     }
     const list = [...this.heroes.values()];
+    this.stepAttacks(dt);
     stepUnits(list, dt, { friction: this.friction });
     this.stepCasts(dt);
     collideUnits(list);
@@ -308,7 +468,7 @@ export class Minigame {
     for (const [hp, u] of this.heroes) {
       const fx = [];
       if (u.finished) fx.push('finished');
-      if (u.cast && u.cast.t >= 0) fx.push('casting');
+      if ((u.cast && u.cast.t >= 0) || u.swing) fx.push('casting');
       if (u.speedMult < 0.95) fx.push('slow');
       if (this.party.hasBomb?.(hp)) fx.push('bomb');
       const extra = fx.length ? { fx } : {};
@@ -326,7 +486,22 @@ export class Minigame {
     return null;
   }
 
+  abilitiesSnap(pid) {
+    if (!this.abilities.length) {
+      const a = this.abilitySnap(pid);
+      return a ? [a] : [];
+    }
+    const cds = this.acd.get(pid) || [];
+    const ch = this.acharges.get(pid) || [];
+    return this.abilities.map((ab, i) => {
+      const left = ch[i] ?? null;
+      const off = ab.available ? !ab.available(pid) : false;
+      return { name: ab.name, key: 'QWER'[i], cd: round2(Math.max(0, cds[i] || 0)), max: ab.cd || 1, icon: ab.icon, desc: ab.desc, target: ab.kind === 'point' || ab.kind === 'unit', range: ab.range, left, empty: left === 0 || off };
+    });
+  }
+
   abilitySnap(pid) {
+    if (this.abilities.length) return this.abilitiesSnap(pid)[0];
     const cd = this.cds.get(pid) || 0;
     if (this.shove) return { name: this.shoveName || 'Holy Shove', key: 'Q', cd: round2(Math.max(0, cd)), max: this.shove.cd, icon: '🔨', desc: 'Knock back nearby hammerguys.' };
     const sp = this.spell;
@@ -337,10 +512,11 @@ export class Minigame {
 
   snapshot(pid) {
     return {
-      ents: [...this.heroEnts(pid), ...this.worldEnts(pid)],
+      ents: [...this.heroEnts(pid), ...this.worldEnts(pid), ...this.missileEnts()],
       hud: this.hud(pid),
       scores: this.meta.ranking === 'score' ? Object.fromEntries([...this.scores].map(([k, v]) => [k, Math.floor(v)])) : null,
       ability: this.abilitySnap(pid),
+      abilities: this.abilitiesSnap(pid),
     };
   }
 
@@ -349,3 +525,10 @@ export class Minigame {
   }
 }
 
+
+// Ability slot from a cast command: {slot: 1} or {spell: 's1'}; slot 0 otherwise.
+function slotOf(m) {
+  if (Number.isInteger(m.slot)) return Math.max(0, Math.min(3, m.slot));
+  const r = /^s([0-3])$/.exec(String(m.spell ?? ''));
+  return r ? +r[1] : 0;
+}

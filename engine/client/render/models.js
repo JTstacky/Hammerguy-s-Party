@@ -72,19 +72,19 @@ export function triMat(file, base, tint = '#ffffff', scale = 1, opts = {}) {
 }
 
 export const boulderMat = () => triMat('tex_boulder.webp', '#77746e', '#b4b2ae', 0.9);
-const plateMat = () => texMat('tex_plate.webp', '#b8bcc6', '#e8ecf4', 1, { metalness: 0.55, roughness: 0.4 });
-const goldMat = () => mat('#d8a834', { metalness: 0.75, roughness: 0.32 });
-const hideMat = () => triMat('tex_hide.webp', '#8a6a4a', '#e0c8a8', 1.1);
-const furMat = (tint = '#ffffff') => texMat('tex_fur.webp', '#5a3e28', tint, 2);
-const leatherMat = (tint = '#ffffff') => texMat('tex_leather.webp', '#5a3020', tint, 1);
-const barkMat = () => texMat('tex_bark.webp', '#5b3d22', '#d8c8b8', 1);
-const boneMat = () => mat('#eee4cc', { roughness: 0.5 });
+export const plateMat = () => texMat('tex_plate.webp', '#b8bcc6', '#e8ecf4', 1, { metalness: 0.55, roughness: 0.4 });
+export const goldMat = () => mat('#d8a834', { metalness: 0.75, roughness: 0.32 });
+export const hideMat = () => triMat('tex_hide.webp', '#8a6a4a', '#e0c8a8', 1.1);
+export const furMat = (tint = '#ffffff') => texMat('tex_fur.webp', '#5a3e28', tint, 2);
+export const leatherMat = (tint = '#ffffff') => texMat('tex_leather.webp', '#5a3020', tint, 1);
+export const barkMat = () => texMat('tex_bark.webp', '#5b3d22', '#d8c8b8', 1);
+export const boneMat = () => mat('#eee4cc', { roughness: 0.5 });
 
 export function glowMat(color, opacity = 1) {
   return new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity, toneMapped: false });
 }
 
-function mesh(geo, material, x = 0, y = 0, z = 0) {
+export function mesh(geo, material, x = 0, y = 0, z = 0) {
   const m = new THREE.Mesh(geo, material);
   m.position.set(x, y, z);
   m.castShadow = true;
@@ -92,32 +92,32 @@ function mesh(geo, material, x = 0, y = 0, z = 0) {
   return m;
 }
 
-const G = {
+export const G = {
   sphere: new THREE.SphereGeometry(1, 20, 14),
   cone: new THREE.ConeGeometry(1, 1, 16),
   cyl: new THREE.CylinderGeometry(1, 1, 1, 16),
   box: new THREE.BoxGeometry(1, 1, 1),
 };
 
-function scaled(geo, sx, sy = sx, sz = sx) {
+export function scaled(geo, sx, sy = sx, sz = sx) {
   const g = geo.clone();
   g.scale(sx, sy, sz);
   return g;
 }
 
-function darken(hex, k) {
+export function darken(hex, k) {
   return new THREE.Color(hex).multiplyScalar(k);
 }
 
 // A solid of revolution round Y from [radius, height] pairs.
-function lathe(profile, segs = 20) {
+export function lathe(profile, segs = 20) {
   return new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(Math.max(0.0001, r), y)), segs);
 }
 
 // A tube along a smooth curve through `pts`, tapering from r0 to r1: horns,
 // tusks, limbs, hafts, plumes.
 const tv = new THREE.Vector3();
-function tube(pts, r0, r1 = r0, segs = 12, radial = 10) {
+export function tube(pts, r0, r1 = r0, segs = 12, radial = 10) {
   const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
   const g = new THREE.TubeGeometry(curve, segs, 1, radial, false);
   const pos = g.attributes.position;
@@ -137,7 +137,7 @@ function tube(pts, r0, r1 = r0, segs = 12, radial = 10) {
 // A lumpy organic shape: an ellipsoid pushed in and out by smooth noise, with
 // shared vertices so it shades smoothly, and a planar UV that wraps a tiling
 // texture without a seam. Seeded so every copy of a model matches.
-function blob(sx, sy, sz, { amt = 0.12, freq = 2.2, seed = 1, detail = 3 } = {}) {
+export function blob(sx, sy, sz, { amt = 0.12, freq = 2.2, seed = 1, detail = 3 } = {}) {
   let g = new THREE.IcosahedronGeometry(1, detail);
   g.deleteAttribute('uv');
   g.deleteAttribute('normal');
@@ -166,7 +166,7 @@ function blob(sx, sy, sz, { amt = 0.12, freq = 2.2, seed = 1, detail = 3 } = {})
 }
 
 // A flat axe blade in the XY plane, cutting edge toward +X.
-function axeBlade(w = 0.45, h = 0.55) {
+export function axeBlade(w = 0.45, h = 0.55) {
   const sh = new THREE.Shape();
   sh.moveTo(0, -0.08);
   sh.quadraticCurveTo(w * 0.5, -h * 0.35, w, -h * 0.5);
@@ -182,7 +182,7 @@ function axeBlade(w = 0.45, h = 0.55) {
 // across Z, its sides curling toward +X by `bend` and its hem trailing
 // toward -X by `sway`. A cape at the back wraps round the body as is; turn
 // a front panel by PI.
-function cloth(w, h, bend = 0.15, sway = 0) {
+export function cloth(w, h, bend = 0.15, sway = 0) {
   const g = new THREE.PlaneGeometry(w, h, 6, 8);
   const pos = g.attributes.position;
   for (let i = 0; i < pos.count; i++) {
@@ -262,17 +262,36 @@ export function paladin(color) {
   };
   const arm = (s, fwd) => mesh(tube([[0, 1.12, 0.36 * s], [0.08 + fwd * 0.1, 0.9, 0.4 * s], [0.12 + fwd * 0.2, 0.72, 0.3 * s]], 0.085, 0.075, 8, 8), steel);
   const fist = (s, fwd) => mesh(scaled(G.sphere, 0.08), steel, 0.12 + fwd * 0.2, 0.7, 0.3 * s);
-  const hammer = new THREE.Group();
+  const hammer = warhammer();
   hammer.position.set(0.15, 0.9, -0.42);
-  hammer.add(mesh(tube([[0, -0.4, 0], [0, 0.3, 0], [0, 0.72, 0]], 0.03, 0.028), mat('#6b4a2a')));
-  const head = mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.4, 16).rotateX(Math.PI / 2), gold, 0, 0.78, 0);
-  head.rotation.y = Math.PI / 2;
-  hammer.add(head);
-  for (const e of [-1, 1]) hammer.add(mesh(new THREE.CylinderGeometry(0.125, 0.125, 0.04, 16).rotateZ(Math.PI / 2), steel, 0.2 * e, 0.78, 0));
-  hammer.add(mesh(scaled(G.cone, 0.05, 0.16, 0.05), steel, 0, 0.96, 0));
   hammer.rotation.z = -0.3;
   body.add(legL, legR, torso, faulds, belt, tabard, cape, gorget, helm, visor, crest, plume, pauld(1), pauld(-1), arm(1, 0.3), fist(1, 0.3), arm(-1, 0), fist(-1, 0), hammer);
   g.userData = { body, staff: hammer, legL, legR, kind: 'hero' };
+  return g;
+}
+
+// A paladin's warhammer: a chunky octagonal silver head with flared striking
+// faces and a back spike on a stout haft with a leather grip, gold only on the
+// collar and rims. Group origin is the grip; the head sits at y = 0.8.
+export const silverMat = () => mat('#dfe3ea', { metalness: 0.85, roughness: 0.22 });
+export function warhammer() {
+  const g = new THREE.Group();
+  const silver = silverMat();
+  const gold = goldMat();
+  g.add(mesh(tube([[0, -0.45, 0], [0.005, 0.2, 0], [0, 0.72, 0]], 0.042, 0.036, 6, 10), mat('#5a3a1e', { roughness: 0.6 })));
+  g.add(mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.34, 12), leatherMat(), 0, -0.2, 0));
+  g.add(mesh(scaled(G.sphere, 0.065), gold, 0, -0.47, 0));
+  // Head, lathed along its own axis (X): flared faces, a waisted middle.
+  const head = mesh(lathe([[0.001, -0.27], [0.15, -0.27], [0.16, -0.24], [0.12, -0.2], [0.1, -0.08], [0.11, 0], [0.1, 0.08], [0.12, 0.2], [0.16, 0.24], [0.15, 0.27], [0.001, 0.27]], 8), silver, 0, 0.8, 0);
+  head.rotation.z = Math.PI / 2;
+  g.add(head);
+  for (const e of [-1, 1]) {
+    const rim = mesh(new THREE.TorusGeometry(0.145, 0.018, 6, 8), gold, 0.235 * e, 0.8, 0);
+    rim.rotation.y = Math.PI / 2;
+    g.add(rim);
+  }
+  g.add(mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.12, 10), gold, 0, 0.64, 0));
+  g.add(mesh(scaled(G.cone, 0.06, 0.2, 0.06), silver, 0, 1.0, 0));
   return g;
 }
 

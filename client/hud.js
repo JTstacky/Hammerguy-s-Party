@@ -10,7 +10,7 @@ export class PartyHud extends HudBase {
     this.set('topbar', `
       <div class="tb-left">${s.tiebreak ? '<b>Tie-breaker</b>' : `Game <b>${s.index}</b> / ${s.total}`}</div>
       <div class="tb-mid"><span class="phase">${escapeHtml(s.mg.name)}</span> <span class="clock" title="${s.elapsed ? 'No time limit: time played' : 'Time left'}">${s.phase === 'play' ? (s.elapsed ? '⏱ ' : '') + fmtTime(s.timer) : ''}</span></div>
-      <div class="tb-right">${s.hud?.fuse != null ? `<span class="fuse">💣 ${s.hud.fuse.toFixed(1)}s</span>` : ''}<span class="gold">⭐ ${s.points[me] ?? 0} pts</span></div>`);
+      <div class="tb-right">${s.hud?.label ? `<span class="hudlabel">${escapeHtml(s.hud.label)}</span>` : ''}${s.hud?.fuse != null ? `<span class="fuse">💣 ${s.hud.fuse.toFixed(1)}s</span>` : ''}<span class="gold">⭐ ${s.points[me] ?? 0} pts</span></div>`);
     const rows = Object.entries(s.points).sort((a, b) => b[1] - a[1]);
     const showScore = s.scores && s.phase === 'play';
     this.set('multiboard', `<div class="mb-title">Hammerguy's Party</div><table>
@@ -21,12 +21,11 @@ export class PartyHud extends HudBase {
       }).join('')}</table>`);
 
     const cells = [];
-    if (s.ability) {
-      const a = s.ability;
+    (s.abilities || (s.ability ? [s.ability] : [])).forEach((a, slot) => {
       const icon = a.icon || '🔨';
-      const pips = a.left != null ? (a.left ? '●' : '○') : '';
-      cells.push(this.cmdButton({ slot: 0, icon, key: 'Q', cd: a.empty ? 1 : a.cd, max: a.empty ? 1 : a.max, pips, tip: `text:${encodeURIComponent(`<div class="tt-title">${icon} ${a.name}</div><div class="tt-desc">${escapeHtml(a.desc || '')}</div>`)}` }));
-    }
+      const pips = a.left != null ? (a.left > 3 ? `×${a.left}` : '●'.repeat(a.left) || '○') : '';
+      cells.push(this.cmdButton({ slot, icon, key: a.key || 'QWER'[slot], cd: a.empty ? 1 : a.cd, max: a.empty ? 1 : a.max, pips, tip: `text:${encodeURIComponent(`<div class="tt-title">${icon} ${a.name}</div><div class="tt-desc">${escapeHtml(a.desc || '')}</div>`)}` }));
+    });
     for (let i = cells.length; i < 8; i++) cells.push('<div class="cmd empty"></div>');
     this.set('cmdcard', cells.join(''));
     const r = this.playerRow(me);

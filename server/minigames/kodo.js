@@ -20,7 +20,7 @@ const MAX_BM = 8;
 
 export class KodoStampede extends Minigame {
   static id = 'kodo';
-  static name = 'Kodo Stampede';
+  static name = 'Stampede';
   static desc = 'Beastmasters in the middle of the field send kodo beasts stampeding toward the ends, from both sides before long. Each kodo explodes on the first hammerguy it hits. Last one standing wins.';
   static controls = 'Right-click to move. You have 700 HP; each kodo does 60 to everyone near the blast.';
   static duration = 300;
