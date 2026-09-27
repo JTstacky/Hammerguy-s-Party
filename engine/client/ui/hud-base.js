@@ -159,9 +159,11 @@ export class HudBase {
       const pips = a.left != null ? (a.left > 3 ? `×${a.left}` : '●'.repeat(a.left) || '○') : '';
       setText(c.pips, pips);
       setHidden(c.pips, !pips);
-      setText(c.num, cd > 0 ? String(Math.ceil(cd)) : '');
+      // Unusable (no charges, or not available now): greyed out, no countdown.
+      const counting = cd > 0 && !a.empty;
+      setText(c.num, counting ? String(Math.ceil(cd)) : '');
       setHidden(c.sweep, cd <= 0);
-      setHidden(c.num, cd <= 0);
+      setHidden(c.num, !counting);
       if (c.pct !== pct) { c.sweep.style.setProperty('--p', `${pct}%`); c.pct = pct; }
       for (const [name, value] of [['cooling', cd > 0], ['disabled', !!a.empty], ['active', !!a.active]]) {
         if (c[name] !== value) { c.el.classList.toggle(name, value); c[name] = value; }
