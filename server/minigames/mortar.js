@@ -172,26 +172,22 @@ export class MortarMayhem extends Minigame {
       if (u.target && this.inDanger(u.target.x, u.target.y, 0.4)) u.stop();
       return;
     }
-    let best = null;
-    let bd = Infinity;
-    for (let i = 0; i < 16; i++) {
-      const a = (i / 16) * Math.PI * 2;
-      for (const r of [1, 2, 3]) {
+    // The nearest safe spot: rings of 1, 2 and 3 units, the first safe point wins.
+    for (const r of [1, 2, 3]) {
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
         const x = u.x + Math.cos(a) * r;
         const y = u.y + Math.sin(a) * r;
         if (Math.abs(x) > HW - 0.5 || Math.abs(y) > HW - 0.5 || this.inDanger(x, y, 0.5)) continue;
-        if (r < bd) {
-          bd = r;
-          best = [x, y];
-        }
+        u.order(x, y);
+        return;
       }
     }
-    if (best) u.order(best[0], best[1]);
   }
 
   worldEnts() {
     const ents = this.siege.map((s) => ({ id: s.id, k: 'catapult', x: round2(s.x), y: round2(s.y), f: round2(s.f), demo: s.demo ? 1 : undefined, fire: s.wind >= 0 ? 1 : undefined }));
-    for (const r of this.rocks) ents.push({ id: r.id, k: 'lob', x: round2(r.x), y: round2(r.y), sx: round2(r.sx), sy: round2(r.sy), t: round2(r.t / r.flight), r: round2(TIERS[1][0]), r2: round2(TIERS[2][0]), oil: r.oil ? 1 : undefined });
+    for (const r of this.rocks) ents.push({ id: r.id, k: 'lob', x: round2(r.x), y: round2(r.y), sx: round2(r.sx), sy: round2(r.sy), t: round2(r.t / r.flight), r: round2(TIERS[1][0]), oil: r.oil ? 1 : undefined });
     for (const o of this.oil) ents.push({ id: o.id, k: 'oil', x: round2(o.x), y: round2(o.y), r: round2(OIL_R), t: round2(o.t) });
     return ents;
   }

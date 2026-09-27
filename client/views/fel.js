@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerEvent } from '../../engine/client/render/registry.js';
+import { bakeModel } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 
 // Faces the fixed RTS camera (56° angle of attack).
@@ -84,7 +85,7 @@ function burrow(color) {
 
 registerView('burrow', {
   make(e, world, v) {
-    const g = burrow(world.colors[e.o] || '#cccccc');
+    const g = bakeModel(burrow(world.colors[e.o] || '#cccccc'));
     v.parts = g.userData;
     world.fx.dustCloud(e.x, e.y, 1.6, '#8a7050', 12);
     return g;

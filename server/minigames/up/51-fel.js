@@ -264,6 +264,13 @@ export class FelOrcFiasco extends MortarMayhem {
   }
 
   stepBurrows(dt) {
+    if (this.burrowFell) {
+      // Drop fallen burrows (orders still holding one see alive === false).
+      this.burrowFell = false;
+      let n = 0;
+      for (const b of this.burrows) if (b.alive) this.burrows[n++] = b;
+      this.burrows.length = n;
+    }
     for (const b of this.burrows) {
       if (!b.alive || !b.building) continue;
       b.prog += dt;
@@ -298,6 +305,7 @@ export class FelOrcFiasco extends MortarMayhem {
     if (b.hp > 0) return;
     b.alive = false;
     b.hp = 0;
+    this.burrowFell = true;
     this.ev({ k: 'burrowfall', x: round2(b.x), y: round2(b.y), r: round2(BURROW.half) });
     for (const u of this.heroes.values()) {
       if (u.alive && u.hidden && b.inside === u.owner) {
@@ -466,9 +474,10 @@ export class FelOrcFiasco extends MortarMayhem {
 
   worldEnts(pid) {
     const ents = super.worldEnts(pid);
+    const repairing = new Set(this.repairing.values());
     for (const b of this.burrows) {
       if (!b.alive) continue;
-      ents.push({ id: b.id, k: 'burrow', x: round2(b.x), y: round2(b.y), o: b.owner, hp: Math.ceil(b.hp), mhp: BURROW.hp, b: b.building ? round2(b.prog / BURROW.build) : 1, g: b.inside != null ? 1 : undefined, rp: [...this.repairing.values()].includes(b) ? 1 : undefined });
+      ents.push({ id: b.id, k: 'burrow', x: round2(b.x), y: round2(b.y), o: b.owner, hp: Math.ceil(b.hp), mhp: BURROW.hp, b: b.building ? round2(b.prog / BURROW.build) : 1, g: b.inside != null ? 1 : undefined, rp: repairing.has(b) ? 1 : undefined });
     }
     return ents;
   }

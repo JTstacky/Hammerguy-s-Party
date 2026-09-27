@@ -113,6 +113,7 @@ function paint(material, file, units = TILE_UNITS) {
   const fallback = material.map;
   const apply = (tex) => {
     const t = tex.clone();
+    t.userData = {}; // this copy belongs to the material (freed with its map)
     t.repeat.set(fallback.repeat.x * (fallback.userData.units || 1) / units, fallback.repeat.y * (fallback.userData.units || 1) / units);
     t.needsUpdate = true;
     material.map = t;
@@ -193,7 +194,7 @@ export class World {
     // Phones redraw the shadow map every other frame (render()): half the
     // shadow cost, and at 60 fps the lag is invisible.
     this.renderer.shadowMap.autoUpdate = !LITE;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap; // PCFSoft is gone in r186 (it fell back to this)
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
     this.scene = new THREE.Scene();
@@ -240,6 +241,10 @@ export class World {
     this.onMessage = () => {};
 
     this.selGeo = new THREE.RingGeometry(0.72, 0.86, 40);
+    this.selGeo.userData.shared = true;
+    // Kodos stream in and out all game; removed ones are reused (built and
+    // merged models cost ~10 ms each). Emptied at every map change.
+    this.kodoPool = [];
     this.selGeo.rotateX(-Math.PI / 2);
     this.rangeRing = new THREE.Mesh(new THREE.RingGeometry(0.97, 1, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.35, depthWrite: false }));
     this.rangeRing.position.y = 0.06;
@@ -270,7 +275,10 @@ export class World {
     this.snaps = [];
     this.pendingEvents = [];
     this.fx.clear();
+    disposeTree(this.mapGroup);
     this.mapGroup.clear();
+    for (const o of this.kodoPool) disposeTree(o);
+    this.kodoPool.length = 0;
     this.liquids = [];
     this.animated = [];
     this.floorMesh = null;
@@ -444,16 +452,19 @@ export class World {
     const now = performance.now() / 1000;
     const t = snap.tk / 30;
     const sample = now - t;
+    let last = this.snaps[this.snaps.length - 1];
+    if (last && (t < last.t || t > last.t + 5)) {
+      // Another timeline (joined a different room, or the host restarted): start over.
+      this.snaps.length = 0;
+      this.offset = this.step = this.jitter = this.lastRt = null;
+      last = null;
+    }
     this.offset = this.offset == null ? sample : Math.min(sample, this.offset + 0.002);
     // Lateness of this snapshot against the best seen; its recent peak is the jitter.
-    const last = this.snaps[this.snaps.length - 1];
     const step = last ? Math.min(0.2, Math.max(1 / 30, t - last.t)) : 1 / 15;
     this.step = this.step == null ? step : this.step + (step - this.step) * 0.1;
     this.jitter = Math.max(sample - this.offset, (this.jitter ?? 0.03) * 0.97);
-    const target = Math.min(DELAY_MAX, Math.max(DELAY_MIN, this.step + this.jitter + 0.008));
-    // Ease towards it: fast when more buffer is needed, slowly when less, so
-    // render time never jumps.
-    this.delay += Math.max(-0.002, Math.min(0.01, target - this.delay));
+    this.delayTarget = Math.min(DELAY_MAX, Math.max(DELAY_MIN, this.step + this.jitter + 0.008));
     const ents = new Map();
     for (const e of snap.ents) ents.set(e.id, e);
     this.snaps.push({ t, ents, links: snap.links || [], snap });
@@ -465,8 +476,15 @@ export class World {
     this.myUnit = snap.me?.uid ?? null;
   }
 
-  renderTime() {
-    return performance.now() / 1000 - (this.offset ?? 0) - this.delay;
+  // Once per frame. The delay eases towards its target in real time: up by
+  // at most 25 % of a second per second (the world runs briefly slower rather
+  // than jumping back), down by 5 %. Render time never goes backwards.
+  renderTime(dt) {
+    const d = (this.delayTarget ?? this.delay) - this.delay;
+    this.delay += Math.max(-0.05 * dt, Math.min(0.25 * dt, d));
+    const rt = performance.now() / 1000 - (this.offset ?? 0) - this.delay;
+    this.lastRt = this.lastRt == null ? rt : Math.max(this.lastRt, rt);
+    return this.lastRt;
   }
 
   // Finds the pair of snapshots around render time.
@@ -505,7 +523,10 @@ export class World {
         v.sk = e.sk;
         obj = bakeModel(e.sk && SKINS.has(e.sk) ? SKINS.get(e.sk)(color) : M.paladin(color));
         break;
-      case 'kodo': obj = bakeModel(M.kodo()); break;
+      case 'kodo':
+        obj = this.kodoPool.pop() || bakeModel(M.kodo());
+        setOpacity(obj, 1);
+        break;
       case 'golem': obj = bakeModel(M.golem()); break;
       case 'coin': obj = M.coin(); break;
       case 'goldbag': obj = M.goldbag(); break;
@@ -667,14 +688,15 @@ export class World {
 
   removeView(v) {
     this.entGroup.remove(v.obj);
-    if (v.k === 'lob') this.entGroup.remove(v.parts.rock);
     v.bar?.remove();
     this.fx.returnLight(v.light);
     v.def?.remove?.(v, this);
-    v.obj.traverse((o) => {
-      if (o.isInstancedMesh) o.dispose();
-      else if (o.userData.baked) o.geometry.dispose();
-    });
+    if (v.k === 'lob') {
+      this.entGroup.remove(v.parts.rock);
+      disposeTree(v.parts.rock, false);
+    }
+    if (v.k === 'kodo' && this.kodoPool.length < 24) this.kodoPool.push(v.obj);
+    else disposeTree(v.obj, false);
   }
 
   // -------------------------------------------------------------- frame
@@ -682,7 +704,7 @@ export class World {
   render(dt) {
     this.time += dt;
     for (const m of this.liquids) m.uniforms.time.value = this.time;
-    const rt = this.renderTime();
+    const rt = this.renderTime(dt);
     const br = this.bracket(rt);
 
     // Fire events whose time has come.
@@ -727,8 +749,13 @@ export class World {
       this.updateLinks(b, a, k);
       const snap = b.snap;
       if (this.floorMesh && snap.arena) this.setFloorRadius(lerp(a.snap.arena?.r ?? snap.arena.r, snap.arena.r, k));
-      const fl = [...b.ents.values()].find((e) => e.k === 'floor');
-      if (this.floorMesh && fl) this.setFloorRadius(fl.r);
+      if (this.floorMesh) {
+        for (const e of b.ents.values()) {
+          if (e.k !== 'floor') continue;
+          this.setFloorRadius(e.r);
+          break;
+        }
+      }
     }
 
     for (const a of this.animated) {
@@ -963,26 +990,37 @@ export class World {
       case 'firewheel': {
         const ang = lerpAngle(a.a, b.a, k);
         const p = v.parts;
-        const dummy = new THREE.Object3D();
-        const pts = [[0, 0]];
+        // Fire positions (x, z pairs), kept between frames.
+        const pts = (p.pts ??= new Float32Array(p.n * 2));
+        let np = 1;
+        pts[0] = pts[1] = 0;
         for (let s = 0; s < 4; s++) {
           const sa = ang + (s * Math.PI) / 2;
-          for (const r of b.rs) pts.push([Math.cos(sa) * r, Math.sin(sa) * r]);
+          for (const r of b.rs) {
+            if (np >= p.n) break;
+            pts[np * 2] = Math.cos(sa) * r;
+            pts[np * 2 + 1] = Math.sin(sa) * r;
+            np++;
+          }
         }
-        pts.forEach(([px, pz], i) => {
+        for (let i = 0; i < np; i++) {
+          const px = pts[i * 2];
+          const pz = pts[i * 2 + 1];
           const flick = 1 + Math.sin(this.time * 13 + i * 1.7) * 0.15;
-          dummy.position.set(px, 0.06, pz);
-          dummy.scale.setScalar(b.fr * 0.85 * flick);
-          dummy.updateMatrix();
-          p.disc.setMatrixAt(i, dummy.matrix);
-          dummy.position.set(px, 0.35, pz);
-          dummy.scale.setScalar(b.fr * 0.22 * flick);
-          dummy.updateMatrix();
-          p.core.setMatrixAt(i, dummy.matrix);
-        });
+          DUMMY.position.set(px, 0.06, pz);
+          DUMMY.scale.setScalar(b.fr * 0.85 * flick);
+          DUMMY.updateMatrix();
+          p.disc.setMatrixAt(i, DUMMY.matrix);
+          DUMMY.position.set(px, 0.35, pz);
+          DUMMY.scale.setScalar(b.fr * 0.22 * flick);
+          DUMMY.updateMatrix();
+          p.core.setMatrixAt(i, DUMMY.matrix);
+        }
         // Spread this frame's flames over the fires; they rise off the moving spokes.
         for (let n = emit(v, 'fire', 30 * p.n, dt); n > 0; n--) {
-          const [px, pz] = pts[Math.floor(Math.random() * pts.length)];
+          const q = Math.floor(Math.random() * np) * 2;
+          const px = pts[q];
+          const pz = pts[q + 1];
           this.fx.flame(px, 0.15, pz, b.fr * 2.6, 0.7, b.fr * 0.3);
           if (Math.random() < 0.08) this.fx.smokePuff(px, 1.6, pz, '#2a2422', 0.9, 1.2, 0.3);
         }
@@ -1339,13 +1377,43 @@ function lerpAngle(a, b, k) {
   return a + d * k;
 }
 
+// Frees what a map or a view owns on the GPU: its geometries and the textures
+// that are not shared (cached materials and fxTexture textures are marked
+// userData.shared). A shared geometry or texture freed here is simply
+// uploaded again if something still draws it. Materials are only freed with
+// a whole map: a view file may share one material between all its entities,
+// and freeing it with each entity could force a shader recompile mid-game.
+function disposeTree(root, materials = true) {
+  root.traverse((o) => {
+    if (o.isInstancedMesh) o.dispose();
+    if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose();
+    if (!o.material) return;
+    for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+      if (m.userData.shared) continue;
+      for (const k in m) if (m[k]?.isTexture && !m[k].userData.shared) m[k].dispose();
+      if (m.uniforms) for (const u of Object.values(m.uniforms)) if (u.value?.isTexture && !u.value.userData.shared) u.value.dispose();
+      if (!materials) continue;
+      m.userData.dispose?.();
+      m.dispose();
+    }
+  });
+}
+
+const DUMMY = new THREE.Object3D(); // scratch transform for instance matrices
+
 function setOpacity(obj, op) {
-  if (obj.userData.opacity === op) return;
+  if ((obj.userData.opacity ?? 1) === op) return;
   obj.userData.opacity = op;
   obj.traverse((o) => {
     if (!o.isMesh || !o.material || o === obj.userData.shieldMesh) return;
     if (!o.userData.ownMat) {
-      o.material = o.material.clone();
+      // A private copy to fade (freed with the view). clone() drops the
+      // shader hooks of the procedural materials, so carry them over.
+      const src = o.material;
+      o.material = src.clone();
+      o.material.onBeforeCompile = src.onBeforeCompile;
+      o.material.customProgramCacheKey = src.customProgramCacheKey;
+      o.material.userData = {};
       o.userData.ownMat = true;
     }
     o.material.transparent = op < 1 || o.material.blending === THREE.AdditiveBlending || o.material.opacity < 1;

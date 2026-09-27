@@ -180,13 +180,31 @@ function fallbackTexture() {
 }
 
 // Loads a texture from client/public/fx/, calling `onLoad(tex)` when it arrives.
+// One texture per file and settings, shared by every caller (marked
+// userData.shared so map and view teardown never disposes it). onLoad runs
+// once the image is in, asynchronously even when it already is.
+const fxCache = new Map();
 export function fxTexture(file, onLoad, { repeat = false, srgb = true } = {}) {
-  return loader.load(`fx/${file}`, (tex) => {
-    if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
-    if (repeat) tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.anisotropy = 4;
-    onLoad?.(tex);
-  }, undefined, () => {});
+  const key = `${file}|${repeat}|${srgb}`;
+  let e = fxCache.get(key);
+  if (!e) {
+    e = { tex: null, loaded: false, waiting: [] };
+    fxCache.set(key, e);
+    e.tex = loader.load(`fx/${file}`, (tex) => {
+      if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
+      if (repeat) tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.anisotropy = 4;
+      e.loaded = true;
+      for (const fn of e.waiting) fn(tex);
+      e.waiting = null;
+    }, undefined, () => {});
+    e.tex.userData.shared = true;
+  }
+  if (onLoad) {
+    if (e.loaded) queueMicrotask(() => onLoad(e.tex));
+    else e.waiting.push(onLoad);
+  }
+  return e.tex;
 }
 
 class SpriteParticles {

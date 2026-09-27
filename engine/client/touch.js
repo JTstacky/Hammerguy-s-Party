@@ -91,8 +91,13 @@ export class TouchControls {
       const dir = len > DEAD ? Math.atan2(dy, dx) : null;
       // Send at once on a real change of direction; otherwise tick() keeps it going.
       const turned = dir != null && (s.dir == null || Math.abs(Math.atan2(Math.sin(dir - s.dir), Math.cos(dir - s.dir))) > 0.2);
+      const centred = dir == null && s.dir != null;
       s.dir = dir;
-      if (turned && performance.now() - s.last > 50) this.steer();
+      if (centred && s.sent) {
+        // Back in the dead zone: stop, as letting go does.
+        if (this.active) this.input.send({ t: 'cmd', c: 'stop' });
+        s.sent = false;
+      } else if (turned && performance.now() - s.last > 50) this.steer();
       return;
     }
     const f = this.taps.get(e.pointerId);

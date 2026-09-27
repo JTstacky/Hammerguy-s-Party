@@ -11,7 +11,9 @@ const matCache = new Map();
 export function mat(color, opts = {}) {
   const key = new THREE.Color(color).getHexString() + JSON.stringify(opts);
   if (!matCache.has(key)) {
-    matCache.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.05, ...opts }));
+    const m = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.05, ...opts });
+    m.userData.shared = true;
+    matCache.set(key, m);
   }
   return matCache.get(key);
 }
@@ -31,6 +33,7 @@ export function texMat(file, base, tint = '#ffffff', repeat = 1, opts = {}) {
       m.color.set(tint);
       m.needsUpdate = true;
     }, { repeat: true });
+    m.userData.shared = true;
     texCache.set(key, m);
   }
   return texCache.get(key);
@@ -67,6 +70,7 @@ export function triMat(file, base, tint = '#ffffff', scale = 1, opts = {}) {
         }`);
   };
   m.customProgramCacheKey = () => 'triplanar';
+  m.userData.shared = true;
   triCache.set(key, m);
   return m;
 }

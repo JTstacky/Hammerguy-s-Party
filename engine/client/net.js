@@ -186,8 +186,12 @@ class P2PHost {
 
   fromWorker(m) {
     if (m.type === 'send') {
-      if (m.conn === 'local') this.net.onMessage(JSON.parse(m.data));
-      else this.conns.get(m.conn)?.send(m.data);
+      if (m.conn === 'local') return this.net.onMessage(JSON.parse(m.data));
+      const dc = this.conns.get(m.conn);
+      // A backed-up channel skips replaceable snapshots rather than queueing
+      // stale state behind them (the channel is reliable and ordered).
+      if (!dc || (m.drop && (dc.dataChannel?.bufferedAmount > 65536 || dc.bufferSize > 0))) return;
+      dc.send(m.data);
     } else if (m.type === 'close') {
       this.conns.get(m.conn)?.close();
     }
