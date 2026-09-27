@@ -33,7 +33,7 @@ const frag = /* glsl */ `
   }
 `;
 
-class Particles {
+export class Particles {
   constructor(scene, blending) {
     this.pos = new Float32Array(MAX_PARTICLES * 3);
     this.col = new Float32Array(MAX_PARTICLES * 3);
@@ -45,7 +45,7 @@ class Particles {
     this.size0 = new Float32Array(MAX_PARTICLES);
     this.grav = new Float32Array(MAX_PARTICLES);
     this.drag = new Float32Array(MAX_PARTICLES);
-    this.next = 0;
+    initPool(this, MAX_PARTICLES);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
     geo.setAttribute('color', new THREE.BufferAttribute(this.col, 3).setUsage(THREE.DynamicDrawUsage));
@@ -65,11 +65,11 @@ class Particles {
     this.points.renderOrder = 10;
     scene.add(this.points);
     this.geo = geo;
+    resetPool(this);
   }
 
   spawn(x, y, z, vx, vy, vz, color, size, life, grav = 0, drag = 0) {
-    const i = this.next;
-    this.next = (this.next + 1) % MAX_PARTICLES;
+    const i = spawnSlot(this);
     this.pos[i * 3] = x;
     this.pos[i * 3 + 1] = y;
     this.pos[i * 3 + 2] = z;
@@ -87,14 +87,12 @@ class Particles {
   }
 
   update(dt) {
-    let last = -1;
-    for (let i = 0; i < MAX_PARTICLES; i++) {
+    for (let i = 0; i < this.count; i++) {
+      this.life[i] -= dt;
       if (this.life[i] <= 0) {
-        if (this.alpha[i] !== 0) this.alpha[i] = 0;
+        removeParticle(this, i--);
         continue;
       }
-      last = i;
-      this.life[i] -= dt;
       const k = Math.max(0, this.life[i] / this.maxLife[i]);
       const dr = 1 - this.drag[i] * dt;
       this.vel[i * 3] *= dr;
@@ -106,7 +104,7 @@ class Particles {
       this.alpha[i] = k;
       this.size[i] = this.size0[i] * (0.4 + 0.6 * k);
     }
-    uploadLive(this, last, ['position', 'color', 'size', 'alpha']);
+    uploadLive(this, ['position', 'color', 'size', 'alpha']);
   }
 }
 
@@ -207,7 +205,7 @@ export function fxTexture(file, onLoad, { repeat = false, srgb = true } = {}) {
   return e.tex;
 }
 
-class SpriteParticles {
+export class SpriteParticles {
   constructor(scene, { file, cols = 1, rows = 1, mode = 'add', max = 1500, blending }) {
     max = Math.ceil(max * FX_DENSITY);
     this.max = max;
@@ -230,8 +228,7 @@ class SpriteParticles {
     this.fadeIn = new Float32Array(max);
     this.grav = new Float32Array(max);
     this.drag = new Float32Array(max);
-    this.next = 0;
-    this.live = 0;
+    initPool(this, max);
     const geo = new THREE.BufferGeometry();
     const attr = (name, arr, n) => geo.setAttribute(name, new THREE.BufferAttribute(arr, n).setUsage(THREE.DynamicDrawUsage));
     attr('position', this.pos, 3);
@@ -260,14 +257,14 @@ class SpriteParticles {
     this.points.renderOrder = 11;
     scene.add(this.points);
     this.geo = geo;
+    resetPool(this);
   }
 
   // o: {vx, vy, vz, color, size, life, grow (size multiplier at death), spin,
   //     frame (atlas cell, or -1 for random), anim (frames to play), alpha,
   //     fadeIn (fraction of life), grav, drag, rot}
   spawn(x, y, z, o) {
-    const i = this.next;
-    this.next = (this.next + 1) % this.max;
+    const i = spawnSlot(this);
     this.pos[i * 3] = x;
     this.pos[i * 3 + 1] = y;
     this.pos[i * 3 + 2] = z;
@@ -292,14 +289,12 @@ class SpriteParticles {
   }
 
   update(dt) {
-    let last = -1;
-    for (let i = 0; i < this.max; i++) {
+    for (let i = 0; i < this.count; i++) {
+      this.life[i] -= dt;
       if (this.life[i] <= 0) {
-        if (this.alpha[i] !== 0) this.alpha[i] = 0;
+        removeParticle(this, i--);
         continue;
       }
-      last = i;
-      this.life[i] -= dt;
       const k = Math.max(0, this.life[i] / this.maxLife[i]); // 1 → 0
       const age = 1 - k;
       const dr = Math.max(0, 1 - this.drag[i] * dt);
@@ -309,14 +304,23 @@ class SpriteParticles {
       this.pos[i * 3] += this.vel[i * 3] * dt;
       this.pos[i * 3 + 1] += this.vel[i * 3 + 1] * dt;
       this.pos[i * 3 + 2] += this.vel[i * 3 + 2] * dt;
-      this.rot[i] += this.spin[i] * dt;
+      if (this.spin[i]) {
+        this.rot[i] += this.spin[i] * dt;
+        this.dirty.add('rot');
+      }
       const fi = this.fadeIn[i];
       const fade = fi > 0 && age < fi ? age / fi : Math.min(1, k * 1.6);
       this.alpha[i] = this.alpha0[i] * fade;
       this.size[i] = this.size0[i] * (1 + (this.grow[i] - 1) * age);
-      if (this.anim[i]) this.frame[i] = Math.min(this.cells - 1, this.frame0[i] + Math.floor(age * this.anim[i]));
+      if (this.anim[i]) {
+        const frame = Math.min(this.cells - 1, this.frame0[i] + Math.floor(age * this.anim[i]));
+        if (this.frame[i] !== frame) {
+          this.frame[i] = frame;
+          this.dirty.add('frame');
+        }
+      }
     }
-    uploadLive(this, last, ['position', 'color', 'size', 'alpha', 'rot', 'frame']);
+    uploadLive(this, ['position', 'color', 'size', 'alpha', 'rot', 'frame']);
   }
 }
 
@@ -324,25 +328,49 @@ const tmpColor = new THREE.Color();
 const NOTHING = new THREE.Object3D(); // stand-in transient object (never in the scene)
 const rnd = (a, b) => a + Math.random() * (b - a);
 
-// Uploads and draws only particles 0..last (the live range). A system with
-// nothing alive is hidden and skips the upload entirely; one more upload
-// after it empties clears the last frame's particles.
-function uploadLive(sys, last, attrs) {
-  const n = last + 1;
-  if (n === 0 && !sys.drawn) {
-    sys.points.visible = false;
-    return;
+// All particle arrays share the same dense live prefix, including CPU-only state.
+function initPool(sys, max) {
+  sys.max = max;
+  sys.arrays = Object.values(sys).filter((a) => a instanceof Float32Array);
+  sys.dirty = new Set();
+}
+
+function spawnSlot(sys) {
+  sys.dirty.add('color').add('rot').add('frame');
+  return sys.count < sys.max ? sys.count++ : Math.floor(Math.random() * sys.max);
+}
+
+function removeParticle(sys, i) {
+  const last = --sys.count;
+  if (i === last) return;
+  for (const a of sys.arrays) {
+    const stride = a.length / sys.max;
+    a.copyWithin(i * stride, last * stride, (last + 1) * stride);
   }
-  sys.points.visible = n > 0;
-  const upto = Math.max(n, sys.drawn || 0);
-  sys.drawn = n;
-  sys.geo.setDrawRange(0, n);
+  sys.dirty.add('color').add('rot').add('frame');
+}
+
+function resetPool(sys) {
+  sys.count = 0;
+  sys.life.fill(0);
+  sys.dirty.clear();
+  sys.points.visible = false;
+  sys.geo.setDrawRange(0, 0);
+}
+
+// Empty pools need neither an upload nor a draw, even on the frame they empty.
+function uploadLive(sys, attrs) {
+  sys.points.visible = sys.count > 0;
+  sys.geo.setDrawRange(0, sys.count);
+  if (!sys.count) return;
   for (const a of attrs) {
+    if ((a === 'color' || a === 'rot' || a === 'frame') && !sys.dirty.has(a)) continue;
     const at = sys.geo.attributes[a];
     at.clearUpdateRanges();
-    at.addUpdateRange(0, upto * at.itemSize);
+    at.addUpdateRange(0, sys.count * at.itemSize);
     at.needsUpdate = true;
   }
+  sys.dirty.clear();
 }
 
 export class Effects {
@@ -577,18 +605,15 @@ export class Effects {
     this.add.update(dt);
     this.norm.update(dt);
     for (const s of Object.values(this.sp)) s.update(dt);
+    let live = 0;
     for (const tr of this.transients) {
       tr.t += dt;
       const k = Math.min(1, tr.t / tr.dur);
       tr.update(k);
-      if (k >= 1) {
-        this.scene.remove(tr.obj);
-        tr.dispose?.();
-        tr.obj.material?.dispose?.();
-        tr.done = true;
-      }
+      if (k >= 1) this.removeTransient(tr);
+      else this.transients[live++] = tr;
     }
-    this.transients = this.transients.filter((t) => !t.done);
+    this.transients.length = live;
     for (const l of this.lightPool) {
       const f = l.userData.follow;
       if (!f) continue;
@@ -596,6 +621,7 @@ export class Effects {
       l.position.y += l.userData.dy;
     }
     const v = new THREE.Vector3();
+    live = 0;
     for (const t of this.texts) {
       t.t += dt;
       const k = t.t / t.dur;
@@ -604,22 +630,29 @@ export class Effects {
       v.project(this.camera);
       t.el.style.transform = `translate(-50%, -50%) translate(${((v.x + 1) / 2) * width}px, ${((1 - v.y) / 2) * height}px)`;
       t.el.style.opacity = String(Math.min(1, 2 * (1 - k)));
-      if (k >= 1) {
-        t.el.remove();
-        t.done = true;
-      }
+      if (k >= 1) t.el.remove();
+      else this.texts[live++] = t;
     }
-    this.texts = this.texts.filter((t) => !t.done);
+    this.texts.length = live;
+  }
+
+  removeTransient(tr) {
+    this.scene.remove(tr.obj);
+    tr.dispose?.();
+    tr.obj.traverse((obj) => {
+      if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
+      else obj.material?.dispose();
+    });
   }
 
   clear() {
-    for (const tr of this.transients) {
-      this.scene.remove(tr.obj);
-      tr.dispose?.();
-    }
+    for (const tr of this.transients) this.removeTransient(tr);
     for (const l of this.lightPool) this.returnLight(l);
-    this.transients = [];
+    this.transients.length = 0;
     for (const t of this.texts) t.el.remove();
-    this.texts = [];
+    this.texts.length = 0;
+    resetPool(this.add);
+    resetPool(this.norm);
+    for (const s of Object.values(this.sp)) resetPool(s);
   }
 }

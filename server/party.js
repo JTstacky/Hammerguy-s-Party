@@ -41,7 +41,11 @@ export class HammerguysParty {
     if (!tie) this.index++;
     this.mg = new Game(this, pids);
     this.mg.setup();
-    this.mapInfo = { ...this.mg.map, v: ++this.mapV };
+    const meta = this.mg.meta;
+    this.mapInfo = { ...this.mg.map, v: ++this.mapV,
+      mg: { id: meta.id, name: meta.name, desc: meta.desc, controls: meta.controls },
+      abilities: this.mg.abilityDefs(),
+    };
     this.phase = 'intro';
     this.timer = INTRO_TIME;
     this.lastResults = null;
@@ -145,7 +149,6 @@ export class HammerguysParty {
       index: this.index,
       total: this.total,
       tiebreak: this.tiebreak || undefined,
-      mg: { id: meta.id, name: meta.name, desc: meta.desc, controls: meta.controls },
       points: Object.fromEntries(this.points),
       alive: Object.fromEntries(this.pids.map((p) => [p, this.mg.heroes.get(p)?.alive ?? false])),
       me: { uid: this.mg.heroes.get(pid)?.id },

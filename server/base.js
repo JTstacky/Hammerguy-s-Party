@@ -495,28 +495,28 @@ export class Minigame {
     return null;
   }
 
+  abilityDefs() {
+    if (this.abilities.length) return this.abilities.map((ab, i) => ({ name: ab.name, key: 'QWER'[i], max: ab.cd || 1, icon: ab.icon, desc: ab.desc, target: ab.kind === 'point' || ab.kind === 'unit', range: ab.range }));
+    if (this.shove) return [{ name: this.shoveName || 'Holy Shove', key: 'Q', max: this.shove.cd, icon: '🔨', desc: 'Knock back nearby hammerguys.' }];
+    const sp = this.spell;
+    return sp ? [{ name: sp.name, key: 'Q', max: sp.cd || 1, icon: sp.icon, desc: sp.desc, target: true, range: sp.range }] : [];
+  }
+
   abilitiesSnap(pid) {
     if (!this.abilities.length) {
-      const a = this.abilitySnap(pid);
-      return a ? [a] : [];
+      if (!this.shove && !this.spell) return [];
+      const cd = round2(Math.max(0, this.cds.get(pid) || 0));
+      if (this.shove) return [{ cd }];
+      const left = this.spell.charges ? this.charges.get(pid) || 0 : null;
+      return [{ cd, left, empty: left === 0 }];
     }
     const cds = this.acd.get(pid) || [];
     const ch = this.acharges.get(pid) || [];
     return this.abilities.map((ab, i) => {
       const left = ch[i] ?? null;
       const off = ab.available ? !ab.available(pid) : false;
-      return { name: ab.name, key: 'QWER'[i], cd: round2(Math.max(0, cds[i] || 0)), max: ab.cd || 1, icon: ab.icon, desc: ab.desc, target: ab.kind === 'point' || ab.kind === 'unit', range: ab.range, left, empty: left === 0 || off };
+      return { cd: round2(Math.max(0, cds[i] || 0)), left, empty: left === 0 || off };
     });
-  }
-
-  abilitySnap(pid) {
-    if (this.abilities.length) return this.abilitiesSnap(pid)[0];
-    const cd = this.cds.get(pid) || 0;
-    if (this.shove) return { name: this.shoveName || 'Holy Shove', key: 'Q', cd: round2(Math.max(0, cd)), max: this.shove.cd, icon: '🔨', desc: 'Knock back nearby hammerguys.' };
-    const sp = this.spell;
-    if (!sp) return null;
-    const left = sp.charges ? this.charges.get(pid) || 0 : null;
-    return { name: sp.name, key: 'Q', cd: round2(Math.max(0, cd)), max: sp.cd || 1, icon: sp.icon, desc: sp.desc, target: true, range: sp.range, left, empty: left === 0 };
   }
 
   snapshot(pid) {
@@ -524,7 +524,6 @@ export class Minigame {
       ents: [...this.heroEnts(pid), ...this.worldEnts(pid), ...this.missileEnts()],
       hud: this.hud(pid),
       scores: this.meta.ranking === 'score' ? Object.fromEntries([...this.scores].map(([k, v]) => [k, Math.floor(v)])) : null,
-      ability: this.abilitySnap(pid),
       abilities: this.abilitiesSnap(pid),
       attack: this.attack ? 1 : undefined,
     };
