@@ -44,6 +44,7 @@ export class WispWheel extends Minigame {
         return [sx * wc3(384 + rand(-128, 128)), sy * wc3(384 + rand(-128, 128))];
       }),
     );
+    for (const u of this.heroes.values()) u.skin = 'satyr';
     this.wheelId = newId();
     this.angle = 0; // degrees
     this.speed = 0; // degrees per 0.05 s tick

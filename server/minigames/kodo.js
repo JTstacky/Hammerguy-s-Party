@@ -34,6 +34,7 @@ export class KodoStampede extends Minigame {
       this.pids.map(() => [wc3(-384) + rand(-0.3, 0.3), wc3(rand(-192, 192))]),
       { hp: 700, facing: 0 },
     );
+    for (const u of this.heroes.values()) u.skin = 'grunt';
     this.kodos = [];
     this.bms = [{ id: newId(), x: 0, y: 0, dir: -1, on: false, acc: 0 }];
     this.spawnT = 7;
