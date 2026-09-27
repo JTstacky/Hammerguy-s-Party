@@ -254,22 +254,20 @@ registerView('bottlefx', {
     v.on = !!e.on;
     flash = null;
     // Sway the camera after the world has placed it (CameraSetTargetNoise).
-    const orig = world.updateCamera;
-    v.origCam = orig;
-    world.updateCamera = function (dt) {
-      orig.call(this, dt);
-      const me = this.myView();
+    v.cam = (camera, dt, w) => {
+      const me = w.myView();
       const want = v.on && me && !(me.deadT > 0) ? 1 : 0;
       v.sway = (v.sway || 0) + (want - (v.sway || 0)) * Math.min(1, dt * 1.5);
       if (v.sway < 0.01) return;
-      const t = this.time;
+      const t = w.time;
       const s = v.sway;
-      this.camera.position.x += (Math.sin(t * 0.83) + 0.5 * Math.sin(t * 1.91 + 1)) * SWAY * s;
-      this.camera.position.z += (Math.sin(t * 0.67 + 2) + 0.5 * Math.sin(t * 1.53)) * SWAY * 0.7 * s;
-      this.camera.position.y += Math.sin(t * 1.1 + 4) * SWAY * 0.4 * s;
-      this.camera.lookAt(this.focus);
-      this.camera.rotateZ(Math.sin(t * 0.9 + 0.5) * ROLL * s);
+      camera.position.x += (Math.sin(t * 0.83) + 0.5 * Math.sin(t * 1.91 + 1)) * SWAY * s;
+      camera.position.z += (Math.sin(t * 0.67 + 2) + 0.5 * Math.sin(t * 1.53)) * SWAY * 0.7 * s;
+      camera.position.y += Math.sin(t * 1.1 + 4) * SWAY * 0.4 * s;
+      camera.lookAt(w.focus);
+      camera.rotateZ(Math.sin(t * 0.9 + 0.5) * ROLL * s);
     };
+    world.cameraFx.add(v.cam);
     return new THREE.Group();
   },
   update(v, a, b, k, dt) {
@@ -279,15 +277,15 @@ registerView('bottlefx', {
       flash.t += dt;
       const t = flash.t;
       const w = t < 1.5 ? t / 1.5 : t < 3 ? 1 - (t - 1.5) / 1.5 : 0;
-      v.div.style.background = flash.c;
+      if (v.bg !== flash.c) v.div.style.background = v.bg = flash.c;
       v.div.style.opacity = String(Math.max(0, w) * flash.a);
       if (t >= 3) flash = null;
-    } else v.div.style.opacity = '0';
+    } else if (v.div.style.opacity !== '0') v.div.style.opacity = '0';
     return true;
   },
   remove(v, world) {
     v.div.remove();
-    world.updateCamera = v.origCam;
+    world.cameraFx.delete(v.cam);
     flash = null;
   },
 });

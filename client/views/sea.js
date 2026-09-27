@@ -294,50 +294,52 @@ export function battleship(color) {
   return g;
 }
 
-registerSkin('battleship', (color) => battleship(color));
+// Wakes, spray, recoil, a gentle roll and sinking: each ship animates itself
+// every frame (the skin's userData.tick hook).
+function shipTick(dt, sv, snap, world) {
+  const fx = world.fx;
+  const o = sv.obj;
+  const { body, hull, gun } = o.userData;
+  if (gun?.userData.recoil > 0) {
+    gun.userData.recoil = Math.max(0, gun.userData.recoil - dt * 3);
+    gun.position.x = 0.9 - Math.sin(gun.userData.recoil * Math.PI) * 0.18;
+  }
+  if (sv.deadT > 0) {
+    hull.position.x = -Math.min(3, Math.max(0, sv.deadT - 0.6) * 1.2);
+    if (sv.deadT < 3 && Math.random() < dt * 10) fx.smokePuff(o.position.x, 0.4, o.position.z, '#302a28', 1.3, 1.6, 0.5);
+    return;
+  }
+  body.rotation.x = Math.sin(world.time * 1.3 + sv.id) * 0.04;
+  const x = o.position.x;
+  const z = o.position.z;
+  const px = sv.lastX;
+  const pz = sv.lastZ;
+  sv.lastX = x;
+  sv.lastZ = z;
+  if (px == null || dt <= 0) return;
+  if (Math.hypot(x - px, z - pz) / dt < 0.5) return;
+  const f = -o.rotation.y;
+  const cx = Math.cos(f);
+  const cz = Math.sin(f);
+  sv.wake = (sv.wake || 0) + dt * 26;
+  while (sv.wake >= 1) {
+    sv.wake -= 1;
+    const side = Math.random() < 0.5 ? 1 : -1;
+    fx.trail(x - cx * 1.9 - cz * side * 0.3, 0.12, z - cz * 1.9 + cx * side * 0.3, '#dff4ff', 0.55, 1.1, 0.25);
+    if (Math.random() < 0.5) fx.trail(x + cx * 1.9 + cz * side * 0.25, 0.2, z + cz * 1.9 - cx * side * 0.25, '#ffffff', 0.4, 0.5, 0.15);
+  }
+}
 
-// Wakes, spray and a gentle roll for every ship, from the one 'seafx' entity.
+registerSkin('battleship', (color) => {
+  const g = battleship(color);
+  g.userData.tick = shipTick;
+  return g;
+});
+
+// The server still sends one 'seafx' entity; the ships animate themselves now.
 registerView('seafx', {
   make() {
     return new THREE.Group();
-  },
-  update(v, a, b, k, dt, world) {
-    const fx = world.fx;
-    const last = (v.last ??= new Map());
-    for (const sv of world.views.values()) {
-      if (sv.k !== 'paladin' || sv.sk !== 'battleship') continue;
-      const o = sv.obj;
-      const body = o.userData.body;
-      const hull = o.userData.hull;
-      const gun = o.userData.gun;
-      if (gun?.userData.recoil > 0) {
-        gun.userData.recoil = Math.max(0, gun.userData.recoil - dt * 3);
-        gun.position.x = 0.9 - Math.sin(gun.userData.recoil * Math.PI) * 0.18;
-      }
-      if (sv.deadT > 0) {
-        hull.position.x = -Math.min(3, Math.max(0, sv.deadT - 0.6) * 1.2);
-        if (sv.deadT < 3 && Math.random() < dt * 10) fx.smokePuff(o.position.x, 0.4, o.position.z, '#302a28', 1.3, 1.6, 0.5);
-        continue;
-      }
-      body.rotation.x = Math.sin(world.time * 1.3 + sv.id) * 0.04;
-      const p = last.get(sv.id);
-      const x = o.position.x;
-      const z = o.position.z;
-      last.set(sv.id, { x, z });
-      if (!p || dt <= 0) continue;
-      const sp = Math.hypot(x - p.x, z - p.z) / dt;
-      if (sp < 0.5) continue;
-      const f = -o.rotation.y;
-      const cx = Math.cos(f);
-      const cz = Math.sin(f);
-      sv.wake = (sv.wake || 0) + dt * 26;
-      while (sv.wake >= 1) {
-        sv.wake -= 1;
-        const side = Math.random() < 0.5 ? 1 : -1;
-        fx.trail(x - cx * 1.9 - cz * side * 0.3, 0.12, z - cz * 1.9 + cx * side * 0.3, '#dff4ff', 0.55, 1.1, 0.25);
-        if (Math.random() < 0.5) fx.trail(x + cx * 1.9 + cz * side * 0.25, 0.2, z + cz * 1.9 - cx * side * 0.25, '#ffffff', 0.4, 0.5, 0.15);
-      }
-    }
   },
 });
 

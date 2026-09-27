@@ -13,7 +13,11 @@ import { VIEWS, SKINS, EVENTS, THEMES_EXTRA, MAP_BUILDERS } from './registry.js'
 import './basics.js';
 import { play } from '../audio.js';
 
-const INTERP_DELAY = 0.11; // seconds behind the newest snapshot
+// How far behind the newest snapshot we render: one snapshot interval plus
+// the arrival jitter, measured (the host's own page gets 30 Hz snapshots with
+// almost no jitter, about 45 ms; a remote player at 15 Hz, about 90-130 ms).
+const DELAY_MIN = 0.04;
+const DELAY_MAX = 0.25;
 const CAM_PITCH = (56 * Math.PI) / 180;
 
 // ------------------------------------------------------------ textures
@@ -214,6 +218,10 @@ export class World {
 
     this.views = new Map();
     this.snaps = [];
+    this.delay = 0.11; // interpolation delay (s), adapted in pushSnapshot
+    // Functions (camera, dt, world) run after the camera is placed each frame,
+    // for effects like WC3's camera noise. Views add and delete their own.
+    this.cameraFx = new Set();
     this.pendingEvents = [];
     this.offset = null;
     this.colors = {}; // owner id -> hex
@@ -276,16 +284,20 @@ export class World {
     this.sun.color.set(theme.sun);
     this.sun.intensity = theme.sunI ?? 2.4;
     const B = map.bounds || 25;
+    // The sun follows the camera focus, so its shadow box only has to cover
+    // the view (sharper shadows on big maps), or the map if that is smaller.
     const cam = this.sun.shadow.camera;
-    cam.left = -B;
-    cam.right = B;
-    cam.top = B;
-    cam.bottom = -B;
+    const S = Math.min(B + 4, (map.zoom ?? this.zoom) * 1.1 + 4);
+    cam.left = -S;
+    cam.right = S;
+    cam.top = S;
+    cam.bottom = -S;
     cam.far = 150;
     cam.updateProjectionMatrix();
 
     const f = map.floor;
-    const floorTex = noiseTexture(theme.floor[0], theme.floor[1], theme.floor[2]);
+    // Built only by the floors below that paint it (256x256 on the CPU).
+    const floorTex = map.theme === 'lava' || map.theme === 'ice' || !groundLayers ? noiseTexture(...(theme.floor || ['#6a7a4a', 30, {}])) : null;
 
     if (map.theme === 'lava' || map.theme === 'ice') {
       const liquid = new THREE.Mesh(new THREE.PlaneGeometry(260, 260).rotateX(-Math.PI / 2), liquidMaterial(map.theme === 'lava' ? 'lava' : 'water'));
@@ -433,6 +445,15 @@ export class World {
     const t = snap.tk / 30;
     const sample = now - t;
     this.offset = this.offset == null ? sample : Math.min(sample, this.offset + 0.002);
+    // Lateness of this snapshot against the best seen; its recent peak is the jitter.
+    const last = this.snaps[this.snaps.length - 1];
+    const step = last ? Math.min(0.2, Math.max(1 / 30, t - last.t)) : 1 / 15;
+    this.step = this.step == null ? step : this.step + (step - this.step) * 0.1;
+    this.jitter = Math.max(sample - this.offset, (this.jitter ?? 0.03) * 0.97);
+    const target = Math.min(DELAY_MAX, Math.max(DELAY_MIN, this.step + this.jitter + 0.008));
+    // Ease towards it: fast when more buffer is needed, slowly when less, so
+    // render time never jumps.
+    this.delay += Math.max(-0.002, Math.min(0.01, target - this.delay));
     const ents = new Map();
     for (const e of snap.ents) ents.set(e.id, e);
     this.snaps.push({ t, ents, links: snap.links || [], snap });
@@ -445,7 +466,7 @@ export class World {
   }
 
   renderTime() {
-    return performance.now() / 1000 - (this.offset ?? 0) - INTERP_DELAY;
+    return performance.now() / 1000 - (this.offset ?? 0) - this.delay;
   }
 
   // Finds the pair of snapshots around render time.
@@ -482,7 +503,7 @@ export class World {
       case 'warlock': obj = bakeModel(M.warlock(color)); break;
       case 'paladin':
         v.sk = e.sk;
-        obj = e.sk && SKINS.has(e.sk) ? SKINS.get(e.sk)(color) : bakeModel(M.paladin(color));
+        obj = bakeModel(e.sk && SKINS.has(e.sk) ? SKINS.get(e.sk)(color) : M.paladin(color));
         break;
       case 'kodo': obj = bakeModel(M.kodo()); break;
       case 'golem': obj = bakeModel(M.golem()); break;
@@ -858,6 +879,8 @@ export class World {
           }
         }
         v.visibleBar = !b.dead && !(invis && b.o !== this.myId);
+        // Skins may animate themselves (wakes, roll, sinking...).
+        o.userData.tick?.(dt, v, b, this);
         break;
       }
       case 'kodo':
@@ -1130,6 +1153,7 @@ export class World {
       this.camera.position.x += (Math.random() - 0.5) * q;
       this.camera.position.y += (Math.random() - 0.5) * q;
     }
+    for (const fn of this.cameraFx) fn(this.camera, dt, this);
     if (this.scene.fog) {
       this.scene.fog.near = this.zoom + 20;
       this.scene.fog.far = this.zoom + 95;

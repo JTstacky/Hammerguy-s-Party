@@ -246,18 +246,25 @@ export class Room {
       this.broadcast({ t: 'map', map: g.mapInfo });
     }
     this.tickCount++;
-    if (this.tickCount % SNAPSHOT_EVERY === 0) {
-      const events = g.events;
-      g.events = [];
-      for (const p of this.players.values()) {
-        if (p.bot || !p.connected) continue;
-        const snap = g.snapshot(p.id);
-        snap.t = 'snap';
-        snap.tk = this.tickCount;
-        snap.ev = events.filter((e) => e.to == null || e.to === p.id);
-        this.sendTo(p, snap);
-      }
+    // Snapshots go out every SNAPSHOT_EVERY ticks over the network, but every
+    // tick to the host's own page (no network cost; halves its input lag).
+    // Events wait in slowEvents for the next network snapshot.
+    const events = g.events;
+    g.events = [];
+    const slowTurn = this.tickCount % SNAPSHOT_EVERY === 0;
+    if (events.length) this.slowEvents = this.slowEvents ? this.slowEvents.concat(events) : events;
+    for (const p of this.players.values()) {
+      if (p.bot || !p.connected) continue;
+      const fast = !!p.ws?.fast;
+      if (!fast && !slowTurn) continue;
+      const evs = fast ? events : this.slowEvents || [];
+      const snap = g.snapshot(p.id);
+      snap.t = 'snap';
+      snap.tk = this.tickCount;
+      snap.ev = evs.length ? evs.filter((e) => e.to == null || e.to === p.id) : evs;
+      this.sendTo(p, snap);
     }
+    if (slowTurn) this.slowEvents = null;
     if (g.over) {
       this.overTime += dt;
       if (this.overTime > GAME_OVER_LINGER) this.endGame();

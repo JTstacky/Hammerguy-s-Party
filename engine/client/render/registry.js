@@ -6,11 +6,17 @@
 //     make(e, world, v)            -> THREE.Object3D   (v is the view record; stash parts on v.parts)
 //     update(v, a, b, k, dt, world)                    (a/b: bracketing snapshots of the entity, k: blend;
 //                                                       v.x / v.z / v.f are already interpolated;
-//                                                       position/rotation are set for you unless it returns true)
+//                                                       position and rotation are set before update runs,
+//                                                       so it may simply overwrite them)
 //     remove(v, world)                                 (optional clean-up)
 //   })
 //   registerSkin('sheep', (color) => group)   hero looks: a Group with userData.body
-//                                              (optional userData.legL/legR/staff are animated)
+//                                              (optional userData.legL/legR/staff are animated;
+//                                              optional userData.tick(dt, v, snap, world) runs every frame;
+//                                              static parts are merged per material, so anything a skin
+//                                              moves must be referenced from userData)
+//   world.cameraFx.add(fn)                     fn(camera, dt, world) after the camera is placed each
+//                                              frame (camera noise, sway); delete it in remove()
 //   registerEvent('web', (e, world) => {...})  one-shot effects for a game's event kinds
 //   registerTheme('cave', { sky, fog, sun, hemi, sunI }, groundLayers)
 //                                              groundLayers as in world.js GROUNDS (see terrain.js)

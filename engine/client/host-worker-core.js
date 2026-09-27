@@ -18,6 +18,8 @@ export function runHostWorker(gameDef) {
       case 'open': {
         const conn = {
           readyState: 1,
+          // The host's own page: no network, so it gets a snapshot every tick.
+          fast: !!m.local,
           send: (data) => self.postMessage({ type: 'send', conn: m.conn, data }),
           close: () => {
             conn.readyState = 3;
