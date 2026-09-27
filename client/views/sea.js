@@ -13,11 +13,11 @@ import { play } from '../../engine/client/audio.js';
 
 // ------------------------------------------------------------ theme & water
 
-const SAND = { tex: 'tex_dirt.webp', tint: '#f0e0b8', color: '#b8a070', units: 6 };
+const GRASS = { tex: 'tex_grass.webp', tint: '#a4b48c', color: '#46663a', units: 11 };
 registerTheme(
   'sea',
   { sky: '#86aacb', fog: '#94b4cc', floor: ['#c8b080', 30, {}], sun: '#fff2dc', hemi: ['#d8ecff', '#2c4454'], sunI: 2.3 },
-  { floor: SAND, edge: { ...SAND, tint: '#d8c49c', units: 5 }, outer: { tex: 'tex_grass.webp', tint: '#a4b48c', color: '#46663a' }, edgeWidth: 1.8 },
+  { floor: GRASS, edge: GRASS, outer: GRASS, edgeWidth: 1.8 },
 );
 
 // WC3 north is up on screen; the shallows lie in the NE and SW corners.
@@ -26,19 +26,56 @@ const SHALLOWS = [
   [-12.5, 12],
 ];
 
-function seaMaterial(hw, hh, time) {
+// Build the coastline once, including all noise and shallow-water distances.
+// R = signed distance (positive water), G = surf breakup, B = NE/SW shoals.
+// The coast is an OUTWARD offset of the server rectangle, including its
+// corners: neither the beach nor the water discard can enter navigable sea.
+function coastNoise(x, z) {
+  const hash = (a, b) => { const n = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return n - Math.floor(n); };
+  const ix = Math.floor(x), iz = Math.floor(z);
+  const fx = x - ix, fz = z - iz;
+  const u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz);
+  return (1 - v) * ((1 - u) * hash(ix, iz) + u * hash(ix + 1, iz)) + v * ((1 - u) * hash(ix, iz + 1) + u * hash(ix + 1, iz + 1));
+}
+
+export function coastDistance(x, z, hw, hh) {
+  const qx = Math.abs(x) - hw, qz = Math.abs(z) - hh;
+  const rect = Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0);
+  const coves = coastNoise(x * 0.19 + 4, z * 0.19 + 9);
+  const ripples = coastNoise(x * 0.83, z * 0.83);
+  return 0.7 + 3.1 * coves + 0.35 * ripples - rect;
+}
+
+function coastline(hw, hh) {
+  const res = 384;
+  const extent = new THREE.Vector2(hw + 8, hh + 8);
+  const data = new Uint8Array(res * res * 4);
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) {
+    const x = ((i + 0.5) / res * 2 - 1) * extent.x;
+    const z = ((j + 0.5) / res * 2 - 1) * extent.y;
+    const d = coastDistance(x, z, hw, hh);
+    const rag = coastNoise(x * 1.8, z * 1.8);
+    let shoal = 0;
+    for (const [sx, sz] of SHALLOWS) shoal = Math.max(shoal, 1 - smooth(2, 8, Math.hypot(x - sx, z - sz) + rag));
+    const o = (j * res + i) * 4;
+    data[o] = Math.round(Math.max(0, Math.min(1, (d + 8) / 16)) * 255);
+    data[o + 1] = Math.round(rag * 255);
+    data[o + 2] = Math.round(shoal * 255);
+    data[o + 3] = 255;
+  }
+  const tex = new THREE.DataTexture(data, res, res);
+  tex.minFilter = tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return { tex, extent };
+}
+
+function seaMaterial(coast, time) {
   const u = {
-    tWater: { value: null },
-    uOn: { value: 0 },
-    uHalf: { value: new THREE.Vector2(hw, hh) },
-    uNE: { value: new THREE.Vector2(...SHALLOWS[0]) },
-    uSW: { value: new THREE.Vector2(...SHALLOWS[1]) },
-    time,
+    tWater: { value: null }, uOn: { value: 0 },
+    tCoast: { value: coast.tex }, uExtent: { value: coast.extent }, time,
   };
-  fxTexture('tex_sea_water.webp', (t) => {
-    u.tWater.value = t;
-    u.uOn.value = 1;
-  }, { repeat: true });
+  fxTexture('tex_sea_water.webp', (t) => { u.tWater.value = t; u.uOn.value = 1; }, { repeat: true });
   const mat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.28, metalness: 0.12 });
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, u);
@@ -48,48 +85,78 @@ function seaMaterial(hw, hh, time) {
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
         varying vec2 vSea;
-        uniform sampler2D tWater;
+        uniform sampler2D tWater, tCoast;
         uniform float uOn, time;
-        uniform vec2 uHalf, uNE, uSW;
-        float sHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-        float sNoise(vec2 p) {
-          vec2 i = floor(p), f = fract(p);
-          f = f * f * (3.0 - 2.0 * f);
-          return mix(mix(sHash(i), sHash(i + vec2(1.0, 0.0)), f.x), mix(sHash(i + vec2(0.0, 1.0)), sHash(i + vec2(1.0, 1.0)), f.x), f.y);
-        }`)
+        uniform vec2 uExtent;`)
       .replace('#include <map_fragment>', `
         vec2 p = vSea;
-        float d = min(uHalf.x - abs(p.x), uHalf.y - abs(p.y));
-        float rag = sNoise(p * 0.6) * 0.7 + sNoise(p * 2.1) * 0.25;
-        if (d < -0.9 + rag) discard;
+        vec3 coast = texture2D(tCoast, p / (2.0 * uExtent) + 0.5).rgb;
+        float d = coast.r * 16.0 - 8.0;
+        if (d < 0.0) discard;
+        float rag = coast.g;
         vec3 c = vec3(0.03, 0.12, 0.2);
         if (uOn > 0.5) {
           vec3 a = texture2D(tWater, p * 0.045 + vec2(time * 0.010, time * 0.006)).rgb;
           vec3 b = texture2D(tWater, vec2(p.y, -p.x) * 0.034 + vec2(-time * 0.007, time * 0.011)).rgb;
-          c = mix(a, b, 0.45) * 0.78;
+          c = mix(a, b, 0.45) * 0.72;
         }
-        float sh = max(1.0 - smoothstep(1.5, 6.5, length(p - uNE) + rag * 2.0), 1.0 - smoothstep(1.5, 6.5, length(p - uSW) + rag * 2.0));
-        c = mix(c, c * vec3(1.25, 2.0, 1.85) + vec3(0.04, 0.1, 0.08), sh * 0.8);
-        float shore = 1.0 - smoothstep(0.0, 3.5, d);
-        c = mix(c, c * vec3(1.35, 1.8, 1.65) + vec3(0.02, 0.05, 0.04), shore * 0.7);
-        float surf = smoothstep(0.3, 0.0, abs(d - 0.35 - 0.3 * sin(time * 1.4 + (p.x + p.y) * 0.7) - rag * 0.4));
-        c = mix(c, vec3(0.8, 0.9, 0.9), surf * 0.4);
+        float shallow = max(coast.b * 0.85, (1.0 - smoothstep(0.0, 3.8, d)) * 0.8);
+        c = mix(c, c * vec3(1.3, 1.85, 1.65) + vec3(0.05, 0.13, 0.1), shallow);
+        float wave = 0.28 + 0.17 * sin(time * 1.4 + (p.x + p.y) * 0.7);
+        float surf = 1.0 - smoothstep(0.045, 0.24, abs(d - wave - rag * 0.22));
+        c = mix(c, vec3(0.74, 0.87, 0.82), surf * smoothstep(0.18, 0.75, rag) * 0.65);
         diffuseColor.rgb = c;`);
   };
-  mat.customProgramCacheKey = () => 'seaWater';
+  mat.customProgramCacheKey = () => 'seaCoastWater';
+  return mat;
+}
+
+function beachMaterial(coast) {
+  const mat = new THREE.MeshStandardMaterial({ color: '#d9c79b', roughness: 1, metalness: 0, transparent: true, depthWrite: false });
+  const u = { tCoast: { value: coast.tex }, uExtent: { value: coast.extent }, tSand: { value: null }, sandOn: { value: 0 } };
+  fxTexture('tex_dirt.webp', (t) => { u.tSand.value = t; u.sandOn.value = 1; }, { repeat: true });
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, u);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec2 vBeach;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvBeach = (modelMatrix * vec4(position, 1.0)).xz;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec2 vBeach;
+        uniform sampler2D tCoast, tSand;
+        uniform vec2 uExtent;
+        uniform float sandOn;`)
+      .replace('#include <map_fragment>', `
+        vec3 coast = texture2D(tCoast, vBeach / (2.0 * uExtent) + 0.5).rgb;
+        float inland = 8.0 - coast.r * 16.0;
+        // A narrow damp rim gives way to pale sand, then feathered grass.
+        float fade = 1.0 - smoothstep(1.0, 3.0 + coast.g * 1.2, inland);
+        if (fade < 0.01 || inland < -0.2) discard;
+        vec3 sand = vec3(0.7);
+        if (sandOn > 0.5) {
+          vec3 tile = texture2D(tSand, vBeach * 0.18).rgb;
+          sand = vec3(0.6 + dot(tile, vec3(0.299, 0.587, 0.114)) * 0.4);
+        }
+        diffuseColor.rgb *= sand * mix(vec3(0.56, 0.65, 0.63), vec3(1.0), smoothstep(0.0, 0.85, inland));
+        diffuseColor.a *= fade;`);
+  };
+  mat.customProgramCacheKey = () => 'seaCoastBeach';
   return mat;
 }
 
 registerMapBuilder('sea', (map, world) => {
-  const hw = map.floor.w / 2;
-  const hh = map.floor.h / 2;
-  // world.liquids is where the renderer ticks its animated surfaces.
+  const hw = map.floor.w / 2, hh = map.floor.h / 2;
+  const coast = coastline(hw, hh);
   const holder = { uniforms: { time: { value: 0 } } };
   world.liquids.push(holder);
-  const water = new THREE.Mesh(new THREE.PlaneGeometry(hw * 2 + 2, hh * 2 + 2).rotateX(-Math.PI / 2), seaMaterial(hw, hh, holder.uniforms.time));
+  const geo = new THREE.PlaneGeometry(coast.extent.x * 2, coast.extent.y * 2).rotateX(-Math.PI / 2);
+  const water = new THREE.Mesh(geo, seaMaterial(coast, holder.uniforms.time));
   water.position.y = 0.05;
   water.receiveShadow = true;
-  world.mapGroup.add(water);
+  const beach = new THREE.Mesh(geo, beachMaterial(coast));
+  beach.position.y = 0.035;
+  beach.receiveShadow = true;
+  world.mapGroup.add(water, beach);
 });
 
 // ------------------------------------------------------------ battleship
