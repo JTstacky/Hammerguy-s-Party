@@ -51,6 +51,10 @@ test('two clients join a room and play', async () => {
     a.send({ t: 'start' });
     const sa = await a.wait((m) => m.t === 'snap');
     const sb = await b.wait((m) => m.t === 'snap');
+    const map = await a.wait((m) => m.t === 'map');
+    assert.ok(map.map.mg.name);
+    assert.ok(Array.isArray(map.map.abilities));
+    assert.ok(!('mg' in sa) && !('ability' in sa));
     assert.equal(sa.ents.filter((e) => e.k === 'paladin').length, 2);
     assert.equal(sb.ents.filter((e) => e.k === 'paladin').length, 2);
     assert.equal(sa.phase, 'intro');
@@ -60,6 +64,8 @@ test('two clients join a room and play', async () => {
     await b2.open();
     b2.send({ t: 'join', code: welcome.code, name: 'Bob', token: 'b' });
     await b2.wait((m) => m.t === 'start');
+    const reconnectMap = await b2.wait((m) => m.t === 'map');
+    assert.deepEqual(reconnectMap.map, map.map, 'welcome resends the current metadata and definitions');
     const snap = await b2.wait((m) => m.t === 'snap');
     assert.ok(snap.me?.uid, 'reconnected player controls their hammerguy again');
     a.ws.close();

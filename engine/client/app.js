@@ -29,6 +29,12 @@ function fitZoom(map) {
 // Read at load: hosting rewrites the URL.
 const ONLY = new URLSearchParams(location.search).get('only') || undefined;
 
+// Restore map-scoped metadata before rendering or resolving input actions.
+export function restoreSnapshot(snap, map) {
+  if (!map?.mg) return snap;
+  return { ...snap, mg: map.mg, abilities: (snap.abilities || []).map((a, i) => ({ ...map.abilities[i], ...a })) };
+}
+
 export function startApp(cfg) {
   const transport = new URLSearchParams(location.search).get('transport') || import.meta.env?.VITE_TRANSPORT || 'p2p';
   renderShell({ ...cfg, p2p: transport === 'p2p' });
@@ -226,12 +232,14 @@ export function startApp(cfg) {
       case 'start':
         state.inGame = true;
         state.snap = null;
+        state.map = null;
         hud.reset();
         showScreen('game');
         world.follow = true;
         world.zoom = cfg.gameZoom ?? 30;
         break;
       case 'map':
+        state.map = m.map;
         // Each game fixes its own camera distance (WC3 maps did), sized to its arena.
         world.zoom = m.map.zoom ?? fitZoom(m.map) ?? cfg.gameZoom ?? 30;
         world.setMap(m.map);
@@ -239,9 +247,9 @@ export function startApp(cfg) {
         break;
       case 'snap':
         if (!state.inGame) return;
-        state.snap = m;
-        world.pushSnapshot(m);
-        hud.update(m);
+        state.snap = restoreSnapshot(m, state.map);
+        world.pushSnapshot(state.snap);
+        hud.update(state.snap);
         input.active = m.phase === 'play' || m.phase === 'shop';
         break;
       case 'end':

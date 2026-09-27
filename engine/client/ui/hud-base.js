@@ -90,6 +90,8 @@ export class HudBase {
 
   reset() {
     this.cache = {};
+    this.commandKey = null;
+    this.commandCells = null;
     for (const id of ['topbar', 'multiboard', 'cmdcard', 'unitinfo', 'centercard', 'shop']) $(id).innerHTML = '';
     $('shop').hidden = true;
     $('centercard').hidden = true;
@@ -132,11 +134,46 @@ export class HudBase {
       </table>${this.isHost() ? '<button class="btn primary" id="to-lobby">Back to lobby</button>' : '<div class="sub">Waiting for the host…</div>'}</div>`;
   }
 
-  // Standard cooldown button for the command card.
-  cmdButton({ slot, icon, key, cd = 0, max = 1, pips = '', tip = '' }) {
-    const pct = cd > 0 ? Math.min(100, (cd / max) * 100) : 0;
-    return `<div class="cmd ${cd > 0 ? 'cooling' : ''}" data-slot="${slot}" ${tip ? `data-tip="${tip}"` : ''}>
-      <span class="icon">${icon}</span><span class="hk">${key}</span>${pips ? `<span class="pips">${pips}</span>` : ''}
-      ${cd > 0 ? `<span class="cdsweep" style="--p:${pct}%"></span><span class="cdnum">${Math.ceil(cd)}</span>` : ''}</div>`;
+  // Keep the card's nodes while cooldowns and charges change.
+  setCommands(abilities) {
+    const key = JSON.stringify(abilities.map((a) => [a.icon, a.key, a.name, a.desc]));
+    if (this.commandKey !== key) {
+      this.commandKey = key;
+      const cells = abilities.map((a, slot) => {
+        const icon = a.icon || '🔨';
+        const tip = `text:${encodeURIComponent(`<div class="tt-title">${icon} ${a.name}</div><div class="tt-desc">${escapeHtml(a.desc || '')}</div>`)}`;
+        return `<div class="cmd" data-slot="${slot}" data-tip="${tip}">
+          <span class="icon">${icon}</span><span class="hk">${a.key || 'QWER'[slot]}</span><span class="pips" hidden></span>
+          <span class="cdsweep" hidden></span><span class="cdnum" hidden></span></div>`;
+      });
+      while (cells.length < 8) cells.push('<div class="cmd empty"></div>');
+      this.set('cmdcard', cells.join(''));
+      this.commandCells = [...$('cmdcard').querySelectorAll('[data-slot]')].map((el) => ({
+        el, pips: el.querySelector('.pips'), sweep: el.querySelector('.cdsweep'), num: el.querySelector('.cdnum'),
+      }));
+    }
+    abilities.forEach((a, i) => {
+      const c = this.commandCells[i];
+      const cd = a.empty ? 1 : a.cd || 0;
+      const pct = cd > 0 ? Math.min(100, cd / (a.empty ? 1 : a.max || 1) * 100) : 0;
+      const pips = a.left != null ? (a.left > 3 ? `×${a.left}` : '●'.repeat(a.left) || '○') : '';
+      setText(c.pips, pips);
+      setHidden(c.pips, !pips);
+      setText(c.num, cd > 0 ? String(Math.ceil(cd)) : '');
+      setHidden(c.sweep, cd <= 0);
+      setHidden(c.num, cd <= 0);
+      if (c.pct !== pct) { c.sweep.style.setProperty('--p', `${pct}%`); c.pct = pct; }
+      for (const [name, value] of [['cooling', cd > 0], ['disabled', !!a.empty], ['active', !!a.active]]) {
+        if (c[name] !== value) { c.el.classList.toggle(name, value); c[name] = value; }
+      }
+    });
   }
+}
+
+export function setText(el, text) {
+  if (el.textContent !== text) el.textContent = text;
+}
+
+export function setHidden(el, hidden) {
+  if (el.hidden !== hidden) el.hidden = hidden;
 }

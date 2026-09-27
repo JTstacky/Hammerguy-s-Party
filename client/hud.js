@@ -1,16 +1,32 @@
 // Hammerguy's Party HUD: game counter, points multiboard, the single ability
 // button, and the intro / results cards between minigames.
 
-import { HudBase, fmtTime, escapeHtml, controlsText } from '../engine/client/ui/hud-base.js';
+import { HudBase, fmtTime, escapeHtml, controlsText, $, setText, setHidden } from '../engine/client/ui/hud-base.js';
 
 export class PartyHud extends HudBase {
   update(s) {
     this.snap = s;
     const me = this.myId();
     this.set('topbar', `
-      <div class="tb-left">${s.tiebreak ? '<b>Tie-breaker</b>' : `Game <b>${s.index}</b> / ${s.total}`}</div>
-      <div class="tb-mid"><span class="phase">${escapeHtml(s.mg.name)}</span> <span class="clock" title="${s.elapsed ? 'No time limit: time played' : 'Time left'}">${s.phase === 'play' ? (s.elapsed ? '⏱ ' : '') + fmtTime(s.timer) : ''}</span></div>
-      <div class="tb-right">${s.hud?.label ? `<span class="hudlabel">${escapeHtml(s.hud.label)}</span>` : ''}${s.hud?.fuse != null ? `<span class="fuse">💣 ${s.hud.fuse.toFixed(1)}s</span>` : ''}<span class="gold">⭐ ${s.points[me] ?? 0} pts</span></div>`);
+      <div class="tb-left"><span class="game-prefix">Game </span><b></b><span class="game-total"></span></div>
+      <div class="tb-mid"><span class="phase"></span> <span class="clock"></span></div>
+      <div class="tb-right"><span class="hudlabel" hidden></span><span class="fuse" hidden></span><span class="gold"></span></div>`);
+    const top = $('topbar');
+    setText(top.querySelector('.game-prefix'), s.tiebreak ? '' : 'Game ');
+    setText(top.querySelector('.tb-left b'), s.tiebreak ? 'Tie-breaker' : String(s.index));
+    setText(top.querySelector('.game-total'), s.tiebreak ? '' : ` / ${s.total}`);
+    setText(top.querySelector('.phase'), s.mg.name);
+    const clock = top.querySelector('.clock');
+    const title = s.elapsed ? 'No time limit: time played' : 'Time left';
+    if (clock.title !== title) clock.title = title;
+    setText(clock, s.phase === 'play' ? (s.elapsed ? '⏱ ' : '') + fmtTime(s.timer) : '');
+    const label = top.querySelector('.hudlabel');
+    setText(label, s.hud?.label || '');
+    setHidden(label, !s.hud?.label);
+    const fuse = top.querySelector('.fuse');
+    setText(fuse, s.hud?.fuse != null ? `💣 ${s.hud.fuse.toFixed(1)}s` : '');
+    setHidden(fuse, s.hud?.fuse == null);
+    setText(top.querySelector('.gold'), `⭐ ${s.points[me] ?? 0} pts`);
     const rows = Object.entries(s.points).sort((a, b) => b[1] - a[1]);
     const showScore = s.scores && s.phase === 'play';
     this.set('multiboard', `<div class="mb-title">Hammerguy's Party</div><table>
@@ -20,14 +36,7 @@ export class PartyHud extends HudBase {
         return `<tr class="${s.alive[id] === false && s.phase === 'play' ? 'dead' : ''} ${+id === me ? 'me' : ''}"><td><i class="sw" style="background:${r.color}"></i></td><td style="color:${r.color}">${r.name}${r.connected === false ? ' ⚠' : ''}</td>${showScore ? `<td>${s.scores[id] ?? 0}</td>` : ''}<td><b>${pts}</b></td></tr>`;
       }).join('')}</table>`);
 
-    const cells = [];
-    (s.abilities || (s.ability ? [s.ability] : [])).forEach((a, slot) => {
-      const icon = a.icon || '🔨';
-      const pips = a.left != null ? (a.left > 3 ? `×${a.left}` : '●'.repeat(a.left) || '○') : '';
-      cells.push(this.cmdButton({ slot, icon, key: a.key || 'QWER'[slot], cd: a.empty ? 1 : a.cd, max: a.empty ? 1 : a.max, pips, tip: `text:${encodeURIComponent(`<div class="tt-title">${icon} ${a.name}</div><div class="tt-desc">${escapeHtml(a.desc || '')}</div>`)}` }));
-    });
-    for (let i = cells.length; i < 8; i++) cells.push('<div class="cmd empty"></div>');
-    this.set('cmdcard', cells.join(''));
+    this.setCommands(s.abilities || []);
     const r = this.playerRow(me);
     this.set('unitinfo', `<div class="portrait" style="--c:${r.color}">🔨</div>
       <div class="uinfo"><div class="uname2" style="color:${r.color}">${r.name}</div><div class="utitle">Hammerguy</div>
