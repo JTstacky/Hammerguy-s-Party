@@ -33,6 +33,11 @@ export class MortarMayhem extends Minigame {
   static timer = false;
   static ranking = 'survival';
 
+  // The player unit's look (client/views/peon.js); Fel Orc Fiasco's are red.
+  get peonSkin() {
+    return 'peon';
+  }
+
   setup() {
     this.map = {
       theme: 'dirt',
@@ -49,6 +54,7 @@ export class MortarMayhem extends Minigame {
       }),
       { speed: wc3(190), r: wc3(16), hp: 50, regen: 0.25 },
     );
+    for (const u of this.heroes.values()) u.skin = this.peonSkin;
     this.siege = [];
     this.rocks = [];
     this.oil = [];

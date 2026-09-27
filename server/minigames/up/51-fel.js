@@ -69,6 +69,10 @@ export class FelOrcFiasco extends MortarMayhem {
   static timer = false;
   static ranking = 'survival';
 
+  get peonSkin() {
+    return 'felpeon';
+  }
+
   setup() {
     super.setup();
     for (const u of this.heroes.values()) u.regen = FEL.regen;
