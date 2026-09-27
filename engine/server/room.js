@@ -66,8 +66,11 @@ export class Room {
         p.connected = true;
         p.name = name || p.name;
         this.emptySince = null;
+        // Everyone else left meanwhile: the room is theirs to run again.
+        if (this.hostId == null || !this.isConnected(this.hostId)) this.hostId = p.id;
         this.welcome(p);
         this.system(`${p.name} reconnected.`);
+        this.broadcastLobby();
         return p;
       }
     }
@@ -225,16 +228,28 @@ export class Room {
     this.overTime = 0;
     this.broadcast({ t: 'start', mode: this.game.mode });
     this.broadcastLobby();
+    // Timers fire late (a 30 ms interval really runs every ~31 ms), so ticks
+    // are paced by the wall clock: run as many steps as real time has passed.
+    // Otherwise game time drifts behind real time and clients, which play
+    // snapshots back in real time, run out of them and stutter.
     const dt = 1 / TICK_RATE;
+    let last = performance.now();
+    let acc = 0;
     this.loop = setInterval(() => {
+      const now = performance.now();
+      acc = Math.min(acc + (now - last) / 1000, dt * 8);
+      last = now;
       try {
-        this.tick(dt);
+        while (acc >= dt - 1e-4 && this.game) {
+          acc -= dt;
+          this.tick(dt);
+        }
       } catch (err) {
         console.error(`[room ${this.code}] tick error`, err);
         this.system('The game crashed and was stopped. Sorry!');
         this.endGame();
       }
-    }, 1000 / TICK_RATE);
+    }, 5);
   }
 
   tick(dt) {
