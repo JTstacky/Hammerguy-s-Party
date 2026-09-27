@@ -264,7 +264,11 @@ function shore() {
       const s = Math.sign(fixed);
       const out = Math.abs(fixed) + rand(0.9, 1.6);
       const p = (o, j = 0) => (horiz ? { x: a + j, y: s * o } : { x: s * o, y: a + j });
-      if (Math.random() < 0.55) props.push({ t: 'rock', ...p(out), s: rand(0.6, 1.3) });
+      // Rocks scattered along the (irregular) waterline, sometimes in pairs.
+      if (Math.random() < 0.4) {
+        props.push({ t: 'rock', ...p(out + rand(-0.4, 2.2), rand(-1, 1)), s: rand(0.5, 1.4) });
+        if (Math.random() < 0.35) props.push({ t: 'rock', ...p(out + rand(0.2, 2.6), rand(-1.6, 1.6)), s: rand(0.35, 0.8) });
+      }
       props.push({ t: 'tree', ...p(out + rand(2.5, 4), rand(-0.6, 0.6)), s: rand(0.9, 1.4) });
       if (Math.random() < 0.6) props.push({ t: 'tree', ...p(out + rand(5, 8), rand(-1, 1)), s: rand(1, 1.5) });
     }

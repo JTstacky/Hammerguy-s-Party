@@ -4,8 +4,8 @@ import { newId, rand, dist, shuffle, round1, round2, wc3, clamp } from '../../..
 // Uther Party 4.0 #50 "Battle for the Bottle" (docs/uther-party/rules-4.0.md).
 // A Free Play game in the original; here it joins the normal roll.
 //
-// A drunken free-for-all between level-2 Pandaren Brewmasters (played as
-// hammerguys) in The Tauren Tragedy's arena: a 1280 x 1280 square with its
+// A drunken free-for-all between level-2 Pandaren Brewmasters
+// in The Tauren Tragedy's arena: a 1280 x 1280 square with its
 // corners cut by cliffs. Everyone has 375 HP, a 26-36 melee hit every 1.71 s,
 // and two spells on a 240-mana pool:
 //  - Q Breath of Fire: a cone 375 long, 125 -> 300 wide, 65 damage; hazed
@@ -109,6 +109,7 @@ export class BattleForTheBottle extends Minigame {
       return [Math.cos(a) * START_R, -Math.sin(a) * START_R];
     }));
     this.spawnHeroes(spots, { hp: BREW.hp, regen: BREW.regen, r: BREW.r, speed: BREW.speed });
+    for (const u of this.heroes.values()) u.skin = 'brewmaster';
     this.hazed = new Map(); // pid -> seconds left
     this.burning = new Map(); // pid -> seconds left
     this.waves = [];

@@ -7,7 +7,9 @@
 
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
-import { registerView, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { registerView, registerEvent, registerSkin, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
+import { fxTexture } from '../../engine/client/render/effects.js';
 import { play } from '../../engine/client/audio.js';
 
 // How strong the effects are compared with the original. The flash there
@@ -15,6 +17,152 @@ import { play } from '../../engine/client/audio.js';
 const FLASH_CAP = 0.35;
 const SWAY = 0.9; // camera drift in world units (the original's noise is ~15)
 const ROLL = 0.035; // radians of camera roll
+
+// ------------------------------------------------------------ Pandaren
+
+// A single unbaked template shares geometry between contestants. Each clone
+// gets its own animation pivots and a cached team material before bakeModel.
+let brewerTemplate;
+function brewerFur(color) {
+  const m = M.texMat('tex_fur.webp', color, color, 2, { roughness: 1, metalness: 0 });
+  // The painted fur tile is brown; retain its brushwork, but make panda fur
+  // ivory/charcoal rather than tinting the panda brown.
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `
+      #ifdef USE_MAP
+        vec3 fur = texture2D(map, vMapUv).rgb;
+        diffuseColor.rgb *= 0.78 + 0.22 * dot(fur, vec3(0.299, 0.587, 0.114));
+      #endif`);
+  };
+  m.customProgramCacheKey = () => 'brewmasterFur';
+  return m;
+}
+
+function makeBrewerTemplate() {
+  const g = new THREE.Group();
+  const body = new THREE.Group();
+  body.name = 'body';
+  body.scale.setScalar(1.45); // same display scale as the paladin
+  g.add(body);
+  const white = brewerFur('#f2eddf');
+  const black = brewerFur('#252a30');
+  const eye = M.mat('#110f0e', { roughness: 0.3 });
+  const team = M.mat('#ffffff', { roughness: 0.9, side: THREE.DoubleSide });
+  const leather = M.leatherMat('#9d7555');
+  const wood = M.texMat('tex_wood.webp', '#78512c', '#c69c65');
+  const iron = M.mat('#49413a', { roughness: 0.55, metalness: 0.5 });
+  const round = (parent, material, x, y, z, sx, sy, sz, seed = 1) => {
+    const detail = Math.max(sx, sy, sz) > 0.25 ? 3 : Math.max(sx, sy, sz) > 0.07 ? 2 : 1;
+    const m = M.mesh(M.blob(sx, sy, sz, { seed, amt: 0.035, detail }), material, x, y, z);
+    parent.add(m);
+    return m;
+  };
+  // Broad black shoulders above a hanging white belly, with short planted legs.
+  round(body, black, -0.035, 1.12, 0, 0.35, 0.35, 0.43);
+  round(body, white, 0.035, 0.86, 0, 0.43, 0.48, 0.43, 2);
+  for (const s of [-1, 1]) {
+    const leg = new THREE.Group();
+    leg.name = s > 0 ? 'legL' : 'legR';
+    leg.position.set(-0.02, 0.48, s * 0.23);
+    round(leg, black, 0, -0.16, 0, 0.16, 0.25, 0.17);
+    round(leg, black, 0.09, -0.39, 0, 0.23, 0.1, 0.18);
+    leg.add(M.mesh(new THREE.CylinderGeometry(0.163, 0.17, 0.13, 16), team, 0.01, -0.27, 0));
+    body.add(leg);
+  }
+  // Face tips up toward the RTS camera: patches sit on the upper-front cheek.
+  const head = new THREE.Group();
+  head.position.set(0.12, 1.48, 0);
+  head.rotation.z = 0.18;
+  body.add(head);
+  round(head, white, 0, 0, 0, 0.31, 0.3, 0.34, 3);
+  for (const s of [-1, 1]) {
+    round(head, black, -0.07, 0.22, s * 0.275, 0.115, 0.13, 0.105);
+    const patch = round(head, black, 0.253, 0.078, s * 0.165, 0.077, 0.125, 0.104);
+    patch.rotation.x = s * 0.3;
+    round(head, white, 0.313, 0.095, s * 0.165, 0.025, 0.043, 0.036);
+    round(head, eye, 0.333, 0.098, s * 0.159, 0.017, 0.027, 0.022);
+    round(head, white, 0.273, -0.093, s * 0.093, 0.15, 0.105, 0.117);
+  }
+  round(head, eye, 0.404, -0.033, 0, 0.057, 0.045, 0.072);
+  head.add(M.mesh(M.tube([[0.377, -0.1, -0.1], [0.397, -0.131, 0], [0.377, -0.1, 0.1]], 0.012, 0.012, 8, 5), eye));
+  // A wide cloth sash, knotted at the side, and a hanging front apron.
+  const sash = M.mesh(M.lathe([[0.39, 0.53], [0.445, 0.61], [0.45, 0.72]], 24), team);
+  sash.scale.z = 1.03;
+  body.add(sash);
+  const loin = M.mesh(M.cloth(0.43, 0.45, 0.045, -0.04), team, 0.38, 0.41, 0);
+  loin.rotation.y = Math.PI;
+  body.add(loin);
+  round(body, team, 0.1, 0.65, 0.45, 0.12, 0.1, 0.075);
+  const tail = M.mesh(M.cloth(0.17, 0.4, 0.035, 0.1), team, 0.01, 0.45, 0.46);
+  body.add(tail);
+  // Wooden back keg: bulging staves, iron hoops, end grain and a bung.
+  const keg = new THREE.Group();
+  keg.position.set(-0.43, 1.02, 0);
+  keg.rotation.x = Math.PI / 2;
+  keg.rotation.z = -0.15;
+  keg.add(M.mesh(M.lathe([[0, -0.38], [0.24, -0.38], [0.29, -0.3], [0.33, 0], [0.29, 0.3], [0.24, 0.38], [0, 0.38]], 20), wood));
+  for (const y of [-0.29, 0.29]) keg.add(M.mesh(M.lathe([[0.29, y - 0.045], [0.3, y], [0.29, y + 0.045]], 20), iron));
+  keg.add(M.mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.05, 12), leather, 0, 0.407, 0));
+  body.add(keg);
+  for (const s of [-1, 1]) {
+    body.add(M.mesh(M.tube([[-0.45, 0.7, s * 0.24], [0.08, 0.89, s * 0.41], [0.12, 1.31, s * 0.25], [-0.4, 1.35, s * 0.22]], 0.035, 0.035, 14, 6), leather));
+  }
+  // The gripping arm and bo share the staff pivot, so casts carry the hand.
+  const staff = new THREE.Group();
+  staff.name = 'staff';
+  staff.position.set(0.02, 1.2, -0.39);
+  staff.add(M.mesh(M.tube([[0, 0, 0], [0.18, -0.19, -0.04], [0.34, -0.26, -0.01]], 0.16, 0.11, 8, 10), black));
+  round(staff, team, 0.26, -0.235, -0.01, 0.11, 0.105, 0.12);
+  round(staff, black, 0.36, -0.265, -0.01, 0.1, 0.105, 0.105);
+  staff.add(M.mesh(M.tube([[0.18, -1.05, 0], [0.36, -0.25, -0.02], [0.48, 0.55, -0.035], [0.46, 1.07, -0.04]], 0.052, 0.042, 16, 10), wood));
+  for (const y of [-0.86, 0.8, 0.91]) staff.add(M.mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.065, 12), leather, y < 0 ? 0.23 : 0.47, y, -0.035));
+  body.add(staff);
+  body.add(M.mesh(M.tube([[0, 1.19, 0.39], [0.11, 0.97, 0.48], [0.3, 0.87, 0.42]], 0.165, 0.115, 8, 10), black));
+  round(body, team, 0.23, 0.9, 0.435, 0.12, 0.11, 0.13);
+  round(body, black, 0.33, 0.85, 0.4, 0.12, 0.12, 0.12);
+  g.traverse((o) => { if (o.material === team) o.name = 'team'; });
+  return g;
+}
+
+export function brewmaster(color) {
+  brewerTemplate ??= makeBrewerTemplate();
+  const g = brewerTemplate.clone(true);
+  const team = M.mat(color, { roughness: 0.9, side: THREE.DoubleSide });
+  g.traverse((o) => { if (o.isMesh && o.name === 'team') o.material = team; });
+  g.userData = { body: g.getObjectByName('body'), staff: g.getObjectByName('staff'), legL: g.getObjectByName('legL'), legR: g.getObjectByName('legR'), kind: 'hero' };
+  return g;
+}
+registerSkin('brewmaster', brewmaster);
+
+let plateauMaterial;
+function plateauMat() {
+  if (plateauMaterial) return plateauMaterial;
+  const m = M.texMat('tex_dirt.webp', '#8e794d', '#b7a67b', 1, { roughness: 0.95 });
+  const grass = { value: null };
+  const ready = { value: 0 };
+  fxTexture('tex_grass.webp', (t) => { grass.value = t; ready.value = 1; }, { repeat: true });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.tGrass = grass;
+    sh.uniforms.grassReady = ready;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vPlateau; varying float vTurf;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvPlateau = position; vTurf = uv.y;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vPlateau; varying float vTurf; uniform sampler2D tGrass; uniform float grassReady;')
+      .replace('#include <map_fragment>', `
+        #ifdef USE_MAP
+          vec3 dirt = texture2D(map, vPlateau.xz * 0.18).rgb * diffuseColor.rgb;
+          vec3 grass = texture2D(tGrass, vPlateau.xz / 11.0 + 0.37).rgb * vec3(0.35, 0.37, 0.25); // the dirt theme's outer tint
+          float tuft = dot(grass, vec3(0.333)); // ("patch" is reserved in GLSL ES 3)
+          // Turf grows back from the cliff edge; the tile only breaks up the line.
+          float blend = smoothstep(0.3, 0.75, vTurf + (tuft - 0.45) * 0.35);
+          diffuseColor.rgb = mix(dirt, grass, blend * grassReady);
+        #endif`);
+  };
+  m.customProgramCacheKey = () => 'bottlePlateau';
+  plateauMaterial = m;
+  return m;
+}
 
 // ------------------------------------------------------------ map
 
@@ -40,24 +188,72 @@ function autumnTree(s = 1, seed = 1) {
 registerMapBuilder('bottle', (map, world) => {
   const HW = map.floor.w / 2;
   const CUT = HW * 1.5; // |x| + |y| <= 960 u of the 640 u half-width
-  // The cut corners: a raised cliff shelf with a rounded, rocky face.
-  const cliff = M.triMat('tex_boulder.webp', '#7a6a58', '#c8b49c', 0.6);
+  const scenery = new THREE.Group();
+  const cliff = M.triMat('tex_boulder.webp', '#71634f', '#aa9275', 0.6);
+  const top = plateauMat();
+  // Four stepped rock strata. Every point stays outside the chamfer's
+  // collision line; ledges retreat outward as they rise, exposing the face.
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) {
-    const sh = new THREE.Shape();
     const e = HW + 3;
-    // The chamfer is pushed out by the bevel so the cliff foot sits on the pathing line.
-    const c = CUT - HW + 0.8;
-    sh.moveTo(sx * c, sy * HW);
-    sh.lineTo(sx * HW, sy * c);
-    sh.lineTo(sx * e, sy * c);
-    sh.lineTo(sx * e, sy * e);
-    sh.lineTo(sx * c, sy * e);
-    sh.closePath();
-    const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.9, bevelEnabled: true, bevelThickness: 0.35, bevelSize: 0.55, bevelSegments: 4, curveSegments: 4 });
-    geo.rotateX(Math.PI / 2); // shape XY -> ground XZ, extruded downward
-    geo.translate(0, 0.95, 0);
-    const m = M.mesh(geo, cliff);
-    world.mapGroup.add(m);
+    const N = 40;
+    const rows = [[0.06, 0.02], [0.25, 0.45], [0.39, 0.62], [0.43, 1.28], [0.76, 1.45], [0.91, 2.05], [1.15, 2.17]];
+    const pos = [];
+    const idx = [];
+    const edge = [];
+    const phase = sx * 2 + sy * 4;
+    for (let r = 0; r < rows.length; r++) {
+      const [setback, height] = rows[r];
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const x = CUT - e + (2 * e - CUT) * t;
+        const z = CUT - x;
+        const crag = 0.25 + 0.16 * Math.sin(t * 31 + phase) + 0.09 * Math.sin(t * 67 + phase);
+        const out = setback + crag * (r ? 1 : 0.3);
+        const y = height + (r ? 0.14 * Math.sin(t * 19 + phase) + 0.07 * Math.sin(t * 43) : 0);
+        const p = [sx * (x + out), y, sy * (z + out)];
+        pos.push(...p);
+        if (r === rows.length - 1) edge.push(p);
+        if (r && i) {
+          const a = r * (N + 1) + i, b = a - N - 1;
+          if (sx * sy > 0) idx.push(a, b, a - 1, b, b - 1, a - 1);
+          else idx.push(a, a - 1, b, b, a - 1, b - 1);
+        }
+      }
+    }
+    const face = new THREE.BufferGeometry();
+    face.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    face.setIndex(idx);
+    face.computeVertexNormals();
+    scenery.add(M.mesh(face, cliff));
+    // The plateau continues out into the treeline, tapering back to ground.
+    const capPos = [], capIdx = [], capUV = [];
+    for (let r = 0; r <= 8; r++) for (let i = 0; i <= N; i++) {
+      const t = r / 8;
+      const p = edge[i];
+      const outer = e + 1.8 + 0.35 * Math.sin(i * 0.7 + phase);
+      const retreat = Math.max(0.2, outer - Math.max(Math.abs(p[0]), Math.abs(p[2])));
+      const fall = Math.max(0, (t - 0.25) / 0.75);
+      capPos.push(p[0] + sx * retreat * t, p[1] * (1 - fall * fall * (3 - 2 * fall)) + 0.015, p[2] + sy * retreat * t);
+      capUV.push(i / N, t);
+      if (r && i) {
+        const a = r * (N + 1) + i, b = a - N - 1;
+        if (sx * sy > 0) capIdx.push(a, b, a - 1, b, b - 1, a - 1);
+        else capIdx.push(a, a - 1, b, b, a - 1, b - 1);
+      }
+    }
+    const cap = new THREE.BufferGeometry();
+    cap.setAttribute('position', new THREE.Float32BufferAttribute(capPos, 3));
+    cap.setAttribute('uv', new THREE.Float32BufferAttribute(capUV, 2));
+    cap.setIndex(capIdx);
+    cap.computeVertexNormals();
+    scenery.add(M.mesh(cap, top));
+    for (let i = 0; i < 9; i++) {
+      const t = (i + 0.5) / 9;
+      const x = CUT - e + (2 * e - CUT) * t;
+      const size = 0.28 + (i % 3) * 0.12;
+      // Radius is included in the setback, keeping the playable octagon clear.
+      scenery.add(M.mesh(M.blob(size, size * 0.8, size * 0.85, { seed: i + 50, amt: 0.25, detail: 2 }), cliff, sx * (x + size), size * 0.45, sy * (CUT - x + size)));
+    }
   }
   // The Fall Tree Walls: three autumn trees on the rim, where the map has them.
   const t = HW / 5; // one tile
@@ -65,8 +261,8 @@ registerMapBuilder('bottle', (map, world) => {
     const tr = autumnTree(1.15, i + 1);
     // They block pathing in the original; stand them on the cliff shelf.
     const k = Math.max(1, (CUT + 0.9 * t) / (Math.abs(x * t) + Math.abs(y * t)));
-    tr.position.set(x * t * k, 1.2, y * t * k);
-    world.mapGroup.add(tr);
+    tr.position.set(x * t * k, 2.05, y * t * k);
+    scenery.add(tr);
   }
   // A ring of autumn trees among the pines outside.
   for (let i = 0; i < 14; i++) {
@@ -74,8 +270,10 @@ registerMapBuilder('bottle', (map, world) => {
     const r = HW * 1.45 + 2 + (i % 3) * 1.4;
     const tr = autumnTree(1 + (i % 4) * 0.12, i + 4);
     tr.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
-    world.mapGroup.add(tr);
+    scenery.add(tr);
   }
+  bakeStatic(scenery);
+  world.mapGroup.add(scenery);
 });
 
 // ------------------------------------------------------------ rune of mana
