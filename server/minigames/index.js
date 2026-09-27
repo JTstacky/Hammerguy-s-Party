@@ -11,11 +11,17 @@ import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
 import { IceSumo } from './sumo.js';
 import { SapperTag } from './potato.js';
+import { BattleForTheBottle } from './up/50-bottle.js';
+import { FelOrcFiasco } from './up/51-fel.js';
+import { SeaCombat } from './up/52-sea.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
   KodoStampede, // #17 Stampede
   WispWheel, // #47 Wheel of Fire
+  BattleForTheBottle, // #50 Battle for the Bottle (Free Play in the original)
+  FelOrcFiasco, // #51 Fel Orc Fiasco (Free Play in the original)
+  SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
