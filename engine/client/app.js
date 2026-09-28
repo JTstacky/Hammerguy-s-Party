@@ -9,7 +9,7 @@ import { World, escapeHtml } from './render/world.js';
 import { Input } from './input.js';
 import { play, unlockAudio, toggleMute, isMuted } from './audio.js';
 import { renderShell } from './shell.js';
-import { IS_TOUCH } from './device.js';
+import { IS_TOUCH, PHONE, CONTROLS, setControls } from './device.js';
 import { PLAYER_COLORS } from '../shared/constants.js';
 
 const $ = (id) => document.getElementById(id);
@@ -108,8 +108,9 @@ export function startApp(cfg) {
 
   // On phones, go fullscreen and landscape on the first menu button (it needs a tap).
   // iPhones don't allow either; the portrait overlay covers that case.
-  function phoneScreen() {
-    if (!IS_TOUCH || document.fullscreenElement) return;
+  // (Touchscreen laptops and desktops only go fullscreen from the button.)
+  function phoneScreen(force = false) {
+    if (!(PHONE || (force && IS_TOUCH)) || document.fullscreenElement) return;
     document.documentElement.requestFullscreen?.({ navigationUI: 'hide' })
       .then(() => screen.orientation?.lock?.('landscape'))
       .catch(() => {});
@@ -357,7 +358,7 @@ export function startApp(cfg) {
     fullBtn.hidden = false;
     fullBtn.onclick = () => {
       if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-      else phoneScreen();
+      else phoneScreen(true);
     };
     document.addEventListener('fullscreenchange', () => {
       fullBtn.classList.toggle('on', !!document.fullscreenElement);
@@ -378,6 +379,24 @@ export function startApp(cfg) {
   }
   $('opt-mute').checked = isMuted();
   $('opt-mute').onchange = () => toggleMute();
+  $('menu-options').onclick = () => ($('options').hidden = false);
+
+  // Controls: touch (phone layout) or mouse and keyboard. Switching rebuilds
+  // the page, so it reloads at once unless that would end a game you host
+  // for other people (guests who reload rejoin their seat automatically).
+  $('opt-controls').value = CONTROLS;
+  $('opt-controls').onchange = (e) => {
+    const note = $('opt-controls-note');
+    if (!setControls(e.target.value)) {
+      note.hidden = true;
+      return;
+    }
+    const hostingOthers = net.isHost && state.lobby?.players.some((p) => !p.bot && p.id !== state.myId);
+    if (hostingOthers) {
+      note.textContent = 'Saved. It takes effect when you reload the page; you are hosting, so wait until the game is over.';
+      note.hidden = false;
+    } else location.reload();
+  };
 
   // Handy for debugging from the console.
   window.game = { send, state, world, net };

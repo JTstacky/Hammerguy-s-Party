@@ -65,7 +65,9 @@ export class TouchControls {
   }
 
   down(e) {
-    if (e.pointerType === 'mouse') return;
+    // A mouse can drag the joystick too (touch controls forced on in
+    // Settings); its other clicks stay with the normal mouse controls.
+    if (e.pointerType === 'mouse' && (this.stick || Math.hypot(e.clientX - this.cx, e.clientY - this.cy) >= GRAB_R)) return;
     unlockAudio();
     this.world.follow = true;
     if (!this.stick && Math.hypot(e.clientX - this.cx, e.clientY - this.cy) < GRAB_R) {
