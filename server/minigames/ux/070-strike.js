@@ -79,15 +79,36 @@ export class StrikeAndLightGalore extends Minigame {
     this.checkEdges();
   }
 
+  // Bots keep to the middle, where a push cannot reach the fence, and spend
+  // lightning on a rival that a push would actually throw out; Purge first
+  // pins a rival near the edge so it cannot step back in.
   botThink(pid, u, mem) {
     const hx = this.dm ? STRIKE.innerX : STRIKE.outerX;
     const hy = this.dm ? STRIKE.innerY : STRIKE.outerY;
     const foes = [...this.heroes.values()].filter((v) => v.alive && v !== u);
     if (!foes.length) return;
-    const v = foes[Math.floor(rand(0, foes.length))];
-    if (this.acd.get(pid)[1] <= 0 && Math.random() < mem.skill * 0.22) this.useAbility(pid, 1, v.x, v.y);
-    else if (this.acd.get(pid)[0] <= 0 && Math.random() < 0.5) this.useAbility(pid, 0, v.x, v.y);
-    else u.order(clamp(u.x + rand(-3, 3), -hx + 1.3, hx - 1.3), clamp(u.y + rand(-3, 3), -hy + 1.3, hy - 1.3));
+    const outAfterPush = (v) => {
+      const d = dist(u.x, u.y, v.x, v.y) || 1;
+      const x = v.x + ((v.x - u.x) / d) * STRIKE.push, y = v.y + ((v.y - u.y) / d) * STRIKE.push;
+      return Math.abs(x) > hx || Math.abs(y) > hy;
+    };
+    const edge = (v) => Math.min(hx - Math.abs(v.x), hy - Math.abs(v.y));
+    const cd = this.acd.get(pid);
+    const kill = foes.filter(outAfterPush);
+    mem.wait = (mem.wait ?? rand(0, 1.5)) - 0.2;
+    if (kill.length && cd[0] <= 0 && mem.wait <= 0 && Math.random() < 0.3 + mem.skill * 0.5) {
+      mem.wait = rand(0.3, 1.5) * (1.3 - mem.skill);
+      return this.useAbility(pid, 0, kill[0].x, kill[0].y);
+    }
+    const nearEdge = foes.filter((v) => edge(v) < STRIKE.push * 0.9).sort((p, q) => edge(p) - edge(q))[0];
+    if (nearEdge && cd[1] <= 0 && Math.random() < mem.skill * 0.3) return this.useAbility(pid, 1, nearEdge.x, nearEdge.y);
+    // Nothing to throw out: a random shove now and then still stirs things up.
+    if (cd[0] <= 0 && Math.random() < 0.04) return this.useAbility(pid, 0, foes[0].x, foes[0].y);
+    if ((mem.next || 0) > this.time) return;
+    mem.next = this.time + rand(0.4, 0.9);
+    // Drift round the middle, away from the nearest fence.
+    const k = 0.35 + (1 - mem.skill) * 0.25;
+    u.order(clamp(u.x * 0.5 + rand(-2.5, 2.5), -hx * k, hx * k), clamp(u.y * 0.5 + rand(-2.5, 2.5), -hy * k, hy * k));
   }
 
   hud() { return { label: this.time < 5 ? `Seers ready in ${Math.ceil(5 - this.time)}` : this.dm ? 'DEATH MATCH MODE!' : `Seers left: ${this.alive.length}` }; }

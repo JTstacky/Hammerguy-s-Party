@@ -71,7 +71,8 @@ export class MiltonsMisery extends Minigame {
     if (this.time < 7 || this.exploded || u.saved != null) return;
     const hits = MILTON.barrelHp - this.barrelHp;
     // Different risk appetites; even a cautious bot waits for a visible cue.
-    const desired = 2 + Math.floor(mem.skill * 4) + (pid % 2);
+    mem.desired ??= 1 + Math.floor(Math.random() * 4 + mem.skill * 4);
+    const desired = mem.desired;
     if (hits >= desired && this.acd.get(pid)[0] <= 0) this.useAbility(pid, 0, u.x, u.y);
   }
 

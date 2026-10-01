@@ -91,13 +91,35 @@ export class ElementalClash extends Minigame {
     }
   }
 
+  // Nearest tile centre of a kind (from the 11x11 terrain grid).
+  nearestTile(u, kinds) {
+    let best = null, bd = Infinity;
+    ELEMENT_GRID.forEach((row, r) => [...row].forEach((t, c) => {
+      if (!kinds.includes(t)) return;
+      const x = (c - 5) * ELEM.tile, y = (r - 5) * ELEM.tile;
+      const d = dist(u.x, u.y, x, y);
+      if (d < bd) { bd = d; best = [x, y]; }
+    }));
+    return best;
+  }
+
+  // Bots pick one rival and keep at it; when hurt they fall back to soil to
+  // heal, and they use the tile under them: roots on grass, armour on ice,
+  // the boulder on rock.
   botThink(pid, u, mem) {
     const foes = [...this.heroes.values()].filter((v) => v.alive && v !== u);
     if (!foes.length) return;
-    const v = foes[Math.floor(rand(0, foes.length))];
+    if (!mem.tgt?.alive || Math.random() < 0.02) mem.tgt = foes.sort((p, q) => dist(u.x, u.y, p.x, p.y) - dist(u.x, u.y, q.x, q.y))[0];
+    const v = mem.tgt;
     const tile = terrainAt(u.x, u.y);
-    if (this.acd.get(pid)[0] <= 0 && ((tile === 'S' && u.hp < 390) || (tile === 'M' && !u.starfall) || (tile === 'I' && u.armourUntil < this.time + 5) || dist(u.x, u.y, v.x, v.y) < ELEM.aoe)) this.useAbility(pid, 0, u.x, u.y);
-    else if (dist(u.x, u.y, v.x, v.y) < wc3(300)) u.attackOrder = v;
+    const ready = this.acd.get(pid)[0] <= 0;
+    const near = dist(u.x, u.y, v.x, v.y);
+    if (ready && ((tile === 'S' && u.hp < 400) || (tile === 'M' && !u.starfall) || (tile === 'I' && u.armourUntil < this.time + 5 && near < wc3(400)) || ((tile === 'G' || tile === 'R') && near < ELEM.aoe * 0.9))) return this.useAbility(pid, 0, u.x, u.y);
+    if (u.hp < 220 + (1 - mem.skill) * 100 && ready) {
+      const s = this.nearestTile(u, 'S');
+      if (s && dist(u.x, u.y, s[0], s[1]) > 0.5) { u.attackOrder = null; return u.order(s[0], s[1]); }
+    }
+    if (near < wc3(260)) u.attackOrder = v;
     else u.order(v.x, v.y);
   }
 
