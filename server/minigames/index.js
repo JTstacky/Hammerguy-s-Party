@@ -23,16 +23,28 @@ import { DestructionsDance } from './up/35-dance.js';
 import { BattleForTheBottle } from './up/50-bottle.js';
 import { FelOrcFiasco } from './up/51-fel.js';
 import { SeaCombat } from './up/52-sea.js';
+import { Roadkill } from './up/07-roadkill.js';
+import { StopAndGo } from './up/18-stopgo.js';
+import { PushTheOgre } from './up/19-pushogre.js';
+import { HorseRace } from './up/24-horserace.js';
+import { QuillboarMile } from './up/33-quillboar.js';
+import { FlightOfTheFootmen } from './up/45-footmen.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
   WayOfTheBow, // #6 Way of the Bow
+  Roadkill, // #7 Roadkill Challenge
   TaurenTragedy, // #10 The Tauren Tragedy
   KodoStampede, // #17 Stampede
+  StopAndGo, // #18 Stop and Go
+  PushTheOgre, // #19 Push the Ogre
+  HorseRace, // #24 Horse Race
   Masquerade, // #25 The Masquerade
   Abombinations, // #28 The Abombinations
   NaturesCircle, // #30 Nature's Circle
+  QuillboarMile, // #33 Quillboar Mile
   DestructionsDance, // #35 Destruction's Dance
+  FlightOfTheFootmen, // #45 Flight of the Footmen
   WispWheel, // #47 Wheel of Fire
   BattleForTheBottle, // #50 Battle for the Bottle (Free Play in the original)
   FelOrcFiasco, // #51 Fel Orc Fiasco (Free Play in the original)
