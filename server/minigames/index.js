@@ -27,6 +27,10 @@ import { CrabIsland } from './up/26-crab.js';
 import { SkullOfGuldan } from './up/31-skull.js';
 import { PorkThePiggy } from './up/36-pork.js';
 import { TidesOfDarkness } from './up/44-tides.js';
+import { SpellBreakerBlood } from './up/42-spellbreaker.js';
+import { DuneWorm } from './up/43-dune.js';
+import { TowerDefense } from './up/46-tower.js';
+import { ClandestineKitty } from './up/49-kitty.js';
 import { GolemGauntlet } from './race.js';
 import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
@@ -102,10 +106,14 @@ export const UTHER = [
   SheepShearers, // #39 The Sheep Shearers
   DoggyHell, // #40 Doggy Hell
   AncientPunisher, // #41 Ancient Punisher
+  SpellBreakerBlood, // #42 Spell Breaker Blood
+  DuneWorm, // #43 Dune Worm Distress
   TidesOfDarkness, // #44 Tides of Darkness
   FlightOfTheFootmen, // #45 Flight of the Footmen
+  TowerDefense, // #46 Tower Defense
   WispWheel, // #47 Wheel of Fire
   DeathTrap, // #48 The Death Trap
+  ClandestineKitty, // #49 Clandestine Kitty
   BattleForTheBottle, // #50 Battle for the Bottle (Free Play in the original)
   FelOrcFiasco, // #51 Fel Orc Fiasco (Free Play in the original)
   SeaCombat, // #52 Sea Combat (Free Play in the original)

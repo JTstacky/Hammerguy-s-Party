@@ -58,3 +58,7 @@ import './whack.js';
 import './crab.js';
 import './tides.js';
 import './skull.js';
+import './spellbreaker.js';
+import './dune.js';
+import './tower.js';
+import './kitty.js';
