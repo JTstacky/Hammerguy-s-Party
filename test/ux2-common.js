@@ -1,0 +1,1 @@
+export function game(Game,n=2){const pids=Array.from({length:n},(_,i)=>i+1);const party={room:{isBot:()=>false,nameOf:p=>`P${p}`,colorOf:()=> '#fff'},msg(){},ev(){}};const g=new Game(party,pids);g.setup();return g;}

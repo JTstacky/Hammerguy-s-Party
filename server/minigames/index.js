@@ -23,6 +23,13 @@ import { DestructionsDance } from './up/35-dance.js';
 import { BattleForTheBottle } from './up/50-bottle.js';
 import { FelOrcFiasco } from './up/51-fel.js';
 import { SeaCombat } from './up/52-sea.js';
+import { RampageWithWolves } from './ux/056-wolves.js';
+import { TowerAttack } from './ux/057-tower.js';
+import { StompOfDoom } from './ux/058-stomp.js';
+import { MosquitoSwarm } from './ux/060-mosquito.js';
+import { GhostlyGambit } from './ux/061-ghostly.js';
+import { SoulExchange } from './ux/062-soul.js';
+import { UndergroundRun } from './ux/168-underground.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -39,7 +46,7 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
-export const ULTIMA_X = [];
+export const ULTIMA_X = [RampageWithWolves, TowerAttack, StompOfDoom, MosquitoSwarm, GhostlyGambit, SoulExchange, UndergroundRun];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 
