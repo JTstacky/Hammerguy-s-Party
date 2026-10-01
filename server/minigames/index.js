@@ -88,6 +88,12 @@ import { ElementalClash } from './ux/071-elemental.js';
 import { WallStreetTraffic } from './ux/072-stock.js';
 import { MiltonsMisery } from './ux/073-milton.js';
 import { Fetch } from './ux/074-fetch.js';
+import { OverNineThousand } from './ux/075-nine.js';
+import { LostAndFound } from './ux/076-lost.js';
+import { TitanicPanic } from './ux/077-titanic.js';
+import { GreatNavalEnmity } from './ux/078-naval.js';
+import { BadFurDay } from './ux/159-badfur.js';
+import { DrinkAndBow } from './ux/161-drinkbow.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -169,6 +175,12 @@ export const ULTIMA_X = [
   WallStreetTraffic, // #72 Wall Street Traffic
   MiltonsMisery, // #73 Milton's Misery
   Fetch, // #74 Fetch!
+  OverNineThousand, // #75 Over Nine Thousand
+  LostAndFound, // #76 Lost & Found
+  TitanicPanic, // #77 Titanic Panic
+  GreatNavalEnmity, // #78 Great Naval Enmity
+  BadFurDay, // #159 Bad Fur Day (hidden in the original)
+  DrinkAndBow, // #161 Drink and Bow (hidden in the original)
   UndergroundRun, // #168 Underground Run (hidden in the original)
 ];
 
