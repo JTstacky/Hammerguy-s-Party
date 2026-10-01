@@ -94,6 +94,13 @@ import { TitanicPanic } from './ux/077-titanic.js';
 import { GreatNavalEnmity } from './ux/078-naval.js';
 import { BadFurDay } from './ux/159-badfur.js';
 import { DrinkAndBow } from './ux/161-drinkbow.js';
+import { WildEastDuel } from './ux/059-wild-east.js';
+import { ChickenStampede } from './ux/162-chicken-stampede.js';
+import { SickPeonPandemonium } from './ux/163-sick-peon.js';
+import { PiggyPandemonium } from './ux/164-piggy-pandemonium.js';
+import { WildClickingDuel } from './ux/166-wild-clicking.js';
+import { DefenseJoke } from './ux/167-defense.js';
+import { WildWestDuel } from './ux/169-wild-west.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -160,6 +167,7 @@ export const ULTIMA_X = [
   RampageWithWolves, // #56 Rampage With Wolves
   TowerAttack, // #57 Tower Attack
   StompOfDoom, // #58 Stomp of Doom
+  WildEastDuel, // #59 Wild East Duel
   MosquitoSwarm, // #60 Mosquito Swarm
   GhostlyGambit, // #61 Ghostly Gambit
   SoulExchange, // #62 The Soul Exchange
@@ -181,7 +189,13 @@ export const ULTIMA_X = [
   GreatNavalEnmity, // #78 Great Naval Enmity
   BadFurDay, // #159 Bad Fur Day (hidden in the original)
   DrinkAndBow, // #161 Drink and Bow (hidden in the original)
+  ChickenStampede, // #162 Chicken Stampede (hidden in the original)
+  SickPeonPandemonium, // #163 Sick Peon Pandemonium (hidden in the original)
+  PiggyPandemonium, // #164 Piggy Pandemonium (hidden in the original)
+  WildClickingDuel, // #166 Wild Clicking Duel (hidden in the original)
+  DefenseJoke, // #167 ??? (Defense; dead content in the original)
   UndergroundRun, // #168 Underground Run (hidden in the original)
+  WildWestDuel, // #169 Wild West Duel (hidden in the original)
 ];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
