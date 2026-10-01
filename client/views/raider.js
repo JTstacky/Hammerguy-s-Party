@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeModel, bakeStatic } from '../../engine/client/render/batch.js';
 import { cliffField, cliffMaterial, dressWalls, circleOfPower, blobShadow, emit } from './lib-f-cliffs.js';
 import { ironMat, brassMat } from './lib-f-units.js';
 
@@ -169,19 +170,24 @@ registerSkin('zeppelin', (color) => {
 // The zeppelins waiting on the pad (and those left there after unloading).
 registerView('rrzep', {
   unit: true,
+  bake: 'flat', // these wait on the pad in numbers; fold each part into one vertex-coloured mesh.
   make(e, world, v) {
     v.parked = !!e.p;
     const z = zeppelinModel(v.parked ? '#8a8a88' : world.colors[e.o] || '#cccccc');
     v.parts = z;
     z.g.add(blobShadow(1.3));
+    z.g.userData = { body: z.body, prop: z.prop };
     return z.g;
   },
   update(v, a, b, k, dt, world) {
     const p = v.parts;
     if (v.parked !== !!b.p) {
-      // Woken: swap in a model in the owner's colour.
+      // Woken: swap in a model in the owner's colour. The initial model was
+      // baked by the registry; this one is rebuilt at runtime, so bake it by hand.
       v.parked = !!b.p;
       const z = zeppelinModel(world.colors[b.o] || '#cccccc');
+      z.g.userData = { body: z.body, prop: z.prop };
+      bakeModel(z.g, { flat: true });
       v.obj.remove(p.body);
       v.obj.add(z.body);
       v.parts = z;
@@ -269,6 +275,7 @@ function hippoModel() {
 function mobView(build, { air = false } = {}) {
   return {
     unit: true,
+    bake: 'flat', // these spawn in numbers; fold each part into one vertex-coloured mesh.
     make(e, world, v) {
       const m = build();
       v.parts = m;
@@ -278,6 +285,8 @@ function mobView(build, { air = false } = {}) {
         m.g.add(net);
         m.net = net;
       }
+      // Kept whole by bakeModel: everything update() moves or toggles.
+      m.g.userData = { ...m };
       return m.g;
     },
     update(v, a, b, k, dt, world) {
@@ -350,7 +359,9 @@ registerMapBuilder('raider', (map, world) => {
   const solid = (ch) => ch === '#';
   const mat = cliffMaterial({ top: 'tex_grass.webp', topTint: '#b0c098', rockTint: '#aaa294' });
   world.mapGroup.add(cliffField({ cells, T, solid, H: 1.5, ramp: 0.45, margin: 6, res: 0.3, material: mat }));
-  dressWalls(world.mapGroup, { cells, T, solid, H: 1.5, density: 0.3, trees: 0.2, seed: 14 });
+  // Wall-top doodads and the landing deck: static scenery, merged per material.
+  const deco = new THREE.Group();
+  dressWalls(deco, { cells, T, solid, H: 1.5, density: 0.3, trees: 0.2, seed: 14 });
   // The Finish: a Circle of Power on the Island.
   const [fx, fy] = map.finish;
   const c = circleOfPower('#ffd700', T * 0.85);
@@ -367,7 +378,9 @@ registerMapBuilder('raider', (map, world) => {
       const z = (r + 0.5) * T - (rows * T) / 2;
       const deck = M.mesh(M.scaled(M.G.box, T * 0.96, 0.08, T * 0.96), wood, x, 0.03, z);
       deck.castShadow = false;
-      world.mapGroup.add(deck);
+      deco.add(deck);
     }
   }
+  bakeStatic(deco);
+  world.mapGroup.add(deco);
 });

@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerEvent, registerSkin } from '../../engine/client/render/registry.js';
 import { play } from '../../engine/client/audio.js';
-import { bakeModel, creatureTick } from './walkgrid-art.js';
+import { creatureTick } from './walkgrid-art.js';
 
 // A polar bear on all fours: a heavy shaggy body with a shoulder hump, a long
 // head with a black nose, small round ears, and thick legs with dark claws.
@@ -49,8 +49,9 @@ export function polarBear(fur = M.mat('#f6f4ee', { roughness: 0.9 }), furShade =
 }
 
 registerView('polarbear', {
+  bake: 'flat', // these patrol in numbers; fold each part into one vertex-coloured mesh.
   make(e, world, v) {
-    const g = bakeModel(polarBear());
+    const g = polarBear();
     v.parts = g.userData;
     return g;
   },

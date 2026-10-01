@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 import { cliffBlock, cliffMat, emit } from './race-kit.js';
 
@@ -101,6 +102,7 @@ export function ogre() {
 }
 
 registerView('ogre', {
+  bake: 'flat',
   make(e, world, v) {
     const g = ogre();
     g.userData.body.scale.setScalar(1.12);
@@ -170,6 +172,7 @@ registerView('plaguecloud', {
 
 // A single tree tile in the field; the gas fells it.
 registerView('pushtree', {
+  bake: true,
   make() {
     const g = new THREE.Group();
     const t = M.tree(1.15);
@@ -203,7 +206,8 @@ registerEvent('treefall', (e, world) => {
 });
 
 registerMapBuilder('pushogre', (map, world) => {
-  const G = world.mapGroup;
+  // Static scenery (the corner cliffs and their trees), merged per material.
+  const G = new THREE.Group();
   const mat = cliffMat('tex_grass.webp', '#9aae84');
   map.po.corners.forEach(([x0, y0, x1, y1], i) => {
     // Grow each corner outward only, so the rock matches the unwalkable tile inside.
@@ -214,4 +218,6 @@ registerMapBuilder('pushogre', (map, world) => {
     t.position.set((x0 + x1) / 2, 1.3, (y0 + y1) / 2);
     G.add(t);
   });
+  bakeStatic(G);
+  world.mapGroup.add(G);
 });

@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { fxTexture } from '../../engine/client/render/effects.js';
 import { registerView, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 import { cliffBlock, cliffMat, emit } from './race-kit.js';
 
@@ -63,6 +64,7 @@ export function spiritTower() {
 }
 
 registerView('spirittower', {
+  bake: true, // ten of these; the static ziggurat merges, the crystal/halo/pool stay as they are.
   make(e, world, v) {
     const g = spiritTower();
     g.position.y = CLIFF_H;
@@ -94,6 +96,7 @@ registerView('spirittower', {
 
 // A spirit bolt arcing down from the crystal onto its seal.
 registerView('sgbolt', {
+  bake: true,
   make(e, world, v) {
     const g = new THREE.Group();
     g.add(new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), M.glowMat('#cfe8ff')));
@@ -157,7 +160,8 @@ registerMapBuilder('stopgo', (map, world) => {
   G.add(cliffBlock(-S.hw - W, -S.hh - 7, -S.hw - 0.4, S.hh + 7, CLIFF_H, { mat, seed: 5, rough: 0.3 }));
   G.add(cliffBlock(-S.hw - 0.2, -S.hh - 7, S.hw + 0.2, -S.hh - 0.4, CLIFF_H, { mat, seed: 7, rough: 0.25 }));
   G.add(cliffBlock(-S.hw - 0.2, S.hh + 0.4, S.hw + 0.2, S.hh + 7, CLIFF_H, { mat, seed: 9, rough: 0.25 }));
-  // Dead trees and bones on the cliff tops.
+  // Dead trees and bones on the cliff tops: static scenery, merged per material.
+  const deco = new THREE.Group();
   for (let i = 0; i < 26; i++) {
     const side = i % 2 ? 1 : -1;
     const x = side * (S.hw + 2 + Math.random() * 8);
@@ -165,6 +169,8 @@ registerMapBuilder('stopgo', (map, world) => {
     if (S.towers.some(([tx, ty]) => Math.hypot(tx - x, ty - z) < 2.2)) continue;
     const t = M.tree(0.7 + Math.random() * 0.4);
     t.position.set(x, CLIFF_H + 0.05, z);
-    G.add(t);
+    deco.add(t);
   }
+  bakeStatic(deco);
+  G.add(deco);
 });

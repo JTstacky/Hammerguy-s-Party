@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { cliffField, cliffMaterial, dressWalls, circleOfPower, emit } from './lib-f-cliffs.js';
 
 // ------------------------------------------------------------ rat
@@ -201,6 +202,7 @@ registerView('cheese', {
 });
 
 registerView('ratcircle', {
+  bake: true, // the plinth, posts and gems merge; the glowing rune stays transparent and untouched.
   make(e, world, v) {
     const g = circleOfPower(world.colors[e.o] || '#ffffff', 1.25);
     v.parts = g.userData;
@@ -220,7 +222,9 @@ registerMapBuilder('ratmaze', (map, world) => {
   const T = map.T;
   const mat = cliffMaterial({ top: 'tex_grass.webp', topTint: '#a8b890', rockTint: '#a8a094' });
   world.mapGroup.add(cliffField({ cells, T, solid: (ch) => ch === '#', H: 1.25, ramp: 0.5, margin: 10, res: 0.3, material: mat }));
-  dressWalls(world.mapGroup, { cells, T, solid: (ch) => ch === '#', H: 1.25, density: 0.22, trees: 0.12, seed: 2 });
+  // Wall-top doodads and the pine ring: static scenery, merged per material.
+  const deco = new THREE.Group();
+  dressWalls(deco, { cells, T, solid: (ch) => ch === '#', H: 1.25, density: 0.22, trees: 0.12, seed: 2 });
   // A ring of pines on the high ground round the maze.
   const half = (cells.length * T) / 2;
   for (let i = 0; i < 60; i++) {
@@ -231,6 +235,8 @@ registerMapBuilder('ratmaze', (map, world) => {
     const [x, z] = [[along, -out], [out, along], [along, out], [-out, along]][side];
     const tr = M.tree(0.9 + Math.random() * 0.5);
     tr.position.set(x, 1.15, z);
-    world.mapGroup.add(tr);
+    deco.add(tr);
   }
+  bakeStatic(deco);
+  world.mapGroup.add(deco);
 });

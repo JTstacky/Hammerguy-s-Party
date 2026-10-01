@@ -203,7 +203,8 @@ function meatWagon() {
 
 registerView('meatwagon', {
   make(e, world, v) {
-    const o = bakeView(meatWagon());
+    // These sit on every wall in numbers: fold each part into one vertex-coloured mesh.
+    const o = bakeView(meatWagon(), { flat: true });
     v.parts = o.userData;
     return o;
   },
@@ -286,7 +287,7 @@ registerView('stick', {
     const st = stick(0.8);
     st.rotation.z = 1.1;
     st.position.set(0.05, 0.62, 0.05);
-    const o = bakeView(itemSack(st));
+    const o = bakeView(itemSack(st), { flat: true });
     v.parts = o.userData;
     return o;
   },

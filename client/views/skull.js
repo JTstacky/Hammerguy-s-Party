@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerTheme, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 
 registerTheme(
@@ -407,7 +408,7 @@ function bar(y = 3) {
 // ------------------------------------------------------------ views
 
 registerView('skull_creep', {
-  bake: 'flat', // crowds: one mesh per moving part
+  bake: 'flat', // crowds: one vertex-coloured mesh per moving part.
   make(e, world, v) {
     const g = (CREEP_MODELS[e.t] || CREEP_MODELS.bloodfiend)();
     const s = SCALE_OF[e.t] || 1;
@@ -597,6 +598,7 @@ registerView('skull_finish', {
 // The Goblin Merchant: a green goblin behind a plank counter under a striped
 // awning, crates and a potion sign.
 registerView('skull_merchant', {
+  bake: true, // static display: nothing in it ever moves.
   make() {
     const g = new THREE.Group();
     const wood = M.texMat('tex_wood.webp', '#6a4a2c', '#e0c8a8');
@@ -836,7 +838,9 @@ registerMapBuilder('skull_cave', (map, world) => {
       world.addProp({ t: 'torch', x: x + nb[0] * T * 0.35, y: z + nb[1] * T * 0.35 }, map.theme);
     }
   }
-  // Stalagmites and bones scattered on the floor edges.
+  // Stalagmites and bones scattered on the floor edges: static scenery,
+  // merged per material.
+  const deco = new THREE.Group();
   for (let i = 0; i < 40; i++) {
     const r = Math.floor(Math.random() * rows);
     const c = Math.floor(Math.random() * cols);
@@ -844,11 +848,13 @@ registerMapBuilder('skull_cave', (map, world) => {
     const [x, z] = centre(c, r);
     if (Math.random() < 0.5) {
       const s = M.mesh(M.tube([[0, 0, 0], [0.05, 0.4, 0], [0, 0.9, 0]], 0.18, 0.02, 6, 8), mat, x + (Math.random() - 0.5) * T * 0.8, 0, z + (Math.random() - 0.5) * T * 0.8);
-      G.add(s);
+      deco.add(s);
     } else {
       const b = M.mesh(M.tube([[-0.3, 0.05, 0], [0, 0.08, 0.05], [0.3, 0.05, 0]], 0.04, 0.03, 6, 5), M.boneMat(), x + (Math.random() - 0.5) * T * 0.8, 0, z + (Math.random() - 0.5) * T * 0.8);
       b.rotation.y = Math.random() * 6;
-      G.add(b);
+      deco.add(b);
     }
   }
+  bakeStatic(deco);
+  G.add(deco);
 });

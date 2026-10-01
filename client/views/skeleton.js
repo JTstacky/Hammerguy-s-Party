@@ -6,6 +6,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerEvent, registerTheme, registerMapBuilder, registerSkin } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 import { emit, dispelEffect, skyBolt, swingPhase, ball, glowMat } from './dispel-fx.js';
 import { priest } from './cleanup.js';
@@ -192,7 +193,9 @@ function headstone() {
 
 registerMapBuilder('sonata', (map, world) => {
   const S = map.sonata;
-  const G = world.mapGroup;
+  // Static scenery (corner rock heaps, the graveyard's dead trees and
+  // headstones), merged per material at the end.
+  const G = new THREE.Group();
   // The ring's corner tiles are cliffs: heaps of rock.
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) {
     for (let i = 0; i < 3; i++) {
@@ -217,6 +220,8 @@ registerMapBuilder('sonata', (map, world) => {
     h.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
     G.add(h);
   }
+  bakeStatic(G);
+  world.mapGroup.add(G);
 });
 
 // -------------------------------------------------------------- views
