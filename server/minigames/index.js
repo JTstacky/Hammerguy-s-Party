@@ -205,4 +205,7 @@ export const MINIGAMES = [...UTHER, ...ULTIMA_X, ...EXTRAS];
 // What a party rolls from: every port (4.0 and Ultima-X), as Ultima-X rolls
 // from all of its events.
 export const PORTS = [...UTHER, ...ULTIMA_X];
-export const ROLL = PORTS.length >= 8 ? PORTS : MINIGAMES;
+// #167 is dead content in the original (nothing ever starts it): it stays
+// playable by name but is never rolled.
+const UNROLLED = new Set([DefenseJoke]);
+export const ROLL = (PORTS.length >= 8 ? PORTS : MINIGAMES).filter((G) => !UNROLLED.has(G));
