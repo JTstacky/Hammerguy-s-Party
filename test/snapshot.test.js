@@ -24,7 +24,8 @@ for (const Game of MINIGAMES) {
       assert.equal(restored.cd, 0);
     });
     const mg = party.mg;
-    if (mg.abilities.length) {
+    // Games that show their own counts (mana-based uses) override abilitiesSnap.
+    if (mg.abilities.length && !Object.hasOwn(Game.prototype, 'abilitiesSnap')) {
       mg.acd.get(1)[0] = 2;
       mg.acharges.get(1)[0] = 0;
       assert.deepEqual(party.snapshot(1).abilities[0], { cd: 2, left: 0, empty: true });

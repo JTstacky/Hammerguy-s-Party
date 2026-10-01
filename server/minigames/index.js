@@ -8,6 +8,12 @@
 //    rolled but can still be played with ?only=<id>.
 import { MortarMayhem } from './mortar.js';
 import { KodoStampede } from './kodo.js';
+import { CovertKitty } from './up/08-covert.js';
+import { BlinkyBear } from './up/27-blinky.js';
+import { MinotaurMaze } from './up/32-minotaur.js';
+import { TheUnseen } from './up/34-unseen.js';
+import { TroubledWaters } from './up/38-troubled.js';
+import { DeathTrap } from './up/48-deathtrap.js';
 import { WispWheel } from './wisp.js';
 import { GolemGauntlet } from './race.js';
 import { KingOfTheHill } from './koth.js';
@@ -34,18 +40,24 @@ export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
   WayOfTheBow, // #6 Way of the Bow
   Roadkill, // #7 Roadkill Challenge
+  CovertKitty, // #8 Covert Kitty
   TaurenTragedy, // #10 The Tauren Tragedy
   KodoStampede, // #17 Stampede
   StopAndGo, // #18 Stop and Go
   PushTheOgre, // #19 Push the Ogre
   HorseRace, // #24 Horse Race
   Masquerade, // #25 The Masquerade
+  BlinkyBear, // #27 Blinky the Bear
   Abombinations, // #28 The Abombinations
   NaturesCircle, // #30 Nature's Circle
+  MinotaurMaze, // #32 Minotaur Maze
   QuillboarMile, // #33 Quillboar Mile
+  TheUnseen, // #34 The Unseen
   DestructionsDance, // #35 Destruction's Dance
+  TroubledWaters, // #38 Troubled Waters
   FlightOfTheFootmen, // #45 Flight of the Footmen
   WispWheel, // #47 Wheel of Fire
+  DeathTrap, // #48 The Death Trap
   BattleForTheBottle, // #50 Battle for the Bottle (Free Play in the original)
   FelOrcFiasco, // #51 Fel Orc Fiasco (Free Play in the original)
   SeaCombat, // #52 Sea Combat (Free Play in the original)
