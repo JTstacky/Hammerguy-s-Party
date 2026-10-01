@@ -41,6 +41,12 @@ import { TreantValley } from './up/15-treant.js';
 import { SkeletonSonata } from './up/16-skeleton.js';
 import { SpikePit } from './up/20-spikes.js';
 import { SalamanderSizzle } from './up/21-salamander.js';
+import { DarkForest } from './up/12-darkforest.js';
+import { SleepyTime } from './up/29-sleepy.js';
+import { ThePlague } from './up/37-plague.js';
+import { SheepShearers } from './up/39-sheep.js';
+import { DoggyHell } from './up/40-doggy.js';
+import { AncientPunisher } from './up/41-ancient.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -50,6 +56,7 @@ export const UTHER = [
   Roadkill, // #7 Roadkill Challenge
   CovertKitty, // #8 Covert Kitty
   TaurenTragedy, // #10 The Tauren Tragedy
+  DarkForest, // #12 Dark Forest
   TreantValley, // #15 Treant Valley
   SkeletonSonata, // #16 The Skeleton Sonata
   KodoStampede, // #17 Stampede
@@ -61,12 +68,17 @@ export const UTHER = [
   Masquerade, // #25 The Masquerade
   BlinkyBear, // #27 Blinky the Bear
   Abombinations, // #28 The Abombinations
+  SleepyTime, // #29 Sleepy Time
   NaturesCircle, // #30 Nature's Circle
   MinotaurMaze, // #32 Minotaur Maze
   QuillboarMile, // #33 Quillboar Mile
   TheUnseen, // #34 The Unseen
   DestructionsDance, // #35 Destruction's Dance
+  ThePlague, // #37 The Plague
   TroubledWaters, // #38 Troubled Waters
+  SheepShearers, // #39 The Sheep Shearers
+  DoggyHell, // #40 Doggy Hell
+  AncientPunisher, // #41 Ancient Punisher
   FlightOfTheFootmen, // #45 Flight of the Footmen
   WispWheel, // #47 Wheel of Fire
   DeathTrap, // #48 The Death Trap
