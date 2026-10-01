@@ -39,7 +39,8 @@ for (const M of MINIGAMES) {
     assert.ok(phases.has('play'));
     const st = party.standings();
     console.log(`  ${M.id}: ${Math.round(party.mg.time)}s, points`, st.map((s) => s.score).join(','));
-    assert.ok(st[0].score >= 1);
+    // Games that can end in a draw in the original (static canDraw) may pay nobody.
+    if (!M.canDraw) assert.ok(st[0].score >= 1);
   });
 }
 
