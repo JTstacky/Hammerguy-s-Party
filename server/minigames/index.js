@@ -63,6 +63,13 @@ import { ThePlague } from './up/37-plague.js';
 import { SheepShearers } from './up/39-sheep.js';
 import { DoggyHell } from './up/40-doggy.js';
 import { AncientPunisher } from './up/41-ancient.js';
+import { WildEastDuel } from './ux/059-wild-east.js';
+import { ChickenStampede } from './ux/162-chicken-stampede.js';
+import { SickPeonPandemonium } from './ux/163-sick-peon.js';
+import { PiggyPandemonium } from './ux/164-piggy-pandemonium.js';
+import { WildClickingDuel } from './ux/166-wild-clicking.js';
+import { DefenseJoke } from './ux/167-defense.js';
+import { WildWestDuel } from './ux/169-wild-west.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -119,7 +126,15 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
-export const ULTIMA_X = [];
+export const ULTIMA_X = [
+  WildEastDuel, // #59
+  ChickenStampede, // #162
+  SickPeonPandemonium, // #163
+  PiggyPandemonium, // #164
+  WildClickingDuel, // #166
+  DefenseJoke, // #167
+  WildWestDuel, // #169
+];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 
