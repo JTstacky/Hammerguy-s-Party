@@ -25,10 +25,56 @@ export class OneBombTooMany extends Minigame {
     for(const m of this.mines)if(!m.done){m.age+=dt;if(m.age>=5)this.blast(m);}
     this.mines=this.mines.filter(m=>!m.done);
   }
-  botThink(pid,u,mem){let danger=null,bd=Infinity;for(const m of this.mines){let d=dist(u.x,u.y,m.x,m.y);if(d<bd){bd=d;danger=m;}}if(danger&&bd<wc3(370)){u.order(u.x+(u.x-danger.x)/(bd||1)*wc3(420),u.y+(u.y-danger.y)/(bd||1)*wc3(420));return;}
-    let target=null,td=Infinity;for(const [p,v] of this.heroes)if(p!==pid&&v.alive){let d=dist(u.x,u.y,v.x,v.y);if(d<td){td=d;target=v;}}
-    if(target&&td<wc3(325)&&td>wc3(300)&&this.acd.get(pid)[0]<=0){this.useAbility(pid,0,target.x,target.y);return;}
-    if(target){const a=Math.atan2(u.y-target.y,u.x-target.x);if(td<wc3(300))u.order(target.x+Math.cos(a)*wc3(345),target.y+Math.sin(a)*wc3(345));else u.order(target.x+Math.cos(a)*wc3(310),target.y+Math.sin(a)*wc3(310));}
+  // Mines within chain reach go off together, at the shortest fuse among them.
+  mineGroups() {
+    const left = [...this.mines];
+    const groups = [];
+    while (left.length) {
+      const g = [left.pop()];
+      for (let i = 0; i < g.length; i++) {
+        for (let j = left.length - 1; j >= 0; j--) if (dist(g[i].x, g[i].y, left[j].x, left[j].y) < wc3(400)) g.push(...left.splice(j, 1));
+      }
+      groups.push({ mines: g, fuse: Math.min(...g.map((m) => 5 - m.age)) });
+    }
+    return groups;
+  }
+
+  // Bots read the chains: if where they stand will be inside a blast before
+  // they could walk clear, they pick the nearest safe spot; otherwise they
+  // keep just outside a rival's blast range and mine where the rival stands.
+  botThink(pid, u, mem) {
+    const groups = this.mineGroups();
+    const hx = wc3(640), hy = wc3(670);
+    const unsafe = (x, y, slack) => groups.some((g) => g.fuse < 2.6 + slack && g.mines.some((m) => dist(x, y, m.x, m.y) < wc3(300) + 0.6));
+    if (unsafe(u.x, u.y, mem.skill) && Math.random() < 0.45 + mem.skill * 0.4) {
+      let best = null, bd = Infinity;
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        for (const r of [3, 5.5, 8]) {
+          const x = Math.max(-hx, Math.min(hx, u.x + Math.cos(a) * r));
+          const y = Math.max(-hy, Math.min(hy, u.y + Math.sin(a) * r));
+          if (!unsafe(x, y, 1.5) && r < bd) { bd = r; best = [x, y]; }
+        }
+      }
+      if (best) return u.order(best[0], best[1]);
+    }
+    let target = null, td = Infinity;
+    for (const [p, v] of this.heroes) if (p !== pid && v.alive) { const d = dist(u.x, u.y, v.x, v.y); if (d < td) { td = d; target = v; } }
+    if (!target) return;
+    // Never mine somewhere that would catch ourselves.
+    if (td < wc3(325) && td > wc3(300) + 0.4 && this.acd.get(pid)[0] <= 0 && Math.random() < 0.3 + mem.skill * 0.5) {
+      // Lead a moving rival: mine where it is going.
+      const [lx, ly] = target.target ? [target.target.x, target.target.y] : [target.x, target.y];
+      const k = Math.min(1, (target.speed * 1.2) / (dist(target.x, target.y, lx, ly) || 1));
+      const x = target.x + (lx - target.x) * k, y = target.y + (ly - target.y) * k;
+      if (dist(u.x, u.y, x, y) <= wc3(325) && dist(u.x, u.y, x, y) > wc3(300) + 0.4) return this.useAbility(pid, 0, x, y);
+      return this.useAbility(pid, 0, target.x, target.y);
+    }
+    if ((mem.next || 0) > this.time) return;
+    mem.next = this.time + 0.4 + Math.random() * 0.4;
+    const a = Math.atan2(u.y - target.y, u.x - target.x) + rand(-0.4, 0.4);
+    const x = target.x + Math.cos(a) * wc3(318), y = target.y + Math.sin(a) * wc3(318);
+    if (!unsafe(x, y, 1)) u.order(Math.max(-hx, Math.min(hx, x)), Math.max(-hy, Math.min(hy, y)));
   }
   worldEnts(){return [...this.mines.map(m=>({id:m.id,k:'uxmine',x:round2(m.x),y:round2(m.y),a:round2(m.age)})),...this.trees.filter(t=>t.alive).map(t=>({id:100000+t.id,k:'uxtree',x:t.x,y:t.y}))];}
 }

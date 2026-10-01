@@ -27,9 +27,25 @@ export class ATaxingSituation extends Minigame {
     else if(this.phase==='judged'&&this.phaseTime>=3&&!this.endAt){this.phase='bidding';this.phaseTime=0;this.round++;for(const p of this.pids)this.bids.set(p,0);this.party.msg('The rest of you! Get paying!');}
     for(const [pid,b] of this.bots){if(!this.heroes.get(pid)?.alive||this.phase!=='bidding')continue;b.think-=dt;if(b.think<=0){b.think=0.7+Math.random();this.botThink(pid,this.heroes.get(pid),b.mem);}}
   }
-  botThink(pid,u,mem){const bid=this.bids.get(pid),gold=this.gold.get(pid),desired=Math.min(gold,Math.max(1,Math.round((gold/(Math.max(2,this.alive.length)+1))*(0.35+mem.skill*0.9))));
-    if(this.phaseTime<2+mem.skill*5||bid>=desired)return;
-    const n=desired-bid>=10?10:desired-bid>=5?5:1;if(gold>=n)this.useAbility(pid,[1,5,10].indexOf(n),u.x,u.y);
+  // Each bot settles its payment once a round, from the gold it had when the
+  // round began: a fair share of what has to last the rounds still to come,
+  // nudged by its own temperament, so bots rarely tie on the same amount.
+  botThink(pid, u, mem) {
+    if (mem.round !== this.round) {
+      mem.round = this.round;
+      mem.temper ??= 0.7 + Math.random() * 0.7;
+      const gold = this.gold.get(pid);
+      const roundsLeft = Math.max(1, this.alive.length - 1);
+      const share = gold / roundsLeft;
+      const want = share * mem.temper * (0.75 + Math.random() * 0.5) + Math.floor(Math.random() * 4);
+      mem.target = Math.max(1, Math.min(gold, Math.round(want)));
+      mem.waitTill = 2 + Math.random() * 14;
+    }
+    const bid = this.bids.get(pid), gold = this.gold.get(pid);
+    if (this.phaseTime < mem.waitTill || bid >= mem.target) return;
+    const rest = mem.target - bid;
+    const n = rest >= 10 ? 10 : rest >= 5 ? 5 : 1;
+    if (gold >= n) this.useAbility(pid, [1, 5, 10].indexOf(n), u.x, u.y);
   }
   isDone(){return this.endAt!=null&&this.time>=this.endAt;}
   hud(pid){return{label:`Round ${this.round} · ${this.phase==='bidding'?`Payment due in ${Math.max(0,Math.ceil(20-this.phaseTime))}s`:this.phase} · Gold ${this.gold.get(pid)??0} · Paying ${this.bids.get(pid)??0}`};}

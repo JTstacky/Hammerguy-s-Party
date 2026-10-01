@@ -15,7 +15,23 @@ export class SoulExchange extends Minigame {
   command(pid,m){if(this.time<SOUL.pause)return;const u=this.heroes.get(pid);if(u?.cast&&(m.c==='move'||m.c==='steer'||m.c==='stop')){u.cast=null;u.stop();}super.command(pid,m);}
   swap(pid,u,v){if(!v.alive||!u.alive||dist(u.x,u.y,v.x,v.y)>SOUL.swapRange)return;const op=v.owner;const a=this.acd.get(pid)[0],b=this.acd.get(op)[0];this.heroes.set(pid,v);this.heroes.set(op,u);v.owner=pid;u.owner=op;this.acd.get(pid)[0]=b;this.acd.get(op)[0]=a;u.attackOrder=null;v.attackOrder=null;this.ev({k:'uxswap',x1:round2(u.x),y1:round2(u.y),x2:round2(v.x),y2:round2(v.y),id1:u.id,id2:v.id,o1:op,o2:pid});}
   tick(dt){if(this.time<SOUL.pause)return;this.stepHeroes(dt);for(const u of this.heroes.values()){u.x=Math.max(-HW,Math.min(HW,u.x));u.y=Math.max(-HW,Math.min(HW,u.y));}}
-  botThink(pid,u,mem){const v=nearest(u,[...this.heroes.values()].filter((a)=>a.owner!==pid),SOUL.swapRange);if(!v)return;if(u.hp<v.hp-50&&this.acd.get(pid)[0]<=0&&Math.random()<0.2)this.useAbility(pid,0,v.x,v.y);else u.attackOrder=v;}
+  // The designer's advice: take a beating, then swap into whoever has the most
+  // health. Bots swap once they are clearly behind the healthiest body in
+  // reach, and otherwise go for the weakest rival to finish it.
+  botThink(pid, u, mem) {
+    if (u.cast) return;
+    const rivals = [...this.heroes.values()].filter((v) => v.owner !== pid && v.alive);
+    const inReach = rivals.filter((v) => dist(u.x, u.y, v.x, v.y) <= SOUL.swapRange - 0.3);
+    const best = inReach.sort((p, q) => q.hp - p.hp)[0];
+    const margin = 30 + (1 - mem.skill) * 60;
+    if (best && this.acd.get(pid)[0] <= 0 && best.hp > u.hp + margin && Math.random() < 0.3 + mem.skill * 0.5) {
+      u.attackOrder = null;
+      u.stop();
+      return this.useAbility(pid, 0, best.x, best.y);
+    }
+    const weak = inReach.sort((p, q) => p.hp - q.hp)[0] || nearest(u, rivals);
+    if (weak && (!u.attackOrder?.alive || Math.random() < 0.15)) u.attackOrder = weak;
+  }
   hud(pid){return{label:`Body ${Math.ceil(this.heroes.get(pid)?.hp||0)} HP · swap cooldown ${Math.max(0,this.acd.get(pid)?.[0]||0).toFixed(1)} s`};}
 }
 noTies(SoulExchange);

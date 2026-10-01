@@ -1,5 +1,5 @@
 import { Minigame } from '../../base.js';
-import { wc3, dist, rand, round2, newId } from '../../../engine/server/sim.js';
+import { wc3, dist, rand, round2, newId, wrapAngle } from '../../../engine/server/sim.js';
 import { ring, inside, active } from './ux3-common.js';
 
 export class EnergyBlitz extends Minigame {
@@ -28,8 +28,41 @@ export class EnergyBlitz extends Minigame {
       }
     }
   }
-  botThink(pid,u,mem){const resting=this.bolts.find(b=>b.s<50);if(resting){let target=null,bd=Infinity;for(const [p,v] of this.heroes)if(p!==pid&&v.alive){let d=dist(v.x,v.y,resting.x,resting.y);if(d<bd){bd=d;target=v;}}if(target){u.order(resting.x-(target.x-resting.x)*0.08,resting.y-(target.y-resting.y)*0.08);return;}}
-    let danger=null,bd=Infinity;for(const b of this.bolts)if(b.s>=50){let d=dist(u.x,u.y,b.x,b.y);if(d<bd){bd=d;danger=b;}}if(danger&&bd<wc3(320))u.order(u.x-Math.sin(danger.f)*(mem.skill>0.65?4:-4),u.y+Math.cos(danger.f)*4);else u.order(rand(-8,8),rand(-7,7));
+  // Bots read each moving bolt's line a second ahead and step off it; with
+  // nothing coming they walk round a resting bolt to line it up on a rival
+  // and push it, and otherwise keep away from the walls and the bolts.
+  botThink(pid, u, mem) {
+    const hx = wc3(600), hy = wc3(530);
+    const lim = (x, h) => Math.max(-h * 0.8, Math.min(h * 0.8, x));
+    for (const b of this.bolts) {
+      if (b.s < 50) continue;
+      const v = wc3(4 * b.s);
+      const cx = Math.cos(b.f), cy = Math.sin(b.f);
+      const along = (u.x - b.x) * cx + (u.y - b.y) * cy;
+      const side = -(u.x - b.x) * cy + (u.y - b.y) * cx;
+      const look = v * (0.4 + mem.skill * 0.8);
+      if (along > -1 && along < look && Math.abs(side) < wc3(190) && Math.random() < 0.5 + mem.skill * 0.45) {
+        const s = Math.sign(side) || 1;
+        return u.order(lim(u.x - cy * s * 4, hx), lim(u.y + cx * s * 4, hy));
+      }
+    }
+    if ((mem.next || 0) > this.time) return;
+    mem.next = this.time + 0.3 + Math.random() * 0.3;
+    const resting = this.bolts.find((b) => b.s < 50);
+    if (resting) {
+      let target = null, bd = Infinity;
+      for (const [p, v] of this.heroes) if (p !== pid && v.alive) { const d = dist(v.x, v.y, resting.x, resting.y); if (d < bd) { bd = d; target = v; } }
+      const mine = dist(u.x, u.y, resting.x, resting.y);
+      if (target && mine < bd + 3) {
+        // Line up behind the bolt first, then walk through it toward the rival.
+        const a = Math.atan2(target.y - resting.y, target.x - resting.x) + rand(-0.15, 0.15) * (1 - mem.skill);
+        const sx = resting.x - Math.cos(a) * wc3(260), sy = resting.y - Math.sin(a) * wc3(260);
+        if (dist(u.x, u.y, sx, sy) > 1 && mine >= wc3(300)) return u.order(lim(sx, hx), lim(sy, hy));
+        if (Math.abs(wrapAngle(Math.atan2(resting.y - u.y, resting.x - u.x) - a)) < 0.5) return u.order(resting.x + Math.cos(a) * 2, resting.y + Math.sin(a) * 2);
+        return u.order(lim(sx, hx), lim(sy, hy));
+      }
+    }
+    if (!u.target || Math.random() < 0.1) u.order(rand(-hx, hx) * 0.6, rand(-hy, hy) * 0.6);
   }
   worldEnts(){return this.bolts.map(b=>({id:b.id,k:'uxbolt',x:round2(b.x),y:round2(b.y),s:Math.round(b.s)}));}
 }

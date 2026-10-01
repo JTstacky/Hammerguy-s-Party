@@ -27,10 +27,42 @@ export class AssassinsCove extends Minigame {
       if(u.edgeCd<=0 && (ex<wc3(70)||ey<wc3(70))){this.damage(pid,ex<wc3(95)&&ey<wc3(95)?21:4.5);u.edgeCd=1;}
     }
   }
-  botThink(pid,u,mem){let target=null,bd=Infinity;for(const [p,v] of this.heroes)if(p!==pid&&v.alive){let d=dist(u.x,u.y,v.x,v.y);if(d<bd){bd=d;target=v;}}if(!target)return;
-    const bx=target.x-Math.cos(target.heading)*wc3(75),by=target.y-Math.sin(target.heading)*wc3(75);
-    if(bd<wc3(100)&&this.acd.get(pid)[0]<=0)this.useAbility(pid,0,target.x,target.y);
-    else if(bd>wc3(140)&&bd<wc3(520)&&this.acd.get(pid)[1]<=0&&mem.skill>0.62)this.useAbility(pid,1,bx,by);
-    else u.order(bx+rand(-0.3,0.3),by+rand(-0.3,0.3));
+  // Bots watch their backs: anyone creeping up behind gets faced, or blinked
+  // away from. They only strike from inside the rear cone (a miss wastes the
+  // 3 s cooldown) and creep round to a rival's back otherwise.
+  botThink(pid, u, mem) {
+    const hx = wc3(704), hy = wc3(688);
+    const lim = (x, h) => Math.max(-h * 0.75, Math.min(h * 0.75, x));
+    const foes = [...this.heroes.values()].filter((v) => v.owner !== pid && v.alive);
+    if (!foes.length) return;
+    const by = (v) => dist(u.x, u.y, v.x, v.y);
+    foes.sort((p, q) => by(p) - by(q));
+    const near = foes[0];
+    const d = by(near);
+    const cd = this.acd.get(pid);
+    // Is that rival behind me (outside the half I am looking at)?
+    const toward = Math.atan2(near.y - u.y, near.x - u.x);
+    const behindMe = Math.abs(wrapAngle(toward - u.heading)) > Math.PI / 2;
+    if (d < wc3(260) && behindMe && Math.random() < 0.25 + mem.skill * 0.5) {
+      if (cd[1] <= 0 && Math.random() < 0.4) {
+        const a = toward + Math.PI + rand(-0.8, 0.8);
+        return this.useAbility(pid, 1, lim(u.x + Math.cos(a) * 8, hx), lim(u.y + Math.sin(a) * 8, hy));
+      }
+      u.stop();
+      u.faceTo = toward;
+      return;
+    }
+    // Strike only from the rear cone.
+    const fromBack = Math.abs(wrapAngle(Math.atan2(near.y - u.y, near.x - u.x) - near.heading)) <= Math.PI / 4 * 0.85;
+    if (d < wc3(100) && cd[0] <= 0 && fromBack) return this.useAbility(pid, 0, near.x, near.y);
+    if ((mem.next || 0) > this.time) return;
+    mem.next = this.time + 0.3 + Math.random() * 0.4;
+    // Come in from behind: through a point well off the rival's back first.
+    const back = near.heading + Math.PI;
+    const far = d > wc3(220);
+    const bx = near.x + Math.cos(back) * wc3(far ? 200 : 70);
+    const byy = near.y + Math.sin(back) * wc3(far ? 200 : 70);
+    if (far && d < wc3(520) && cd[1] <= 0 && mem.skill > 0.6 && Math.random() < 0.3) return this.useAbility(pid, 1, lim(bx, hx), lim(byy, hy));
+    u.order(lim(bx + rand(-0.3, 0.3), hx), lim(byy + rand(-0.3, 0.3), hy));
   }
 }

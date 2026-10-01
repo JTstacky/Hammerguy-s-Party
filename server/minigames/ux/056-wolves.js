@@ -104,7 +104,7 @@ export class RampageWithWolves extends Minigame {
     this.wolves = Array.from({ length: WOLVES.count }, () => {
       const [x, y] = campPoint();
       const w = new Unit({ kind: 'uxwolf', x, y, speed: WOLVES.wolfSpeed, r: WOLVES.wolfR });
-      w.wander = rand(0, 3);
+      w.wander = rand(0, 9);
       return w;
     });
     this.redirect = WOLVES.redirect;
@@ -160,11 +160,13 @@ export class RampageWithWolves extends Minigame {
     }
     for (const w of this.wolves) {
       w.wander -= dt;
-      if (w.wander > 0 && w.target) continue;
-      w.wander = rand(1.5, 4);
+      if (w.wander > 0) continue;
+      // WC3 Wander: now and then, a short trot; often the wolf just stands.
+      w.wander = rand(4, 9);
+      if (Math.random() < 0.5) continue;
       for (let i = 0; i < 8; i++) {
         const a = rand(0, Math.PI * 2);
-        const r = wc3(rand(150, 500));
+        const r = wc3(rand(100, 300));
         const x = w.x + Math.cos(a) * r;
         const y = w.y + Math.sin(a) * r;
         if (inRect(CAMP, x, y) && walkable(x, y)) {
@@ -182,7 +184,7 @@ export class RampageWithWolves extends Minigame {
   // back. They stop and back off when a wolf is close and heading their way,
   // as the designer's advice says ("know when to stop and keep your distance").
   botThink(pid, u, mem) {
-    mem.caution ??= rand(2.8, 4.2);
+    mem.caution ??= rand(1.3, 2.4);
     const goal = this.waypoint(u);
     if (!goal) return;
     // Try 16 headings (and standing still): predict every wolf's position over
@@ -209,12 +211,12 @@ export class RampageWithWolves extends Minigame {
         if (!walkable(x, y)) room = Math.min(room, 0);
         for (const w of near) {
           const [wx, wy] = wolfAt(w, t);
-          room = Math.min(room, dist(x, y, wx, wy) - WOLVES.kill);
+          room = Math.min(room, dist(x, y, wx, wy) - WOLVES.kill - (w.target ? 0 : 0.6 * t));
         }
       }
       if (room <= 0.25) continue;
       const progress = i < 0 ? 0 : Math.cos(a - toGoal);
-      const score = Math.min(room, mem.caution) * 2 + progress * 1.2;
+      const score = Math.min(room, mem.caution) * 2 + progress * 1.8;
       if (score > bestScore) {
         bestScore = score;
         best = i < 0 ? null : a;
@@ -229,7 +231,8 @@ export class RampageWithWolves extends Minigame {
   // The next point on the way: line up with the gate (or the corridor)
   // before going through it, so a bot never presses into the walls.
   waypoint(u) {
-    const gx = clamp(u.x, GATE0 + 0.9, GATE1 - 0.9);
+    const lane = ((u.owner * 0.618) % 1) * 2 - 1;
+    const gx = clamp(u.x, GATE0 + 0.9, GATE1 - 0.9) * 0.4 + ((GATE0 + GATE1) / 2 + lane * ((GATE1 - GATE0) / 2 - 1)) * 0.6;
     const cx = clamp(u.x, COR0 + 0.7, COR1 - 0.7);
     const inGate = Math.abs(u.x - gx) < 0.3;
     const inCor = Math.abs(u.x - cx) < 0.3;
