@@ -76,6 +76,12 @@ import { MuleRace } from './ux/052-mule-race.js';
 import { TornadoNaga } from './ux/053-tornado-naga.js';
 import { GrimReapage } from './ux/054-grim-reapage.js';
 import { TypingTerror } from './ux/055-typing-terror.js';
+import { WintersEquinox } from './ux/063-winter.js';
+import { AssassinsCove } from './ux/064-assassin.js';
+import { EnergyBlitz } from './ux/065-energy.js';
+import { OneBombTooMany } from './ux/066-bomb.js';
+import { HexxingHavoc } from './ux/067-hexxing.js';
+import { ATaxingSituation } from './ux/068-tax.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -145,6 +151,12 @@ export const ULTIMA_X = [
   MosquitoSwarm, // #60 Mosquito Swarm
   GhostlyGambit, // #61 Ghostly Gambit
   SoulExchange, // #62 The Soul Exchange
+  WintersEquinox, // #63 Winter’s Equinox
+  AssassinsCove, // #64 The Assassin’s Cove
+  EnergyBlitz, // #65 Energy Blitz
+  OneBombTooMany, // #66 One Bomb Too Many
+  HexxingHavoc, // #67 Hexxing Havoc
+  ATaxingSituation, // #68 A Taxing Situation
   UndergroundRun, // #168 Underground Run (hidden in the original)
 ];
 

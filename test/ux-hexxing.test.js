@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { HexxingHavoc,CRITTERS } from '../server/minigames/ux/067-hexxing.js';import { wc3 } from '../engine/server/sim.js';
+const party={room:{isBot:()=>false,nameOf:String,colorOf:()=> '#fff'},ev(){},msg(){}};
+test('hexxing: five critter kits and fixed-period hunter rotation',()=>{const g=new HexxingHavoc(party,[1,2]);g.setup();assert.deepEqual(CRITTERS.map(k=>[k.hp,k.speed]),[[50,200],[75,90],[50,120],[35,150],[50,100]]);assert.ok(g.period>=5&&g.period<=8);g.morph();const first=g.hunter;assert.equal(g.heroes.get(first===1?2:1).r,0);g.morph();assert.notEqual(g.hunter,first);assert.equal(g.heroes.get(g.hunter).speed,wc3(150));});
+test('hexxing: health percentage carries into morph',()=>{const g=new HexxingHavoc(party,[1,2]);g.setup();for(const u of g.heroes.values())u.hp=275;g.morph();for(const u of g.heroes.values())assert.ok(Math.abs(u.hp/u.maxHp-0.5)<1e-9);});
+test('hexxing: opening freeze also blocks frog move-click jumps',()=>{const g=new HexxingHavoc(party,[1,2]);g.setup();const u=g.heroes.get(1);u.skin='ux-frog';const x=u.x,y=u.y;g.command(1,{c:'move',x:x+wc3(200),y});assert.equal(u.target,null);assert.ok(u.cast==null);});
