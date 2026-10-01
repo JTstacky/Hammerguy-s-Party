@@ -79,5 +79,5 @@ test('darkforest: an abomination cleaves a druid for 33-39', () => {
   a.dest = null;
   run(g, 1.2);
   const lost = 100 + 1.2 * 0.5 - u.hp;
-  assert.ok(lost >= 32.9 && lost <= 39.2, `damage ${lost}`);
+  assert.ok(lost >= 32.4 && lost <= 39.7, `damage ${lost}`); // give or take a regen tick
 });

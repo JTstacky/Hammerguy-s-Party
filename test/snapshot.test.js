@@ -16,7 +16,8 @@ for (const Game of MINIGAMES) {
     assert.ok(!('ability' in s));
     assert.equal(s.abilities.length, map.abilities.length);
     s.abilities.forEach((a, i) => {
-      assert.ok(Object.keys(a).every((k) => ['cd', 'left', 'empty'].includes(k)));
+      // name/icon only when a toggle changes them (Immolation on/off).
+      assert.ok(Object.keys(a).every((k) => ['cd', 'left', 'empty', 'name', 'icon'].includes(k)));
       const restored = { ...map.abilities[i], ...a };
       assert.equal(typeof restored.name, 'string');
       assert.equal(typeof restored.max, 'number');

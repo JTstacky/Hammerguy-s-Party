@@ -21,6 +21,12 @@ import { PolymorphRing } from './up/09-polyring.js';
 import { BombBaldwin } from './up/11-baldwin.js';
 import { HungryKodos } from './up/13-hungrykodos.js';
 import { RaiderRelay } from './up/14-raider.js';
+import { ObeyArchimonde } from './up/22-obey.js';
+import { WhackAFiend } from './up/23-whack.js';
+import { CrabIsland } from './up/26-crab.js';
+import { SkullOfGuldan } from './up/31-skull.js';
+import { PorkThePiggy } from './up/36-pork.js';
+import { TidesOfDarkness } from './up/44-tides.js';
 import { GolemGauntlet } from './race.js';
 import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
@@ -76,21 +82,27 @@ export const UTHER = [
   PushTheOgre, // #19 Push the Ogre
   SpikePit, // #20 The Spike Pit
   SalamanderSizzle, // #21 The Salamander Sizzle
+  ObeyArchimonde, // #22 Obey Archimonde
+  WhackAFiend, // #23 Whack-a-Fiend
   HorseRace, // #24 Horse Race
   Masquerade, // #25 The Masquerade
+  CrabIsland, // #26 Crab Island
   BlinkyBear, // #27 Blinky the Bear
   Abombinations, // #28 The Abombinations
   SleepyTime, // #29 Sleepy Time
   NaturesCircle, // #30 Nature's Circle
+  SkullOfGuldan, // #31 The Skull of Gul'dan
   MinotaurMaze, // #32 Minotaur Maze
   QuillboarMile, // #33 Quillboar Mile
   TheUnseen, // #34 The Unseen
   DestructionsDance, // #35 Destruction's Dance
+  PorkThePiggy, // #36 Pork the Piggy
   ThePlague, // #37 The Plague
   TroubledWaters, // #38 Troubled Waters
   SheepShearers, // #39 The Sheep Shearers
   DoggyHell, // #40 Doggy Hell
   AncientPunisher, // #41 Ancient Punisher
+  TidesOfDarkness, // #44 Tides of Darkness
   FlightOfTheFootmen, // #45 Flight of the Footmen
   WispWheel, // #47 Wheel of Fire
   DeathTrap, // #48 The Death Trap
