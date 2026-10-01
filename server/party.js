@@ -18,6 +18,7 @@ export class HammerguysParty {
     this.total = settings.games || 8;
     this.pids = room.playerList().map((p) => p.id);
     this.points = new Map(this.pids.map((p) => [p, 0]));
+    this.seqs = new Map(); // pid -> [sequence number, tick] of the newest order handled
     this.events = [];
     this.over = false;
     this.index = 0;
@@ -124,6 +125,9 @@ export class HammerguysParty {
   }
 
   command(pid, m) {
+    // The newest order handled and the tick it first takes part in, for the
+    // player's own prediction (me.pr.sq, me.pr.sk).
+    if (Number.isFinite(m.q)) this.seqs.set(pid, [m.q, this.room.tickCount + 1]);
     if (this.phase === 'play') this.mg.command(pid, m);
   }
 
@@ -151,7 +155,7 @@ export class HammerguysParty {
       tiebreak: this.tiebreak || undefined,
       points: Object.fromEntries(this.points),
       alive: Object.fromEntries(this.pids.map((p) => [p, this.mg.heroes.get(p)?.alive ?? false])),
-      me: { uid: this.mg.heroes.get(pid)?.id },
+      me: { uid: this.mg.heroes.get(pid)?.id, pr: this.phase === 'play' ? this.mg.predictState(pid, ...(this.seqs.get(pid) || [-1, null])) : null },
       ...mgSnap,
     };
     if (this.lastResults && this.phase !== 'play') snap.results = this.lastResults;

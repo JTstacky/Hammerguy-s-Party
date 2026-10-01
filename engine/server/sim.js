@@ -300,12 +300,16 @@ function knockedCollision(a, b, nx, ny, overlap) {
   }
 }
 
+// Both clamps remember the arena on the unit, so a player's client can keep
+// its predicted hero inside it too (see the minigames' predictState).
 export function clampToRect(u, hw, hh) {
+  u.bounds = ['r', hw, hh];
   u.x = clamp(u.x, -hw + u.r, hw - u.r);
   u.y = clamp(u.y, -hh + u.r, hh - u.r);
 }
 
 export function clampToCircle(u, R) {
+  u.bounds = ['c', R];
   const d = Math.hypot(u.x, u.y);
   const max = R - u.r;
   if (d > max) {

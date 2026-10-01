@@ -78,7 +78,7 @@ docs/     uther-party/: the original maps researched from the source. Rule sheet
           research.md: early notes from the original Uther Party map
 ```
 
-**Networking.** The host's browser runs the room in a Web Worker, and guests connect over WebRTC via [PeerJS](https://peerjs.com). `server.js` offers the same rooms over WebSockets for self-hosting.
+**Networking.** The host's browser runs the room in a Web Worker, and guests connect over WebRTC via [PeerJS](https://peerjs.com). Guests who can't connect directly switch to the Teng Games WebSocket relay after 5 seconds. Snapshots are sent as small deltas, over a lossy WebRTC channel where possible, and your own hammerguy is predicted so it responds instantly. `server.js` offers the same rooms over WebSockets for self-hosting. **[docs/multiplayer.md](docs/multiplayer.md)** explains the whole stack, every setting, and how to reuse it in a new game.
 
 The engine is copied here and in [Arcane Arena](https://github.com/JTstacky/Arcane-Arena). Port engine fixes across when they matter to both games.
 

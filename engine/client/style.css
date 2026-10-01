@@ -338,3 +338,9 @@ body:not(.inlobby) #fullbtn { right: calc(max(8px, env(safe-area-inset-right)) +
 body.touch #cmdcard, body.touch #fullbtn, body.touch #hud-menu { touch-action: manipulation; }
 body.touch #cmdcard { touch-action: none; }
 #topbar .hudlabel { color: #ffe38a; font-weight: 700; }
+
+/* Settings: the controls picker, and the start menu's settings link. */
+.optsel { margin: 12px 0 4px; }
+.optsel select { font: inherit; color: var(--text); background: rgba(0, 0, 0, 0.45); border: 1px solid var(--edge); border-radius: 7px; padding: 8px 10px; }
+.linkbtn { background: none; border: none; color: var(--gold); cursor: pointer; font-weight: 600; margin-top: 12px; padding: 4px 8px; }
+.linkbtn:hover { text-decoration: underline; }

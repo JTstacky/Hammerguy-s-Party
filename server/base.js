@@ -41,6 +41,9 @@ export class Minigame {
     this.missiles = [];
     this.charges = new Map();
     this.friction = 2.4;
+    // Players' clients predict their own hero's walking (engine/client/
+    // predict.js). A minigame that moves heroes some other way sets this false.
+    this.predict = true;
   }
 
   get meta() {
@@ -470,6 +473,52 @@ export class Minigame {
     }
     if (this.meta.ranking === 'race') return this.finishOrder.length + this.elimOrder.length >= this.pids.length;
     return false;
+  }
+
+  // The player's own hero's movement state, for client-side prediction: the
+  // client re-runs stepUnits from it with the orders the host hasn't handled
+  // yet. null when there's nothing to predict (dead, finished, garrisoned).
+  predictState(pid, sq, sk = null) {
+    const u = this.heroes.get(pid);
+    if (!this.predict || !u?.alive || u.finished || u.hidden) return null;
+    const r4 = (v) => Math.round(v * 1e4) / 1e4;
+    const c = u.cast;
+    return {
+      sq,
+      sk,
+      x: r4(u.x), y: r4(u.y), h: r4(u.heading), f: r4(u.facing), ds: u.dispSteps, ph: r4(u.stepT),
+      w: u.walking ? 1 : 0,
+      t: u.target ? [r4(u.target.x), r4(u.target.y)] : null,
+      ft: u.faceTo == null ? null : r4(u.faceTo),
+      v: [r4(u.vx), r4(u.vy)],
+      sp: r4(u.speed * u.speedMult), tr: u.turnRate, pw: u.propWindow, r: u.r,
+      st: u.stun > 0 ? r4(u.stun) : 0,
+      fr: this.friction,
+      b: u.bounds || null,
+      // A cast: turning to face `a`, then standing for the cast point.
+      c: c ? { a: r4(c.angle), t: r4(c.t), cp: (c.ab || this.spell)?.castPoint || 0, tol: c.tgt?.u ? 0.08 : 1e-4, q: c.queued ?? null } : null,
+      ca: this.predictableCasts(pid),
+    };
+  }
+
+  // Abilities whose start the client can predict, per slot (Q W E R):
+  // [cast point, 1 if it turns to face the point first, 1 if ready now], or
+  // null. Abilities that pick a target (a unit, a site) wait for the host.
+  predictableCasts(pid) {
+    if (this.abilities.length) {
+      const cds = this.acd.get(pid) || [];
+      const ch = this.acharges.get(pid) || [];
+      return this.abilities.map((ab, i) => {
+        const point = ab.kind === 'point';
+        if (ab.pickTarget || !(point || ((ab.kind === 'instant' || ab.kind === 'self') && ab.castPoint))) return null;
+        const ready = !(cds[i] > 0) && !(ch[i] != null && ch[i] <= 0) && (!ab.available || ab.available(pid));
+        return [ab.castPoint || 0, point ? 1 : 0, ready ? 1 : 0];
+      });
+    }
+    const sp = this.spell;
+    if (!sp || this.shove || sp.pickTarget) return null;
+    const ready = !((this.cds.get(pid) || 0) > 0) && !(sp.charges && !(this.charges.get(pid) > 0));
+    return [[sp.castPoint || 0, 1, ready ? 1 : 0]];
   }
 
   heroEnts(pid) {
