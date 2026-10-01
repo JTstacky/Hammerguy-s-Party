@@ -1,6 +1,9 @@
 // Minigame registry.
 //  - UTHER: ports of Uther Party 4.0's events, in event order. A party rolls
 //    from these, as the original rolls from its list.
+//  - ULTIMA_X: the games Uther Party vUltima-X adds (events 31 Domination and
+//    51-78, then the hidden events 159-169), in event order. Their files are
+//    server/minigames/ux/NNN-slug.js. Every port rolls.
 //  - EXTRAS: Hammerguy's Party originals from before the ports. They are not
 //    rolled but can still be played with ?only=<id>.
 import { MortarMayhem } from './mortar.js';
@@ -36,9 +39,13 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
+export const ULTIMA_X = [];
+
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 
-export const MINIGAMES = [...UTHER, ...EXTRAS];
+export const MINIGAMES = [...UTHER, ...ULTIMA_X, ...EXTRAS];
 
-// What a party rolls from: the ports once there are enough for a full match.
-export const ROLL = UTHER.length >= 8 ? UTHER : MINIGAMES;
+// What a party rolls from: every port (4.0 and Ultima-X), as Ultima-X rolls
+// from all of its events.
+export const PORTS = [...UTHER, ...ULTIMA_X];
+export const ROLL = PORTS.length >= 8 ? PORTS : MINIGAMES;

@@ -118,3 +118,44 @@ registerView('spider', {
 - Add `test/up-slug.test.js` with the sheet's key numbers: speeds, radii, damage, timings, scoring edge cases.
 - `npx vite build` must succeed. Don't use the shared browser pane; the lead reviews visuals.
 - Engine changes: if a game needs one, don't edit shared files. Work round it inside your game and list the request in your report.
+
+## Ultima-X games
+
+Uther Party vUltima-X rolls from 78 events: 4.0's games plus 29 of its own
+(event 31 Domination and 51-78). It also has hidden games (events 159-169)
+that the original only starts from the Free Play lobby. All of them are ported,
+and every port rolls.
+
+- Spec: `docs/uther-party/rules-ultima-x.md` (one section per game) and the
+  `catalog.json` records whose `map` is not `4.0`.
+- Files: `server/minigames/ux/NNN-slug.js` (three-digit event number:
+  `031-domination.js`, `159-badfur.js`), `client/views/ux-slug.js`,
+  `test/ux-slug.test.js`. Register the class in the `ULTIMA_X` list in
+  `server/minigames/index.js`, in event order.
+- **The originals have no bot logic** (computer slots only auto-acquire).
+  Write bots that play the game sensibly, as a human beginner would: they must
+  be able to score, survive a while and finish, and must not all behave the same.
+- Secret variants (second titles in the sheet, armed in the Free Play lobby)
+  are optional; port the main game.
+- Variants of existing games (Chicken Stampede, Sick Peon Pandemonium, Piggy
+  Pandemonium, Wild Clicking Duel, Wild West Duel) should subclass or reuse the
+  game they vary rather than copy it.
+- Typing, bidding, trading and clicking games need their own UI. Put it in the
+  game's view file (DOM overlay under `#hud`, built once and updated in place),
+  and make it work on touch too (on-screen buttons; a typing game uses the
+  phone keyboard through a focused input).
+
+## Skins and models (engine rules)
+
+- Hero skins go through `bakeModel` (`engine/client/render/batch.js`), which
+  merges every static mesh per material. Anything that moves must be
+  referenced from `userData`: `body`, `legL`, `legR`, `staff`, plus extra
+  parts in `userData.anim = [...]`, posed from `userData.tick(dt, v, snap, world)`,
+  which the renderer runs every frame. Nothing allocated per frame.
+- Materials come from the cached helpers (`M.mat`, `M.texMat`, ...), which are
+  shared and never disposed by a view. Anything you create yourself is freed
+  when the view or map goes away.
+- Budget: about 9,000 triangles and 12 materials per hero model. Merge static
+  scenery (`bakeStatic`) so a game stays under about 400 draw calls.
+- `world.cameraFx` (a Set of `(camera, dt, world)`) for camera effects; never
+  patch the camera from a view's update.
