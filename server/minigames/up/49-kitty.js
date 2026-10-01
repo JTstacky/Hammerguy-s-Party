@@ -522,7 +522,7 @@ export class ClandestineKitty extends Minigame {
     const ents = [];
     for (const v of this.vials) if (v.holder == null) ents.push({ id: v.id, k: 'kittyvial', x: round2(v.x), y: round2(v.y) });
     for (const g of this.guards) {
-      const e = { id: g.id, k: 'doomguard', x: round2(g.x), y: round2(g.y), f: round2(g.facing), h: Math.max(0, Math.ceil((100 * g.hp) / g.maxHp)) };
+      const e = { id: g.id, k: 'kittyguard', x: round2(g.x), y: round2(g.y), f: round2(g.facing), h: Math.max(0, Math.ceil((100 * g.hp) / g.maxHp)) };
       if (g.owner != null) e.o = g.owner;
       if (!g.alive) e.dead = 1;
       if (g.mx || g.my) e.mv = 1;

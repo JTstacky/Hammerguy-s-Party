@@ -100,7 +100,7 @@ registerSkin('blademaster', blademaster);
 
 // Blink: a flash of violet light where he left and where he lands, with a
 // fading streak of sparks between them.
-registerEvent('blink', (e, world) => {
+registerEvent('bmblink', (e, world) => {
   for (const [x, z] of [[e.x1, e.y1], [e.x2, e.y2]]) {
     world.fx.burst(x, 1.2, z, '#c090ff', { n: 18, speed: 3, size: 0.5, life: 0.45 });
     world.fx.glow(x, 1.2, z, '#b080ff', 2.2, 0.3);

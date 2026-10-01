@@ -306,7 +306,7 @@ export class RatMaze extends Minigame {
     ents.push({ id: ch.id, k: 'cheese', x: round2(ch.x), y: round2(ch.y), c: ch.carrier != null ? 1 : undefined });
     for (const [pid, id] of this.circles) {
       const [x, y] = this.home.get(pid);
-      ents.push({ id, k: 'powercircle', x: round2(x), y: round2(y), o: pid });
+      ents.push({ id, k: 'ratcircle', x: round2(x), y: round2(y), o: pid });
     }
     return ents;
   }

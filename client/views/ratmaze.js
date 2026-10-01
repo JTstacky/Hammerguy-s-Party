@@ -200,7 +200,7 @@ registerView('cheese', {
   },
 });
 
-registerView('powercircle', {
+registerView('ratcircle', {
   make(e, world, v) {
     const g = circleOfPower(world.colors[e.o] || '#ffffff', 1.25);
     v.parts = g.userData;

@@ -173,7 +173,7 @@ registerView('kittyvial', {
 
 // ------------------------------------------------------------ Doom Guards
 
-registerView('doomguard', {
+registerView('kittyguard', {
   make(e, world, v) {
     const g = new THREE.Group();
     const model = doomGuard();

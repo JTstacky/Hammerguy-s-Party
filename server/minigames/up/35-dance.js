@@ -68,7 +68,7 @@ export class DestructionsDance extends Minigame {
     u.stop();
     u.swing = null;
     u.lastBlink = this.time;
-    this.ev({ k: 'blink', x1: round2(x0), y1: round2(y0), x2: round2(u.x), y2: round2(u.y) });
+    this.ev({ k: 'bmblink', x1: round2(x0), y1: round2(y0), x2: round2(u.x), y2: round2(u.y) });
     return true;
   }
 
