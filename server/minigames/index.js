@@ -11,10 +11,22 @@ import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
 import { IceSumo } from './sumo.js';
 import { SapperTag } from './potato.js';
+import { Roadkill } from './up/07-roadkill.js';
+import { StopAndGo } from './up/18-stopgo.js';
+import { PushTheOgre } from './up/19-pushogre.js';
+import { HorseRace } from './up/24-horserace.js';
+import { QuillboarMile } from './up/33-quillboar.js';
+import { FlightOfTheFootmen } from './up/45-footmen.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
+  Roadkill, // #7 Roadkill Challenge
   KodoStampede, // #17 Stampede
+  StopAndGo, // #18 Stop and Go
+  PushTheOgre, // #19 Push the Ogre
+  HorseRace, // #24 Horse Race
+  QuillboarMile, // #33 Quillboar Mile
+  FlightOfTheFootmen, // #45 Flight of the Footmen
   WispWheel, // #47 Wheel of Fire
 ];
 
