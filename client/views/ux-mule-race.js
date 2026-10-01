@@ -1,0 +1,15 @@
+import * as THREE from 'three';
+import * as M from '../../engine/client/render/models.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
+import { registerSkin, registerMapBuilder, registerView, registerTheme } from '../../engine/client/render/registry.js';
+import { uiBox } from './ux1-common.js';
+
+function mule(color){const g=new THREE.Group(),body=new THREE.Group();g.add(body);const hide=M.hideMat('#a16d3d'),dark=M.leatherMat('#473221'),team=M.mat(color),mane=M.furMat('#33261e');
+  body.add(M.mesh(M.blob(0.85,0.45,0.32,{seed:71,amt:0.09}),hide,0,1.08,0));body.add(M.mesh(M.tube([[0.5,1.1,0],[0.87,1.7,0],[1.03,1.85,0]],0.2,0.13,10,6),hide));body.add(M.mesh(M.blob(0.29,0.22,0.2,{seed:72}),hide,1.12,1.75,0));for(const s of [-1,1]){body.add(M.mesh(M.scaled(M.G.cone,0.12,0.52,0.08),hide,1.02,2.13,s*0.13));body.add(M.mesh(M.scaled(M.G.sphere,0.035),M.glowMat('#f5e9bd'),1.33,1.81,s*0.12));}
+  body.add(M.mesh(M.tube([[-0.78,1.15,0],[-1.08,0.8,0],[-1.23,0.62,0]],0.09,0.02),mane));body.add(M.mesh(M.blob(0.37,0.2,0.42,{seed:73}),team,-0.15,1.5,0));body.add(M.mesh(M.blob(0.28,0.32,0.3,{seed:74}),dark,-0.52,1.56,0));
+  const legL=new THREE.Group(),legR=new THREE.Group();body.add(legL,legR);for(const [leg,s] of [[legL,1],[legR,-1]]){leg.position.z=s*0.25;for(const x of [-0.55,0.55]){leg.add(M.mesh(M.tube([[x,0.85,0],[x+0.06,0.1,0]],0.1,0.065),hide));leg.add(M.mesh(M.scaled(M.G.sphere,0.16,0.09,0.13),dark,x+0.1,0.08,0));}}
+  const staff=new THREE.Object3D();body.add(staff);g.userData={body,legL,legR,staff,kind:'hero'};return g;}
+registerSkin('ux-mule',mule);
+registerTheme('ux-track',{sky:'#93b9dc',fog:'#b2c7c8',sun:'#fff2ca',hemi:['#fff0d2','#657047']},{floor:{tex:'tex_dirt.webp',tint:'#d0aa6d',color:'#ab8050',units:16},edge:{tex:'tex_grass.webp',tint:'#96a35a',color:'#63764b',units:6},outer:{tex:'tex_grass.webp',tint:'#85a466',color:'#648353'},edgeWidth:1});
+registerMapBuilder('ux-mule',(map,world)=>{const g=new THREE.Group(),wood=M.barkMat(),white=M.mat('#f4e2bb');for(let j=0;j<=8;j++){const z=(j-4)*128/54;g.add(M.mesh(M.scaled(M.G.box,93,0.035,0.025),white,40,0.06,z));}for(let x=-4;x<90;x+=2.5)for(const z of [-9.7,9.7]){g.add(M.mesh(M.scaled(M.G.cyl,0.06,0.55,0.06),wood,x,0.3,z));}for(let j=0;j<8;j++){const z=(j-3.5)*128/54;g.add(M.mesh(new THREE.TorusGeometry(0.45,0.08,8,20).rotateX(Math.PI/2),M.goldMat(),4480/54,0.1,z));}bakeStatic(g);world.mapGroup.add(g);});
+registerView('uxmuleui',{make(){const el=uiBox('ux-mule-ui');el.innerHTML='<span>🐎 Mash DOWN or tap</span><button type="button" style="font:bold 18px system-ui;padding:7px 18px;background:#e8b450;border:0;border-radius:8px">GIDDY UP!</button>';const tap=()=>window.game?.send({t:'cmd',c:'tap'});const key=e=>{if(e.code==='ArrowDown'&&document.activeElement?.tagName!=='INPUT'){e.preventDefault();tap();}};el.querySelector('button').addEventListener('pointerdown',tap);window.addEventListener('keydown',key);this.el=el;this.key=key;return new THREE.Group();},remove(){this.el?.remove();window.removeEventListener('keydown',this.key);}});

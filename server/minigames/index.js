@@ -70,6 +70,12 @@ import { MosquitoSwarm } from './ux/060-mosquito.js';
 import { GhostlyGambit } from './ux/061-ghostly.js';
 import { SoulExchange } from './ux/062-soul.js';
 import { UndergroundRun } from './ux/168-underground.js';
+import { Domination } from './ux/031-domination.js';
+import { SwordWeaver } from './ux/051-sword-weaver.js';
+import { MuleRace } from './ux/052-mule-race.js';
+import { TornadoNaga } from './ux/053-tornado-naga.js';
+import { GrimReapage } from './ux/054-grim-reapage.js';
+import { TypingTerror } from './ux/055-typing-terror.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -127,6 +133,12 @@ export const UTHER = [
 ];
 
 export const ULTIMA_X = [
+  Domination, // #31 Domination
+  SwordWeaver, // #51 The Sword Weaver
+  MuleRace, // #52 Mule Race
+  TornadoNaga, // #53 Tornado Naga Madness
+  GrimReapage, // #54 The Grim Reapage
+  TypingTerror, // #55 Typing Terror
   RampageWithWolves, // #56 Rampage With Wolves
   TowerAttack, // #57 Tower Attack
   StompOfDoom, // #58 Stomp of Doom
