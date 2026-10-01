@@ -11,7 +11,7 @@ export class ATaxingSituation extends Minigame {
     this.abilities=[1,5,10].map((n)=>({name:`Pay ${n}`,icon:n===1?'🪙':n===5?'💰':'🏆',desc:`Pay ${n} gold from your wallet.`,kind:'instant',cd:0,
       available:pid=>this.phase==='bidding'&&this.gold.get(pid)>=n,
       cast:(pid)=>{this.gold.set(pid,this.gold.get(pid)-n);this.bids.set(pid,this.bids.get(pid)+n);}}));
-    const xs=[-384,-128,160,416].map(wc3),ys=[-192,-416].map(wc3);
+    const xs=[-384,-128,160,416].map(wc3),ys=[192,416].map(wc3);
     this.spawnHeroes(this.pids.map((_,i)=>[xs[i%4],ys[Math.floor(i/4)%2]]),{hp:100,speed:0,r:wc3(31),facing:Math.PI/2});
     for(const u of this.heroes.values())u.skin='ux-villager';this.predict=false;
   }
@@ -33,6 +33,6 @@ export class ATaxingSituation extends Minigame {
   }
   isDone(){return this.endAt!=null&&this.time>=this.endAt;}
   hud(pid){return{label:`Round ${this.round} · ${this.phase==='bidding'?`Payment due in ${Math.max(0,Math.ceil(20-this.phaseTime))}s`:this.phase} · Gold ${this.gold.get(pid)??0} · Paying ${this.bids.get(pid)??0}`};}
-  worldEnts(){return[{id:900068,k:'uxlord',x:0,y:wc3(320)}];}
+  worldEnts(){return[{id:900068,k:'uxlord',x:0,y:-wc3(320)}];}
   snapshot(pid){const s=super.snapshot(pid);s.tax={phase:this.phase,round:this.round,left:this.phase==='bidding'?Math.max(0,round2(20-this.phaseTime)):0,gold:this.gold.get(pid),bid:this.bids.get(pid)};return s;}
 }
