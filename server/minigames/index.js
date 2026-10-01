@@ -11,10 +11,22 @@ import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
 import { IceSumo } from './sumo.js';
 import { SapperTag } from './potato.js';
+import { DarkForest } from './up/12-darkforest.js';
+import { SleepyTime } from './up/29-sleepy.js';
+import { ThePlague } from './up/37-plague.js';
+import { SheepShearers } from './up/39-sheep.js';
+import { DoggyHell } from './up/40-doggy.js';
+import { AncientPunisher } from './up/41-ancient.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
+  DarkForest, // #12 Dark Forest
   KodoStampede, // #17 Stampede
+  SleepyTime, // #29 Sleepy Time
+  ThePlague, // #37 The Plague
+  SheepShearers, // #39 The Sheep Shearers
+  DoggyHell, // #40 Doggy Hell
+  AncientPunisher, // #41 Ancient Punisher
   WispWheel, // #47 Wheel of Fire
 ];
 
