@@ -63,6 +63,13 @@ import { ThePlague } from './up/37-plague.js';
 import { SheepShearers } from './up/39-sheep.js';
 import { DoggyHell } from './up/40-doggy.js';
 import { AncientPunisher } from './up/41-ancient.js';
+import { RampageWithWolves } from './ux/056-wolves.js';
+import { TowerAttack } from './ux/057-tower.js';
+import { StompOfDoom } from './ux/058-stomp.js';
+import { MosquitoSwarm } from './ux/060-mosquito.js';
+import { GhostlyGambit } from './ux/061-ghostly.js';
+import { SoulExchange } from './ux/062-soul.js';
+import { UndergroundRun } from './ux/168-underground.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -119,7 +126,15 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
-export const ULTIMA_X = [];
+export const ULTIMA_X = [
+  RampageWithWolves, // #56 Rampage With Wolves
+  TowerAttack, // #57 Tower Attack
+  StompOfDoom, // #58 Stomp of Doom
+  MosquitoSwarm, // #60 Mosquito Swarm
+  GhostlyGambit, // #61 Ghostly Gambit
+  SoulExchange, // #62 The Soul Exchange
+  UndergroundRun, // #168 Underground Run (hidden in the original)
+];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 
