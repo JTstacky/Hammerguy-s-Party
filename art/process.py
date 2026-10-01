@@ -106,6 +106,7 @@ JOBS = {
     "tex_needles": lambda n: tile(n, 512),
     "tex_sand": lambda n: tile(n),
     "tex_ice": lambda n: tile(n),
+    "tex_shallows": lambda n: tile(n),
     "tex_rock": lambda n: tile(n),
     "tex_marble": lambda n: tile(n),
     "fx_explosion_sheet": lambda n: additive(n, 1024),

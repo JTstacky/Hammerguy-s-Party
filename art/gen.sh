@@ -9,6 +9,8 @@ ART="$(cd "$(dirname "$0")" && pwd)"
 OUT="${ART_OUT:-$ART/raw}"
 cd "$OUT" 2>/dev/null || { mkdir -p "$OUT"; cd "$OUT"; }
 GEN="${CODEX_IMAGEGEN:-codex-imagegen}"
+# Lean Codex use: the driver model only writes the prompt for gpt-image-2.
+GENOPTS=(--model gpt-6-luna)
 
 
 STYLE="Hand-painted texture in the style of Warcraft III (2002) by Blizzard: painterly, slightly exaggerated, rich but not neon colours, soft brush detail, readable from an overhead RTS camera. No text, no logos, no watermark, no border."
@@ -28,6 +30,7 @@ P[tex_sand]="$STYLE $TILE Barrens / Durotar desert sand ground tile: pale golden
 P[tex_ice]="$STYLE $TILE Icecrown Glacier dark ice ground tile: deep blue and teal translucent ice with white frost veins, fine cracks and a few patches of packed snow."
 P[tex_rock]="$STYLE $TILE Lordaeron rough rocky ground tile: broken grey-brown bedrock and flat stone slabs with gravel and small tufts of dry grass in the cracks, mid-tone."
 P[tex_marble]="$STYLE $TILE Ornate marble floor tiles from a human city or temple: large square cream and pale grey marble slabs with soft veining, thin dark grout lines and a subtle worn border pattern."
+P[tex_shallows]="$STYLE $TILE Flooded grove ground tile at night: a few centimetres of clear shallow water over dark mud, pebbles and fallen leaves, faint concentric rain ripples on the surface, muted blue-grey and brown palette, for One Bomb Too Many and the Soul Exchange pools."
 P[fx_explosion_sheet]="$STYLE A 4x4 grid sprite sheet of 16 animation frames of a fiery siege-rock explosion, read left to right then top to bottom: a white-hot flash, a swelling orange fireball with rolling flames, then breaking up into embers and dark red wisps that fade to nothing in the last frame. Each frame centred in its own equal square cell. $BLACK"
 P[fx_fireball]="$STYLE A single burning demolisher boulder projectile seen from the side, flying left to right: a dark rock wrapped in bright orange flames with a short fiery tail streaming behind it to the left. $BLACK"
 P[fx_purge]="$STYLE A single swirling magical purge effect seen from above: a spiral vortex of pale cyan and white arcane wind with small sparkles, like the Warcraft III shaman Purge spell. $BLACK"
@@ -49,7 +52,7 @@ run() {
   local k=$1
   if [ -f "$k.png" ]; then echo "skip $k"; return; fi
   echo "gen $k"
-  "$GEN" "${P[$k]}" "$k.png" >"$k.log" 2>&1 && echo "done $k" || echo "FAIL $k"
+  "$GEN" "${P[$k]}" "$k.png" "${GENOPTS[@]}" >"$k.log" 2>&1 && echo "done $k" || echo "FAIL $k"
 }
 n=0
 for k in "${want[@]}"; do
