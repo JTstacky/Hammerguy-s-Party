@@ -13,8 +13,7 @@ export class RampageWithWolves extends Minigame {
     const hw = HW, hh = wc3(1540);
     const props=rim(hw,hh,'tree');
     for(const y of [wc3(90),wc3(220)])for(let x=-HW;x<=HW;x+=wc3(95))if(Math.abs(x)>GATE)props.push({t:'tree',x,y,s:0.9});
-    props.push({t:'pillar',x:0,y:SOUTH,s:0.8});
-    this.map = { theme: 'grass', floor: { shape: 'rect', w: hw * 2, h: hh * 2 }, props, bounds: hh + 3 };
+    this.map = { theme: 'grass', floor: { shape: 'rect', w: hw * 2, h: hh * 2 }, props, bounds: hh + 3, build:['uxwolves'], goalY:SOUTH };
     this.spawnHeroes(this.pids.map((_, i) => [-wc3(550) + i * wc3(150), SOUTH]), { hp: WOLVES.sheepHp, speed: WOLVES.sheepSpeed, r: WOLVES.sheepR });
     for (const u of this.heroes.values()) { u.skin = 'uxsheep'; u.carry = false; u.setFacing(Math.PI / 2); }
     this.grass = Array.from({ length: WOLVES.grass }, (_, i) => ({ id: 50000 + i, x: rand(-wc3(75), wc3(75)), y: rand(wc3(1470), wc3(1530)), taken: false }));

@@ -7,3 +7,4 @@ registerSkin('uxsheep',c=>beast(c,'sheep'));
 registerView('uxwolf',{make(){return bakeModel(beast('#bd5744','wolf'));}});
 registerView('uxgrass',{make(){const g=new THREE.Group();g.add(M.mesh(M.blob(0.22,0.1,0.2,{seed:4}),M.mat('#45b838'),0,0.12,0));for(let i=0;i<5;i++){const a=i*1.26;g.add(M.mesh(M.tube([[0,0.1,0],[Math.cos(a)*0.13,0.42,Math.sin(a)*0.13]],0.025,0.005),M.mat('#83e049')));}return g;}});
 registerEvent('uxgrass',(e,w)=>w.fx.burst(e.x,0.3,e.y,'#79df46',{n:12,speed:2,size:0.15,life:0.5}));
+registerMapBuilder('uxwolves',(map,world)=>{const g=new THREE.Group(),gold=M.goldMat(),r=0.9;for(const [inner,outer,y] of [[0.72,0.83,0.05],[1.03,1.13,0.06]])g.add(M.mesh(new THREE.RingGeometry(inner,outer,40).rotateX(-Math.PI/2),gold,0,y,map.goalY));for(let i=0;i<8;i++){const a=i*Math.PI/4;g.add(M.mesh(M.scaled(M.G.sphere,0.09,0.18,0.09),M.glowMat('#ffd66a'),Math.cos(a)*r,0.19,map.goalY+Math.sin(a)*r));}world.mapGroup.add(g);});
