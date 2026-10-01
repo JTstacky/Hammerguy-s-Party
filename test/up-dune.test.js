@@ -108,3 +108,16 @@ test('dune: the Wildkin cannot dig: a worm sealed in rock is out of its reach', 
   assert.ok(g.kinPath(k, a.x, a.y));
   assert.equal(g.kinPath(k, b.x, b.y), null);
 });
+
+test('dune: walking into rock bites through it on the way', () => {
+  const g = game(1);
+  const u = g.heroes.get(1);
+  const [x0, y0] = g.grid.center(6, 6);
+  [u.x, u.y] = [x0, y0];
+  const [tx, ty] = g.grid.center(3, 6); // three cells west, through cells 5 and 4
+  g.command(1, { c: 'move', x: tx, y: ty });
+  run(g, 12);
+  assert.equal(g.grid.get(5, 6), OPEN, 'the first rock was eaten');
+  assert.equal(g.grid.get(4, 6), OPEN, 'and the next');
+  assert.ok(Math.hypot(u.x - tx, u.y - ty) < 1.5, `got there (${u.x.toFixed(2)}, ${u.y.toFixed(2)})`);
+});

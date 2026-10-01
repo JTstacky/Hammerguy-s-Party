@@ -122,6 +122,11 @@ export class DuneWorm extends Minigame {
   // Worms and the Wildkin walk on open cells; the Wildkin may walk "through"
   // barricades at a price, because it breaks them on the way.
   wormCost = (i, j) => (this.grid.get(i, j) === OPEN ? 1 : Infinity);
+  // A move order's route may go through rock, which the worm bites on the way.
+  digCost = (i, j) => {
+    const v = this.grid.get(i, j);
+    return v === OPEN ? 1 : v === ROCK ? 4 : Infinity;
+  };
   kinCost = (i, j) => {
     const v = this.grid.get(i, j);
     return v === OPEN ? 1 : v === WALL ? 6 : Infinity;
@@ -245,12 +250,74 @@ export class DuneWorm extends Minigame {
     const u = this.heroes.get(pid);
     super.command(pid, m);
     if (!u?.alive || u.cast) return;
+    u.digTo = null;
     if ((m.c === 'move' || m.c === 'steer') && u.target && !u.attackOrder) {
-      u.path = this.grid.findPath(u.x, u.y, +m.x || 0, +m.y || 0, { cost: this.wormCost, r: u.r });
+      // Walking into rock digs: route through it and bite each rock in the
+      // way (stepDigging), as a right-click on the rock would.
+      u.digTo = { x: +m.x || 0, y: +m.y || 0 };
+      u.path = this.grid.findPath(u.x, u.y, u.digTo.x, u.digTo.y, { cost: this.digCost, r: u.r });
       u.goal = null;
       u.stop();
     } else if (m.c === 'stop') u.path = null;
-    else if (u.attackOrder) u.path = null;
+    else if (u.attackOrder?.kind === 'rock' && !this.reachable(u, u.attackOrder)) {
+      // A rock behind other rock: dig there, eating every rock on the way.
+      u.digTo = { x: u.attackOrder.x, y: u.attackOrder.y };
+      u.attackOrder = null;
+      u.path = null;
+      u.digStale = true;
+    } else if (u.attackOrder) u.path = null;
+  }
+
+  // Can the worm get next to this rock through open tunnels? (an open cell
+  // beside it that the worm's own cell connects to)
+  reachable(u, rock) {
+    const [si, sj] = this.grid.cellOf(u.x, u.y);
+    const seen = new Set([this.key(si, sj)]);
+    const todo = [[si, sj]];
+    const side = ([i, j]) => Math.abs(i - rock.i) + Math.abs(j - rock.j) === 1;
+    while (todo.length) {
+      const c = todo.pop();
+      if (side(c)) return true;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = [c[0] + di, c[1] + dj];
+        const k = this.key(...n);
+        if (seen.has(k) || this.grid.get(...n) !== OPEN) continue;
+        seen.add(k);
+        todo.push(n);
+      }
+    }
+    return false;
+  }
+
+  // A worm on a move order bites the first rock on its route, then re-plans
+  // once it is gone, until it gets where it was sent.
+  stepDigging() {
+    for (const u of this.heroes.values()) {
+      const d = u.digTo;
+      if (!u.alive || !d) continue;
+      if (u.attackOrder && u.attackOrder.kind !== 'rock') {
+        u.digTo = null;
+        continue;
+      }
+      if (u.attackOrder || u.swing) {
+        u.digStale = true;
+        continue;
+      }
+      if (dist(u.x, u.y, d.x, d.y) < 0.3) {
+        u.digTo = null;
+        continue;
+      }
+      if (u.digStale || !u.path?.length) {
+        u.digStale = false;
+        u.path = this.grid.findPath(u.x, u.y, d.x, d.y, { cost: this.digCost, r: u.r });
+      }
+      const rock = u.path.find(([x, y]) => this.grid.get(...this.grid.cellOf(x, y)) === ROCK);
+      if (rock) {
+        const [i, j] = this.grid.cellOf(rock[0], rock[1]);
+        u.attackOrder = this.rockAt(i, j);
+        u.digStale = true;
+      }
+    }
   }
 
   // ------------------------------------------------------------ the Wildkin
@@ -338,6 +405,7 @@ export class DuneWorm extends Minigame {
 
   tick(dt) {
     if (!this.wildkin && this.time >= WILDKIN.t) this.spawnWildkin();
+    this.stepDigging();
     for (const [, u] of this.heroes) followPath(u);
     this.stepHeroes(dt);
     this.stepBarricades(dt);

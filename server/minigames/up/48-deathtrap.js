@@ -59,7 +59,7 @@ export class DeathTrap extends GridRace {
       props: treesAroundRect(HW, HH, 0.4, 2.2),
       bounds: HW,
       build: ['upmaze'],
-      maze: this.grid.snap({ style: 'pillar', h: 2.6 }),
+      maze: this.grid.snap({ style: 'pillar', h: 0.8 }), // low, so the spikes in the lanes show
       spikes: this.spikes.map((s) => [+s.x.toFixed(2), +s.y.toFixed(2)]),
     };
     this.finishRect = rectFromWc3(conv, 7296, -8384, 7424, -8256);
