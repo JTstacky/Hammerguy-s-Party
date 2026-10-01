@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerMapBuilder, registerTheme } from '../../engine/client/render/registry.js';
 import { pose, pivot, limb, octCorners, lerp } from './e-common.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 
 // ------------------------------------------------------------ dreadlord
@@ -298,22 +299,25 @@ registerTheme(
 
 registerMapBuilder('masquerade', (map, world) => {
   const hw = map.floor.w / 2;
+  // Everything but the lamps (their flames flicker) is merged per material
+  // into a few meshes: the town is over a thousand parts otherwise.
+  const town = new THREE.Group();
   let seed = 0;
   for (const [x0, y0, x1, y1] of map.buildings || []) {
     const w = x1 - x0;
     const d = y1 - y0;
     const h = house(w - 0.15, d - 0.15, Math.min(w, d) > 3 ? 2.8 : 2.2, seed++);
     h.position.set((x0 + x1) / 2, 0, (y0 + y1) / 2);
-    world.mapGroup.add(h);
+    town.add(h);
   }
   // The central tree ringed by flower beds.
   const tree = M.tree(1.5);
-  world.mapGroup.add(tree);
+  town.add(tree);
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2;
     const fb = flowerBed(0.55);
     fb.position.set(Math.cos(a) * 1.7, 0, Math.sin(a) * 1.7);
-    world.mapGroup.add(fb);
+    town.add(fb);
   }
   // Lamp posts round the square.
   for (const [x, z] of [[-6, -6], [6, -6], [6, 6], [-6, 6], [0, -9], [9, 0], [0, 9], [-9, 0]]) {
@@ -330,9 +334,11 @@ registerMapBuilder('masquerade', (map, world) => {
     const [x, z] = [[along, -out], [out, along], [along, out], [-out, along]][side];
     const h = house(side % 2 ? 3 : 4, side % 2 ? 4 : 3, 2.6 + Math.random() * 0.8, i);
     h.position.set(x, 0, z);
-    world.mapGroup.add(h);
+    town.add(h);
   }
-  octCorners(world, hw, map.cut || 7);
+  octCorners({ mapGroup: town }, hw, map.cut || 7);
+  bakeStatic(town, { castShadow: true });
+  world.mapGroup.add(town);
 });
 
 // ------------------------------------------------------------ day and night

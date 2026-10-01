@@ -633,6 +633,8 @@ export class World {
         if (VIEWS.has(e.k)) {
           v.def = VIEWS.get(e.k);
           obj = v.def.make(e, this, v);
+          // Opt-in: merge the static parts per material (see registry.js).
+          if (v.def.bake) obj = bakeModel(obj, { flat: v.def.bake === 'flat' });
         } else if (e.k.startsWith('p_')) {
           const spell = e.k.slice(2);
           const c = this.spellColors[spell] || '#fff';

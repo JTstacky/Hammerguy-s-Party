@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { fxTexture } from '../../engine/client/render/effects.js';
 import { registerView, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 import { cliffBlock, cliffMat, rubble, emit } from './race-kit.js';
 
@@ -80,6 +81,7 @@ export function cannonTower() {
 }
 
 registerView('guardtower', {
+  bake: true,
   make(e, world, v) {
     const g = guardTower();
     v.parts = g.userData;
@@ -95,6 +97,7 @@ registerView('guardtower', {
 });
 
 registerView('cannontower', {
+  bake: true,
   make(e, world, v) {
     const g = cannonTower();
     v.parts = g.userData;
@@ -211,7 +214,8 @@ registerEvent('ffcannon', (e, world) => {
 
 registerMapBuilder('footmen', (map, world) => {
   const F = map.ff;
-  const G = world.mapGroup;
+  // Static scenery, merged per material at the end (hundreds of parts otherwise).
+  const G = new THREE.Group();
   const mat = cliffMat('tex_grass.webp', '#8aa070', 'tex_boulder.webp', '#a8a6b4');
   F.cliffs.forEach(([ax, az, bx, bz], i) => {
     const x0 = Math.min(ax, bx);
@@ -229,4 +233,6 @@ registerMapBuilder('footmen', (map, world) => {
     t.position.set(Math.min(cx0, cx1) + 1 + Math.random() * 6, PLATEAU_H, (Math.random() - 0.5) * 6);
     G.add(t);
   }
+  bakeStatic(G);
+  world.mapGroup.add(G);
 });

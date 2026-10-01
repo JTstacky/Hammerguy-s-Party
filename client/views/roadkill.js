@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { circleOfPower, animateCircle, cliffBlock, cliffMat, groundStrip, rubble, emit, lerpAngle } from './race-kit.js';
 
 // A dwarven Siege Engine (WC3's steam tank): an iron-plated hull on two
@@ -81,6 +82,7 @@ export function siegeEngine() {
 }
 
 registerView('siegeengine', {
+  bake: 'flat', // crowds: one mesh per moving part
   make(e, world, v) {
     const g = siegeEngine();
     g.userData.body.scale.setScalar(1.05);
@@ -121,7 +123,8 @@ registerView('cop', {
 
 registerMapBuilder('roadkill', (map, world) => {
   const R = map.rk;
-  const G = world.mapGroup;
+  // Static scenery, merged per material at the end (hundreds of parts otherwise).
+  const G = new THREE.Group();
   // Roads worn by the engines: one strip per lane, the length of its patrol plus the kill reach.
   for (const [y, lo, hi] of R.lanes) G.add(groundStrip(lo - 2.2, y - 1.05, hi + 2.2, y + 1.05, { tint: '#c4ae8c', opacity: 0.85 }));
   // The ridge that splits the course and the two rocky corners.
@@ -142,4 +145,6 @@ registerMapBuilder('roadkill', (map, world) => {
   // The start strip, a worn patch of ground.
   const [[sx0, sy0], [sx1, sy1]] = R.start;
   G.add(groundStrip(Math.min(sx0, sx1), Math.min(sy0, sy1) - 0.4, Math.max(sx0, sx1), Math.max(sy0, sy1) + 0.4, { tint: '#b0a080', opacity: 0.6 }));
+  bakeStatic(G);
+  world.mapGroup.add(G);
 });

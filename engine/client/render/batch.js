@@ -50,7 +50,15 @@ export function bakeStatic(root, { castShadow = true } = {}) {
 // the model's userData (body, legs, staff, wings...); each of those keeps its
 // own transform, and the meshes under it merge into it. Transparent and
 // additive materials are left alone (their opacity is animated).
-export function bakeModel(root) {
+// flat: true goes further for units that come in crowds (crew, creeps): every
+// plain material under an animated part folds into ONE vertex-coloured mesh,
+// so a part is one draw call whatever it is made of. Textures and metalness
+// are lost (invisible at RTS distance); glowing materials stay separate.
+const FLAT = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, metalness: 0.05 });
+FLAT.userData.shared = true;
+const glows = (m) => m.emissive && m.emissiveIntensity > 0 && (m.emissive.r + m.emissive.g + m.emissive.b) > 0.05;
+
+export function bakeModel(root, { flat = false } = {}) {
   const anim = new Set([root]);
   const note = (v) => {
     if (v?.isObject3D) anim.add(v);
@@ -73,10 +81,20 @@ export function bakeModel(root) {
     if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
     g.morphAttributes = {};
     g.applyMatrix4(m);
+    let key = o.material;
+    if (flat && !glows(o.material) && o.material.color) {
+      key = FLAT;
+      const n = g.attributes.position.count;
+      const col = new Float32Array(n * 3);
+      // Textured materials keep their average colour (their .color is the texture tint).
+      const { r, g: gg, b: bb } = o.material.userData.base || o.material.color;
+      for (let i = 0; i < n; i++) col.set([r, gg, bb], i * 3);
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    }
     if (!owners.has(owner)) owners.set(owner, new Map());
     const b = owners.get(owner);
-    if (!b.has(o.material)) b.set(o.material, { geos: [], cast: false });
-    const e = b.get(o.material);
+    if (!b.has(key)) b.set(key, { geos: [], cast: false });
+    const e = b.get(key);
     e.geos.push(g);
     e.cast ||= o.castShadow;
     drop.push(o);

@@ -407,6 +407,7 @@ function bar(y = 3) {
 // ------------------------------------------------------------ views
 
 registerView('skull_creep', {
+  bake: 'flat', // crowds: one mesh per moving part
   make(e, world, v) {
     const g = (CREEP_MODELS[e.t] || CREEP_MODELS.bloodfiend)();
     const s = SCALE_OF[e.t] || 1;
@@ -418,7 +419,9 @@ registerView('skull_creep', {
     g.add(sk);
     const zz = new THREE.Group();
     g.add(zz);
-    v.parts = { ...g.userData, hb, sk, s };
+    // Kept whole by bakeModel: the bar, its fill and the carried Skull move.
+    Object.assign(g.userData, { hb, hbFill: hb.userData.fill, sk });
+    v.parts = { ...g.userData, s };
     return g;
   },
   update(v, a, b, k, dt, world) {

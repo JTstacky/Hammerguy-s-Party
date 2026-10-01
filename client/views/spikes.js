@@ -38,7 +38,7 @@ function spikeGeometries() {
     tips.push(tip);
   }
   const clean = (gs) => mergeGeometries(gs.map((g) => {
-    const n = g.toNonIndexed();
+    const n = g.index ? g.toNonIndexed() : g;
     return n;
   }));
   return { iron: clean(iron), tips: clean(tips) };
@@ -75,7 +75,7 @@ registerMapBuilder('spikes', (map, world) => {
   for (const [x, z, vert] of segs) {
     const g = new RoundedBoxGeometry(vert ? 1 : 2.35, 0.9 + Math.random() * 0.25, vert ? 2.35 : 1, 2, 0.12);
     g.translate(x, 0.45, z);
-    blocks.push(g.toNonIndexed());
+    blocks.push(g.index ? g.toNonIndexed() : g);
   }
   const wall = M.mesh(mergeGeometries(blocks), stone);
   G.add(wall);

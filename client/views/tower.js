@@ -70,6 +70,7 @@ registerSkin('peasant', peasant);
 
 // The crew: same model, posed by the view (walking, hammering at the tower).
 registerView('tdpeasant', {
+  bake: 'flat', // crowds: one mesh per moving part
   make(e, world, v) {
     const g = peasant(world.colors[e.o] || '#ccc');
     v.parts = g.userData;
@@ -161,6 +162,7 @@ function arcaneTower(color, size) {
 }
 
 registerView('tdtower', {
+  bake: true,
   make(e, world, v) {
     v.size = (e.th ?? world.mapData?.th ?? 1.185) * 0.95;
     const g = arcaneTower(world.colors[e.o] || '#ccc', 1.15);
@@ -278,6 +280,7 @@ function archmage() {
 }
 
 registerView('tdarchmage', {
+  bake: true,
   make(e, world, v) {
     const g = archmage();
     v.parts = g.userData;
