@@ -25,6 +25,7 @@ export function texMat(file, base, tint = '#ffffff', repeat = 1, opts = {}) {
   const key = [file, base, tint, repeat, JSON.stringify(opts)].join('|');
   if (!texCache.has(key)) {
     const m = new THREE.MeshStandardMaterial({ color: base, roughness: 0.85, metalness: 0.05, ...opts });
+    m.userData.base = new THREE.Color(base); // its average colour, for flat bakes
     fxTexture(file, (t) => {
       const tt = repeat === 1 ? t : t.clone();
       tt.repeat.set(repeat, repeat);
@@ -47,6 +48,7 @@ export function triMat(file, base, tint = '#ffffff', scale = 1, opts = {}) {
   const key = [file, base, tint, scale, JSON.stringify(opts)].join('|');
   if (triCache.has(key)) return triCache.get(key);
   const m = new THREE.MeshStandardMaterial({ color: base, roughness: 0.85, metalness: 0.05, ...opts });
+  m.userData.base = new THREE.Color(base); // its average colour, for flat bakes
   const u = { tTri: { value: null }, uTriScale: { value: scale }, uTriOn: { value: 0 } };
   fxTexture(file, (t) => {
     u.tTri.value = t;

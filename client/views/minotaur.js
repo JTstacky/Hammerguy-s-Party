@@ -5,7 +5,7 @@ import * as M from '../../engine/client/render/models.js';
 import { registerView, registerEvent } from '../../engine/client/render/registry.js';
 import { fxTexture } from '../../engine/client/render/effects.js';
 import { play } from '../../engine/client/audio.js';
-import { bakeModel } from './walkgrid-art.js';
+import { bakeModel } from '../../engine/client/render/batch.js';
 
 // A minotaur: a hunched bull-headed brute with a shaggy mane, sweeping horns,
 // a gold nose ring and a stone-headed totem club. Faces +X; the snout and
@@ -86,7 +86,8 @@ export function minotaur() {
 
 registerView('minotaur', {
   make(e, world, v) {
-    const g = bakeModel(minotaur());
+    // These come in numbers: fold each limb/head/club into one vertex-coloured mesh.
+    const g = bakeModel(minotaur(), { flat: true });
     v.parts = g.userData;
     return g;
   },

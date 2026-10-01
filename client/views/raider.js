@@ -170,7 +170,7 @@ registerSkin('zeppelin', (color) => {
 // The zeppelins waiting on the pad (and those left there after unloading).
 registerView('rrzep', {
   unit: true,
-  bake: true, // the gondola and envelope merge; the spinning prop stays its own node.
+  bake: 'flat', // these wait on the pad in numbers; fold each part into one vertex-coloured mesh.
   make(e, world, v) {
     v.parked = !!e.p;
     const z = zeppelinModel(v.parked ? '#8a8a88' : world.colors[e.o] || '#cccccc');
@@ -187,7 +187,7 @@ registerView('rrzep', {
       v.parked = !!b.p;
       const z = zeppelinModel(world.colors[b.o] || '#cccccc');
       z.g.userData = { body: z.body, prop: z.prop };
-      bakeModel(z.g);
+      bakeModel(z.g, { flat: true });
       v.obj.remove(p.body);
       v.obj.add(z.body);
       v.parts = z;
@@ -275,7 +275,7 @@ function hippoModel() {
 function mobView(build, { air = false } = {}) {
   return {
     unit: true,
-    bake: true,
+    bake: 'flat', // these spawn in numbers; fold each part into one vertex-coloured mesh.
     make(e, world, v) {
       const m = build();
       v.parts = m;

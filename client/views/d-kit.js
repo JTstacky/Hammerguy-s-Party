@@ -36,8 +36,8 @@ export function mapAnimate(group, fn) {
 // it: views with many copies merge their static parts per material, and map
 // scenery merges into a few draw calls. Without it these are no-ops.
 const batch = Object.values(import.meta.glob('../../engine/client/render/batch.js', { eager: true }))[0] || {};
-export function bakeView(root) {
-  return batch.bakeModel ? batch.bakeModel(root) : root;
+export function bakeView(root, { flat = false } = {}) {
+  return batch.bakeModel ? batch.bakeModel(root, { flat }) : root;
 }
 // `group` must hold only static, opaque meshes and sit at the origin.
 export function bakeScenery(group) {

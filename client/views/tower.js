@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 import { unitBar, setBar, teamRing, emissive, glow } from './up-kit.js';
 
@@ -70,6 +71,7 @@ registerSkin('peasant', peasant);
 
 // The crew: same model, posed by the view (walking, hammering at the tower).
 registerView('tdpeasant', {
+  bake: 'flat', // up to 8 per player; fold each part into one vertex-coloured mesh.
   make(e, world, v) {
     const g = peasant(world.colors[e.o] || '#ccc');
     v.parts = g.userData;
@@ -161,6 +163,7 @@ function arcaneTower(color, size) {
 }
 
 registerView('tdtower', {
+  bake: 'flat', // one per player, but every game has several; the glowing windows/orb stay separate.
   make(e, world, v) {
     v.size = (e.th ?? world.mapData?.th ?? 1.185) * 0.95;
     const g = arcaneTower(world.colors[e.o] || '#ccc', 1.15);
@@ -189,11 +192,14 @@ registerView('tdtower', {
 // Unused spots hold a finished Neutral Passive Arcane Tower; the arena's
 // corners are notched with rock.
 registerMapBuilder('tdfield', (map, world) => {
+  // These neutral towers and rock piles are never updated again: static
+  // scenery, merged per material (the glowing windows/orb stay untouched).
+  const G = new THREE.Group();
   for (const [x, y] of map.neutral || []) {
     const t = arcaneTower('#9a9a9a', 1.15);
-    t.userData.scaffold.visible = false;
+    t.remove(t.userData.scaffold); // always finished: no scaffold to bake in hidden
     t.position.set(x, 0, y);
-    world.mapGroup.add(t);
+    G.add(t);
   }
   const half = map.bounds - 3;
   const n = map.notch || 2.4;
@@ -202,10 +208,12 @@ registerMapBuilder('tdfield', (map, world) => {
     for (const sz of [-1, 1]) {
       for (let i = 0; i < 3; i++) {
         const r = M.mesh(M.blob(n * (0.7 - i * 0.12), n * 0.55, n * (0.6 - i * 0.1), { seed: 600 + i + sx * 3 + sz * 7, amt: 0.15 }), rockM, sx * (half - n * 0.5 - i * 0.5), n * 0.2, sz * (half - n * 0.5 - (2 - i) * 0.5));
-        world.mapGroup.add(r);
+        G.add(r);
       }
     }
   }
+  bakeStatic(G);
+  world.mapGroup.add(G);
 });
 
 // ------------------------------------------------------------ Archmage
@@ -278,6 +286,7 @@ function archmage() {
 }
 
 registerView('tdarchmage', {
+  bake: 'flat', // one per player, but every game has several; the glowing orb stays separate.
   make(e, world, v) {
     const g = archmage();
     v.parts = g.userData;

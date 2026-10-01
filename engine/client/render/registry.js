@@ -9,6 +9,12 @@
 //                                                       position and rotation are set before update runs,
 //                                                       so it may simply overwrite them)
 //     remove(v, world)                                 (optional clean-up)
+//     bake: true | 'flat'                              (optional: merge the model's static meshes per
+//                                                       material with bakeModel; everything update()
+//                                                       moves must then be referenced from the model's
+//                                                       userData, as for skins. Use it for units that
+//                                                       come in numbers. 'flat' folds each part into one
+//                                                       vertex-coloured mesh, for crowds.)
 //   })
 //   registerSkin('sheep', (color) => group)   hero looks: a Group with userData.body
 //                                              (optional userData.legL/legR/staff are animated;
