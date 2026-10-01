@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { GrimReapage,GRIM } from '../server/minigames/ux/054-grim-reapage.js';import { wc3 } from '../engine/server/sim.js';
+const party=()=>({room:{isBot:()=>false,nameOf:p=>`P${p}`,colorOf:()=>''},msg(){},ev(){}});
+test('grim: wraith and XP numbers',()=>{const g=new GrimReapage(party(),[1,2]);g.setup();assert.equal(g.heroes.get(1).hp,10);assert.equal(g.heroes.get(1).speed,wc3(320));assert.equal(g.attack.cd,1.7);assert.equal(GRIM.kidXP,25);assert.equal(GRIM.wraithXP,40);assert.equal(GRIM.revive,10);});
+test('grim: 12 children win; dead wraith revives after 10 seconds',()=>{const g=new GrimReapage(party(),[1,2]);g.setup();for(let i=0;i<12;i++)g.gain(1,25);assert.deepEqual(g.finishOrder,[1]);const a=g.heroes.get(1),b=g.heroes.get(2);g.attackHit(1,a,b);assert.equal(b.alive,false);g.time=6;for(let i=0;i<301;i++){g.time+=1/30;g.tick(1/30);}assert.equal(b.alive,true);});

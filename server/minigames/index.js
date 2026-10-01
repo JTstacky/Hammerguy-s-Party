@@ -23,6 +23,12 @@ import { DestructionsDance } from './up/35-dance.js';
 import { BattleForTheBottle } from './up/50-bottle.js';
 import { FelOrcFiasco } from './up/51-fel.js';
 import { SeaCombat } from './up/52-sea.js';
+import { Domination } from './ux/031-domination.js';
+import { SwordWeaver } from './ux/051-sword-weaver.js';
+import { MuleRace } from './ux/052-mule-race.js';
+import { TornadoNaga } from './ux/053-tornado-naga.js';
+import { GrimReapage } from './ux/054-grim-reapage.js';
+import { TypingTerror } from './ux/055-typing-terror.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -39,7 +45,7 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
-export const ULTIMA_X = [];
+export const ULTIMA_X = [Domination, SwordWeaver, MuleRace, TornadoNaga, GrimReapage, TypingTerror];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 
