@@ -34,8 +34,9 @@ function run(game, maxSeconds) {
 for (const M of MINIGAMES) {
   test(`party: ${M.id} runs to completion with bots`, () => {
     const party = new HammerguysParty(fakeRoom(6), { games: 1, only: M.id });
-    const phases = run(party, 200);
-    assert.ok(party.over, `${M.id} should finish`);
+    // A tie for first plays tiebreaker games, so allow a few rounds.
+    const phases = run(party, ((M.duration || 200) + 20) * 4);
+    assert.ok(party.over, `${M.id} should finish (phase ${party.phase}, game time ${party.game?.time?.toFixed(1)}, phases ${[...phases]})`);
     assert.ok(phases.has('play'));
     const st = party.standings();
     console.log(`  ${M.id}: ${Math.round(party.mg.time)}s, points`, st.map((s) => s.score).join(','));
@@ -45,6 +46,8 @@ for (const M of MINIGAMES) {
 
 test('party: full party of 8 games', () => {
   const party = new HammerguysParty(fakeRoom(8), { games: 8 });
-  run(party, 60 * 15);
+  // Once 8 or more ports exist, a party rolls only Uther Party games, which run
+  // 1-5 minutes each (survival games with no timer), plus any tie-breakers.
+  run(party, 60 * 45);
   assert.ok(party.over);
 });

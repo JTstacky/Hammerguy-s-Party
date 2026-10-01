@@ -11,10 +11,22 @@ import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
 import { IceSumo } from './sumo.js';
 import { SapperTag } from './potato.js';
+import { KaboomRoom } from './up/03-kaboom.js';
+import { CleanupCrew } from './up/05-cleanup.js';
+import { TreantValley } from './up/15-treant.js';
+import { SkeletonSonata } from './up/16-skeleton.js';
+import { SpikePit } from './up/20-spikes.js';
+import { SalamanderSizzle } from './up/21-salamander.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
+  KaboomRoom, // #3 The Kaboom Room
+  CleanupCrew, // #5 The Clean-up Crew
+  TreantValley, // #15 Treant Valley
+  SkeletonSonata, // #16 The Skeleton Sonata
   KodoStampede, // #17 Stampede
+  SpikePit, // #20 The Spike Pit
+  SalamanderSizzle, // #21 The Salamander Sizzle
   WispWheel, // #47 Wheel of Fire
 ];
 
