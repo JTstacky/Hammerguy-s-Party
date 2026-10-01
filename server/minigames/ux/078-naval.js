@@ -108,16 +108,49 @@ export class GreatNavalEnmity extends Minigame {
     this.shells = this.shells.filter((s) => !s.done);
   }
 
+  // Bots sail broadside to their target and never sit still, step clear of
+  // any shell about to land near them, and lead a moving target by its
+  // measured speed (a shell takes a couple of seconds to arrive).
   botThink(pid, u, mem) {
     const rivals = [...this.heroes.values()].filter((v) => v.alive && v !== u);
     if (!rivals.length) return;
-    rivals.sort((a, b) => dist(u.x, u.y, a.x, a.y) - dist(u.x, u.y, b.x, b.y));
+    const lim = (x, h) => Math.max(-h * 0.85, Math.min(h * 0.85, x));
+    // Dodge: the first shell landing near us soon.
+    const danger = this.shells.find((sh) => {
+      const left = sh.flight - sh.t;
+      const reach = wc3(sh.big ? 420 : 170);
+      return left < 1.6 + mem.skill && dist(sh.tx, sh.ty, u.x, u.y) < reach;
+    });
+    if (danger && Math.random() < 0.4 + mem.skill * 0.5) {
+      const a = Math.atan2(u.y - danger.ty, u.x - danger.tx) + rand(-0.5, 0.5);
+      u.order(lim(u.x + Math.cos(a) * 5, HW), lim(u.y + Math.sin(a) * 5, HH));
+      mem.next = this.time + 0.8;
+    }
+    // Track every ship's speed to lead our shots.
+    mem.seen ??= new Map();
+    for (const v of rivals) {
+      const p = mem.seen.get(v.id);
+      if (p && this.time > p.t) mem.seen.set(v.id, { x: v.x, y: v.y, t: this.time, vx: (v.x - p.x) / (this.time - p.t), vy: (v.y - p.y) / (this.time - p.t) });
+      else if (!p) mem.seen.set(v.id, { x: v.x, y: v.y, t: this.time, vx: 0, vy: 0 });
+    }
+    rivals.sort((p, q) => dist(u.x, u.y, p.x, p.y) - dist(u.x, u.y, q.x, q.y));
     const v = rivals[0];
     const d = dist(u.x, u.y, v.x, v.y);
-    if (d > wc3(1100) || Math.random() < 0.12) u.order(v.x + rand(-2, 2), v.y + rand(-2, 2));
-    const lead = d / FIRE.speed * mem.skill;
-    if (Math.random() < 0.85) this.useAbility(pid, 0, v.x + (v.vx || 0) * lead, v.y + (v.vy || 0) * lead);
-    if (Math.random() < 0.025 && d > wc3(300)) this.useAbility(pid, 1, v.x, v.y);
+    const tr = mem.seen.get(v.id);
+    if (d < FIRE.range && Math.random() < 0.5 + mem.skill * 0.4) {
+      const lead = (d / FIRE.speed) * (0.4 + mem.skill * 0.6);
+      this.useAbility(pid, 0, v.x + tr.vx * lead + rand(-0.6, 0.6), v.y + tr.vy * lead + rand(-0.6, 0.6));
+    }
+    // The Big One only at a ship that has stopped, from a safe distance.
+    if (Math.hypot(tr.vx, tr.vy) < 0.5 && d > wc3(500) && Math.random() < 0.03) this.useAbility(pid, 1, v.x, v.y);
+    if ((mem.next || 0) > this.time || u.cast) return;
+    mem.next = this.time + rand(0.8, 1.6);
+    // Keep about 700 u off, circling: broadside, never parked.
+    mem.side ??= Math.random() < 0.5 ? 1 : -1;
+    if (Math.random() < 0.15) mem.side = -mem.side;
+    const a = Math.atan2(u.y - v.y, u.x - v.x) + mem.side * 0.7;
+    const r = wc3(700);
+    u.order(lim(v.x + Math.cos(a) * r, HW), lim(v.y + Math.sin(a) * r, HH));
   }
 
   worldEnts() {
