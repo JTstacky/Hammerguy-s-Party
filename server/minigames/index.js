@@ -63,6 +63,12 @@ import { ThePlague } from './up/37-plague.js';
 import { SheepShearers } from './up/39-sheep.js';
 import { DoggyHell } from './up/40-doggy.js';
 import { AncientPunisher } from './up/41-ancient.js';
+import { WintersEquinox } from './ux/063-winter.js';
+import { AssassinsCove } from './ux/064-assassin.js';
+import { EnergyBlitz } from './ux/065-energy.js';
+import { OneBombTooMany } from './ux/066-bomb.js';
+import { HexxingHavoc } from './ux/067-hexxing.js';
+import { ATaxingSituation } from './ux/068-tax.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -119,7 +125,7 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
-export const ULTIMA_X = [];
+export const ULTIMA_X = [WintersEquinox, AssassinsCove, EnergyBlitz, OneBombTooMany, HexxingHavoc, ATaxingSituation];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 

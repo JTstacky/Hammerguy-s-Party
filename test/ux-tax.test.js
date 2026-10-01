@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { ATaxingSituation } from '../server/minigames/ux/068-tax.js';
+const party={room:{isBot:()=>false,nameOf:String,colorOf:()=> '#fff'},ev(){},msg(){}};
+test('tax: sealed bids spend a persistent 100-gold wallet',()=>{const g=new ATaxingSituation(party,[1,2]);g.setup();g.phase='bidding';g.useAbility(1,2,0,0);assert.equal(g.gold.get(1),90);assert.equal(g.bids.get(1),10);g.phase='judged';g.phaseTime=5;g.tick(1/30);assert.equal(g.gold.get(1),90);assert.equal(g.bids.get(1),0);});
+test('tax: every player tied for cheapest dies after 9.2 s of judging',()=>{const g=new ATaxingSituation(party,[1,2,3]);g.setup();g.phase='bidding';g.bids.set(1,5);g.bids.set(2,5);g.bids.set(3,10);g.phaseTime=20;g.tick(1/30);g.phaseTime=9.2;g.tick(1/30);assert.deepEqual(g.alive,[3]);assert.deepEqual([g.payouts().get(1),g.payouts().get(2),g.payouts().get(3)],[6,6,8]);assert.equal(g.isDone(),false);g.time=g.endAt;assert.equal(g.isDone(),true);});
+test('tax: an all-player low bid is a draw',()=>{const g=new ATaxingSituation(party,[1,2,3]);g.setup();g.phase='bidding';g.phaseTime=20;g.tick(1/30);g.phaseTime=9.2;g.tick(1/30);assert.equal(g.alive.length,0);assert.deepEqual([...g.payouts().values()],[6,6,6]);});
