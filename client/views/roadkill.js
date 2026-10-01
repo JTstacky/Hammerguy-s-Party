@@ -108,6 +108,7 @@ registerView('siegeengine', {
 // A Circle of Power marking a finish or a goal. Fields: o (owner: its team
 // colour), s (1 live, 2 scored, 0 gone), r (radius). Gold when unowned.
 registerView('cop', {
+  bake: true, // the standing stones and plinth merge; the glowing runes stay transparent and untouched.
   make(e, world, v) {
     v.t = Math.random() * 5;
     const c = e.o != null ? world.colors[e.o] || '#ffd24a' : '#ffd24a';

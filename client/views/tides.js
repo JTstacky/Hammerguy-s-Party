@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerTheme, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 
 registerTheme(
@@ -149,6 +150,7 @@ function rock(v, obj, t, moving) {
 }
 
 registerView('tides_destroyer', {
+  bake: true, // crowds: these come 6 to a side; merge the hull per material.
   make(e, world, v) {
     const g = frigate('#8a2418', true);
     // A small health bar that stays square to the camera.
@@ -160,6 +162,8 @@ registerView('tides_destroyer', {
     bar.add(bg, fill);
     bar.rotation.x = -0.4;
     g.add(bar);
+    // Kept whole by bakeModel: the body it rocks, and the bar it animates.
+    g.userData.bar = bar;
     v.parts = { bar, fill };
     return g;
   },
@@ -298,22 +302,24 @@ registerMapBuilder('tides_sea', (map, world) => {
   sea.renderOrder = 2;
   G.add(sea);
   world.liquids.push(mat);
+  // Everything below is static scenery, merged per material at the end.
+  const deco = new THREE.Group();
   // Sandy spits by each dock, and green headlands behind them.
   for (const l of land) {
     const spit = M.mesh(M.blob(l.r, 0.6, l.r * 0.85, { seed: 310, amt: 0.15, freq: 1.5 }), M.triMat('tex_dirt.webp', '#b8a070', '#f0dcb0', 0.35), l.x, -0.1, l.y);
-    G.add(spit);
+    deco.add(spit);
     for (let i = 0; i < 7; i++) {
       const a = Math.random() * Math.PI * 2;
       const t = M.tree(0.9 + Math.random() * 0.4);
       t.position.set(l.x + Math.sign(l.x) * 2 + Math.cos(a) * 2.2, 0.35, l.y + Math.sign(l.y) * 2 + Math.sin(a) * 2.2);
-      G.add(t);
+      deco.add(t);
     }
   }
   yards.forEach((y) => {
     const s = shipyard(!!y.orc);
     s.position.set(y.x, 0, y.y);
     s.rotation.y = y.orc ? Math.PI * 0.75 : -Math.PI * 0.25;
-    G.add(s);
+    deco.add(s);
   });
   // Rocks breaking the surface round the arena.
   for (let i = 0; i < 70; i++) {
@@ -323,6 +329,8 @@ registerMapBuilder('tides_sea', (map, world) => {
     const [x, z] = [[t * (hw + 3), -hh - out], [t * (hw + 3), hh + out], [-hw - out, t * (hh + 3)], [hw + out, t * (hh + 3)]][side];
     const r = M.rock(0.6 + Math.random() * 1.4);
     r.position.set(x, -0.3, z);
-    G.add(r);
+    deco.add(r);
   }
+  bakeStatic(deco);
+  G.add(deco);
 });

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 
 // A low-poly sphere for a skin's small parts (eyes, studs, knuckles).
@@ -187,6 +188,7 @@ function spearModel() {
 }
 
 registerView('pork_pig', {
+  bake: true,
   make(e, world, v) {
     const g = pigModel();
     v.parts = g.userData;
@@ -201,12 +203,16 @@ registerView('pork_pig', {
 });
 
 registerView('pork_spear', {
+  bake: true,
   make(e, world, v) {
     const g = new THREE.Group();
     const spear = spearModel();
     const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.25, 16).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, opacity: 0.3, depthWrite: false }));
     shadow.scale.set(2.4, 1, 0.6);
     g.add(spear, shadow);
+    // Kept whole by bakeModel: the spear and shadow are repositioned every frame.
+    g.userData.spear = spear;
+    g.userData.shadow = shadow;
     v.parts = { spear, shadow };
     return g;
   },
@@ -231,6 +237,7 @@ registerView('pork_spear', {
 });
 
 registerView('pork_aim', {
+  bake: true,
   make() {
     const g = new THREE.Group();
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.34, 0.42, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#ff5030', transparent: true, opacity: 0.7, depthWrite: false }));
@@ -282,6 +289,8 @@ registerEvent('pork_blink', (e, world) => {
 // A split-rail fence round the pen.
 registerMapBuilder('pork_pen', (map, world) => {
   const hw = map.floor.w / 2 + 0.5;
+  // Static scenery (the whole fence), merged per material at the end.
+  const G = new THREE.Group();
   const wood = M.texMat('tex_wood.webp', '#6a4a2c', '#d8c0a0');
   const post = M.lathe([[0.1, 0], [0.1, 1.05], [0.07, 1.15], [0.001, 1.18]], 8);
   const add = (x1, z1, x2, z2) => {
@@ -291,14 +300,14 @@ registerMapBuilder('pork_pen', (map, world) => {
       const t = i / n;
       const p = M.mesh(post, wood, x1 + (x2 - x1) * t + (Math.random() - 0.5) * 0.1, 0, z1 + (z2 - z1) * t + (Math.random() - 0.5) * 0.1);
       p.rotation.z = (Math.random() - 0.5) * 0.08;
-      world.mapGroup.add(p);
+      G.add(p);
       if (i === n) break;
       const tt = (i + 1) / n;
       for (const y of [0.45, 0.85]) {
         const sag = 0.04 + Math.random() * 0.04;
         const a = [x1 + (x2 - x1) * t, y, z1 + (z2 - z1) * t];
         const bb = [x1 + (x2 - x1) * tt, y + (Math.random() - 0.5) * 0.06, z1 + (z2 - z1) * tt];
-        world.mapGroup.add(M.mesh(M.tube([a, [(a[0] + bb[0]) / 2, y - sag, (a[2] + bb[2]) / 2], bb], 0.045, 0.045, 4, 6), wood));
+        G.add(M.mesh(M.tube([a, [(a[0] + bb[0]) / 2, y - sag, (a[2] + bb[2]) / 2], bb], 0.045, 0.045, 4, 6), wood));
       }
     }
   };
@@ -306,4 +315,6 @@ registerMapBuilder('pork_pen', (map, world) => {
   add(-hw, -hw, -hw, hw);
   add(hw, -hw, hw, hw);
   add(-hw, hw, hw, hw);
+  bakeStatic(G);
+  world.mapGroup.add(G);
 });

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { cliffField, cliffMaterial, dressWalls, emit } from './lib-f-cliffs.js';
 import { skinMat } from './lib-f-units.js';
 
@@ -261,7 +262,9 @@ registerMapBuilder('hungrykodo', (map, world) => {
   const solid = (ch) => ch === '#';
   const mat = cliffMaterial({ top: 'tex_grass.webp', topTint: '#b0b890', rockTint: '#a89c8c' });
   world.mapGroup.add(cliffField({ cells, T, solid, H: 1.7, ramp: 0.45, margin: 6, res: 0.3, material: mat }));
-  dressWalls(world.mapGroup, { cells, T, solid, H: 1.7, density: 0.3, trees: 0.25, seed: 13 });
+  // Wall-top doodads and the gate posts: static scenery, merged per material.
+  const deco = new THREE.Group();
+  dressWalls(deco, { cells, T, solid, H: 1.7, density: 0.3, trees: 0.25, seed: 13 });
   // Stone gate posts.
   const stone = M.texMat('tex_stone.webp', '#9a968c', '#e0dcd4', 1);
   const R = 4 * T;
@@ -269,10 +272,12 @@ registerMapBuilder('hungrykodo', (map, world) => {
     for (const s of [1, -1]) {
       const x = cx + (ax ? T * s * 1.08 : 0);
       const z = cz + (ax ? 0 : T * s * 1.08);
-      world.mapGroup.add(M.mesh(M.scaled(M.G.box, 0.45, 2.1, 0.45), stone, x, 1.05, z));
-      world.mapGroup.add(M.mesh(M.scaled(M.G.box, 0.6, 0.2, 0.6), stone, x, 2.15, z));
+      deco.add(M.mesh(M.scaled(M.G.box, 0.45, 2.1, 0.45), stone, x, 1.05, z));
+      deco.add(M.mesh(M.scaled(M.G.box, 0.6, 0.2, 0.6), stone, x, 2.15, z));
     }
   }
+  bakeStatic(deco);
+  world.mapGroup.add(deco);
 });
 
 // A kodo starves (or is finished off by a bolt) and collapses.

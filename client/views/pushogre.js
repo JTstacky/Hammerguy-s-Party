@@ -101,6 +101,7 @@ export function ogre() {
 }
 
 registerView('ogre', {
+  bake: true,
   make(e, world, v) {
     const g = ogre();
     g.userData.body.scale.setScalar(1.12);
@@ -170,6 +171,7 @@ registerView('plaguecloud', {
 
 // A single tree tile in the field; the gas fells it.
 registerView('pushtree', {
+  bake: true,
   make() {
     const g = new THREE.Group();
     const t = M.tree(1.15);

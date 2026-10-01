@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerEvent, registerMapBuilder, registerSkin } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { LITE } from '../../engine/client/device.js';
 import { play } from '../../engine/client/audio.js';
 import { emit, fireball, glowDisc, ball, glowMat } from './dispel-fx.js';
@@ -71,8 +72,9 @@ function centreBrazier() {
 
 registerMapBuilder('kaboom', (map, world) => {
   const R = map.room;
-  const G = world.mapGroup;
-  // Cliffs round the octagon: a tumbled wall of big boulders on its edges.
+  // Static scenery (rocks, pillars, the centre brazier), merged per material
+  // at the end. Torches stay out: their flame plane is animated per-frame.
+  const G = new THREE.Group();
   const corners = [];
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
@@ -108,9 +110,11 @@ registerMapBuilder('kaboom', (map, world) => {
     const t = M.torch();
     const r = R.d / (Math.abs(cx) + Math.abs(cy)) - 0.6;
     t.position.set(cx * r, 0, cy * r);
-    G.add(t);
+    world.mapGroup.add(t);
     world.animated.push({ type: 'torch', obj: t });
   }
+  bakeStatic(G);
+  world.mapGroup.add(G);
   // The braziers' flames are emitted by the 'kcentre' view (the world animates torches only).
   world.kaboomBraziers = { pillars: R.p };
 });

@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import * as M from '../../engine/client/render/models.js';
 import { registerView, registerSkin, registerEvent, registerTheme, registerMapBuilder } from '../../engine/client/render/registry.js';
+import { bakeStatic } from '../../engine/client/render/batch.js';
 import { play } from '../../engine/client/audio.js';
 
 const NAMES = { roar: 'Roar!', stomp: 'War Stomp!', bloodlust: 'Bloodlust!', unholyfrenzy: 'Unholy Frenzy!' };
@@ -245,6 +246,7 @@ const ease = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const hump = (t, a, b, c) => (t < a || t > c ? 0 : t < b ? ease((t - a) / (b - a)) : 1 - ease((t - b) / (c - b)));
 
 registerView('obey_archimonde', {
+  bake: true,
   make(e, world, v) {
     const g = archimonde();
     v.parts = g.userData;
@@ -306,6 +308,7 @@ registerView('obey_archimonde', {
 // A warlock pad: a rune circle under each contestant in their colour, pulsing
 // red while they still owe Archimonde an answer.
 registerView('obey_pad', {
+  bake: true, // the stone base merges; the glowing rings stay transparent and untouched.
   make(e, world, v) {
     const g = new THREE.Group();
     const c = world.colors[e.o] || '#ffffff';
@@ -414,7 +417,9 @@ registerEvent('obey_death', (e, world) => {
 // The hall: Archimonde's blighted dais in the north, pillars and braziers
 // down the sides, and rubble along the unwalkable edges.
 registerMapBuilder('obey_hall', (map, world) => {
-  const G = world.mapGroup;
+  // Static scenery (dais, blight, crystals, pillars, rubble), merged per
+  // material at the end. Torches go through world.addProp, untouched.
+  const G = new THREE.Group();
   const hw = map.floor.w / 2;
   const hh = map.floor.h / 2;
   const ax = map.archi.x;
@@ -461,4 +466,6 @@ registerMapBuilder('obey_hall', (map, world) => {
     r.position.set(x, 0, z);
     G.add(r);
   }
+  bakeStatic(G);
+  world.mapGroup.add(G);
 });
