@@ -79,8 +79,11 @@ test('clean-up: a priest walks into range 500, and 0.5 s into his cast clears th
   }
   assert.ok(castAt, 'the dispel landed');
   assert.ok(Math.abs(castAt - castStart - 0.5) < 0.05, `cast point ${castAt - castStart}`);
-  assert.equal(g.isBlight(0, 0), false, 'cleared where the ghoul was');
-  assert.equal(g.isBlight(wc3(210), 0), true, 'kept beyond 200');
+  // Measured from where the ghoul stood when the cast began (a collision
+  // nudge can move it a little off 0,0 first).
+  const hit = events.find((e) => e.k === 'cleandispel');
+  assert.equal(g.isBlight(hit.x, hit.y), false, 'cleared where the ghoul was');
+  assert.equal(g.isBlight(hit.x + wc3(210), hit.y), true, 'kept beyond 200');
   assert.equal(g.isBlight(v.x, v.y), true, 'the ghoul that moved away is still on blight');
 });
 
