@@ -34,7 +34,8 @@ function run(game, maxSeconds) {
 for (const M of MINIGAMES) {
   test(`party: ${M.id} runs to completion with bots`, () => {
     const party = new HammerguysParty(fakeRoom(6), { games: 1, only: M.id });
-    const phases = run(party, 200);
+    // A tie for first plays tiebreaker games, so allow a few rounds.
+    const phases = run(party, ((M.duration || 200) + 20) * 4);
     assert.ok(party.over, `${M.id} should finish`);
     assert.ok(phases.has('play'));
     const st = party.standings();

@@ -6,6 +6,12 @@
 import { MortarMayhem } from './mortar.js';
 import { KodoStampede } from './kodo.js';
 import { WispWheel } from './wisp.js';
+import { ObeyArchimonde } from './up/22-obey.js';
+import { WhackAFiend } from './up/23-whack.js';
+import { CrabIsland } from './up/26-crab.js';
+import { SkullOfGuldan } from './up/31-skull.js';
+import { PorkThePiggy } from './up/36-pork.js';
+import { TidesOfDarkness } from './up/44-tides.js';
 import { GolemGauntlet } from './race.js';
 import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
@@ -15,6 +21,12 @@ import { SapperTag } from './potato.js';
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
   KodoStampede, // #17 Stampede
+  ObeyArchimonde, // #22 Obey Archimonde
+  WhackAFiend, // #23 Whack-a-Fiend
+  CrabIsland, // #26 Crab Island
+  SkullOfGuldan, // #31 The Skull of Gul'dan
+  PorkThePiggy, // #36 Pork the Piggy
+  TidesOfDarkness, // #44 Tides of Darkness
   WispWheel, // #47 Wheel of Fire
 ];
 
