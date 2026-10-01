@@ -11,7 +11,7 @@ import { unitBar, setBar, mergeGeos, glow } from './up-kit.js';
 registerTheme(
   'dune',
   { sky: '#c8a878', fog: '#c8a882', floor: ['#c8a86a', 40, {}], outer: ['#8a6a44', 30, {}], sun: '#fff6e6', hemi: ['#f4f0e8', '#6a5a44'], sunI: 2.3 },
-  { floor: { tex: 'tex_dirt.webp', tint: '#d8e4b0', color: '#c8a870', units: 7 }, edge: { tex: 'tex_dirt.webp', tint: '#e8d0a8', color: '#9a7a50', units: 5 }, outer: { tex: 'tex_dirt.webp', tint: '#b8986c', color: '#7a5a3a', units: 9 }, edgeWidth: 1.6 },
+  { floor: { tex: 'tex_sand.webp', tint: '#f0e8d8', color: '#c8a870', units: 7 }, edge: { tex: 'tex_sand.webp', tint: '#d8c8b0', color: '#9a7a50', units: 5 }, outer: { tex: 'tex_dirt.webp', tint: '#b8986c', color: '#7a5a3a', units: 9 }, edgeWidth: 1.6 },
 );
 
 // ------------------------------------------------------------ Dune Worm
