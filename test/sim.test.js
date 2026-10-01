@@ -40,12 +40,16 @@ for (const M of MINIGAMES) {
     assert.ok(phases.has('play'));
     const st = party.standings();
     console.log(`  ${M.id}: ${Math.round(party.mg.time)}s, points`, st.map((s) => s.score).join(','));
-    assert.ok(st[0].score >= 1);
+    // Races (and games marked canDraw) can end with nobody scoring, as in the
+    // original; everything else pays someone.
+    if (M.ranking !== 'race' && !M.canDraw) assert.ok(st[0].score >= 1);
   });
 }
 
 test('party: full party of 8 games', () => {
   const party = new HammerguysParty(fakeRoom(8), { games: 8 });
-  run(party, 60 * 15);
+  // Once 8 or more ports exist, a party rolls only Uther Party games, which run
+  // 1-5 minutes each (survival games with no timer), plus any tie-breakers.
+  run(party, 60 * 45);
   assert.ok(party.over);
 });

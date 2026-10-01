@@ -35,16 +35,28 @@ import { PushTheOgre } from './up/19-pushogre.js';
 import { HorseRace } from './up/24-horserace.js';
 import { QuillboarMile } from './up/33-quillboar.js';
 import { FlightOfTheFootmen } from './up/45-footmen.js';
+import { KaboomRoom } from './up/03-kaboom.js';
+import { CleanupCrew } from './up/05-cleanup.js';
+import { TreantValley } from './up/15-treant.js';
+import { SkeletonSonata } from './up/16-skeleton.js';
+import { SpikePit } from './up/20-spikes.js';
+import { SalamanderSizzle } from './up/21-salamander.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
+  KaboomRoom, // #3 The Kaboom Room
+  CleanupCrew, // #5 The Clean-up Crew
   WayOfTheBow, // #6 Way of the Bow
   Roadkill, // #7 Roadkill Challenge
   CovertKitty, // #8 Covert Kitty
   TaurenTragedy, // #10 The Tauren Tragedy
+  TreantValley, // #15 Treant Valley
+  SkeletonSonata, // #16 The Skeleton Sonata
   KodoStampede, // #17 Stampede
   StopAndGo, // #18 Stop and Go
   PushTheOgre, // #19 Push the Ogre
+  SpikePit, // #20 The Spike Pit
+  SalamanderSizzle, // #21 The Salamander Sizzle
   HorseRace, // #24 Horse Race
   Masquerade, // #25 The Masquerade
   BlinkyBear, // #27 Blinky the Bear
