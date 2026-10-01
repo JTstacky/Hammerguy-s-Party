@@ -44,6 +44,7 @@ test('tauren: one footman per starting player every 1.5 s from t=7, up to 49 (th
     u.hp = 1e9;
     u.stun = 1e9; // nobody fights back
   }
+  g.spawnT = 0.75; // the periodic timer's phase is random; pin it mid-period
   run(g, 7);
   assert.equal(g.footmen.length, 0);
   run(g, 1.55);

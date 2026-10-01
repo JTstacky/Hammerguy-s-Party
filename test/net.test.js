@@ -48,7 +48,7 @@ test('two clients join a room and play', async () => {
     await b.wait((m) => m.t === 'welcome');
     await a.wait((m) => m.t === 'lobby' && m.players.length === 2);
     a.send({ t: 'settings', games: 5 });
-    a.send({ t: 'start' });
+    a.send({ t: 'start', only: 'mortar' }); // some games hide rivals (Masquerade)
     const sa = await a.wait((m) => m.t === 'snap');
     const sb = await b.wait((m) => m.t === 'snap');
     const map = await a.wait((m) => m.t === 'map');
