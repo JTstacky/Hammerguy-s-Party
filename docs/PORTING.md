@@ -103,7 +103,7 @@ registerView('spider', {
   - Scale matches the sheet's collision size, and models are drawn bigger than their collision, as in WC3.
   - No bare boxes, no flat shading, no untextured single-colour blobs for anything large.
 - **Textures** in `client/public/fx/`:
-  - Ground: `tex_grass`, `tex_dirt`, `tex_stone`, `tex_nightgrass`, `tex_snow`.
+  - Ground: `tex_grass`, `tex_dirt`, `tex_stone`, `tex_nightgrass`, `tex_snow`, `tex_sand` (desert), `tex_ice` (Icecrown ice), `tex_rock` (rocky ground), `tex_marble` (city or temple floor tiles).
   - Materials: `tex_boulder`, `tex_wood`, `tex_fur`, `tex_hide`, `tex_leather`, `tex_plate`, `tex_bark`, `tex_needles`.
   - Effects: `fx_*`.
   - Tint them to get variety. If a game truly needs a new texture, see `art/gen.sh` (gpt-image-2 through `codex-imagegen`; generate into a folder without spaces or apostrophes) and `art/process.py`. Two at most per batch, named `tex_<slug>_*`.
