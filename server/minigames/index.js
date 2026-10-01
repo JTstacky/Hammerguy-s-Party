@@ -82,6 +82,12 @@ import { EnergyBlitz } from './ux/065-energy.js';
 import { OneBombTooMany } from './ux/066-bomb.js';
 import { HexxingHavoc } from './ux/067-hexxing.js';
 import { ATaxingSituation } from './ux/068-tax.js';
+import { KeepAway } from './ux/069-keep.js';
+import { StrikeAndLightGalore } from './ux/070-strike.js';
+import { ElementalClash } from './ux/071-elemental.js';
+import { WallStreetTraffic } from './ux/072-stock.js';
+import { MiltonsMisery } from './ux/073-milton.js';
+import { Fetch } from './ux/074-fetch.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -157,6 +163,12 @@ export const ULTIMA_X = [
   OneBombTooMany, // #66 One Bomb Too Many
   HexxingHavoc, // #67 Hexxing Havoc
   ATaxingSituation, // #68 A Taxing Situation
+  KeepAway, // #69 Keep Away!
+  StrikeAndLightGalore, // #70 Strike and Light Galore
+  ElementalClash, // #71 Elemental Clash
+  WallStreetTraffic, // #72 Wall Street Traffic
+  MiltonsMisery, // #73 Milton's Misery
+  Fetch, // #74 Fetch!
   UndergroundRun, // #168 Underground Run (hidden in the original)
 ];
 
