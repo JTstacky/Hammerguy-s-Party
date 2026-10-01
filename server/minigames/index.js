@@ -63,6 +63,12 @@ import { ThePlague } from './up/37-plague.js';
 import { SheepShearers } from './up/39-sheep.js';
 import { DoggyHell } from './up/40-doggy.js';
 import { AncientPunisher } from './up/41-ancient.js';
+import { OverNineThousand } from './ux/075-nine.js';
+import { LostAndFound } from './ux/076-lost.js';
+import { TitanicPanic } from './ux/077-titanic.js';
+import { GreatNavalEnmity } from './ux/078-naval.js';
+import { BadFurDay } from './ux/159-badfur.js';
+import { DrinkAndBow } from './ux/161-drinkbow.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -119,7 +125,14 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
-export const ULTIMA_X = [];
+export const ULTIMA_X = [
+  OverNineThousand, // #75
+  LostAndFound, // #76
+  TitanicPanic, // #77
+  GreatNavalEnmity, // #78
+  BadFurDay, // #159
+  DrinkAndBow, // #161
+];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 
