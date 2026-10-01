@@ -63,6 +63,12 @@ import { ThePlague } from './up/37-plague.js';
 import { SheepShearers } from './up/39-sheep.js';
 import { DoggyHell } from './up/40-doggy.js';
 import { AncientPunisher } from './up/41-ancient.js';
+import { KeepAway } from './ux/069-keep.js';
+import { StrikeAndLightGalore } from './ux/070-strike.js';
+import { ElementalClash } from './ux/071-elemental.js';
+import { WallStreetTraffic } from './ux/072-stock.js';
+import { MiltonsMisery } from './ux/073-milton.js';
+import { Fetch } from './ux/074-fetch.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
@@ -119,7 +125,14 @@ export const UTHER = [
   SeaCombat, // #52 Sea Combat (Free Play in the original)
 ];
 
-export const ULTIMA_X = [];
+export const ULTIMA_X = [
+  KeepAway, // #69 Keep Away!
+  StrikeAndLightGalore, // #70 Strike and Light Galore
+  ElementalClash, // #71 Elemental Clash
+  WallStreetTraffic, // #72 Wall Street Traffic
+  MiltonsMisery, // #73 Milton's Misery
+  Fetch, // #74 Fetch!
+];
 
 export const EXTRAS = [GolemGauntlet, KingOfTheHill, GoldRush, IceSumo, SapperTag];
 
