@@ -15,6 +15,12 @@ import { TheUnseen } from './up/34-unseen.js';
 import { TroubledWaters } from './up/38-troubled.js';
 import { DeathTrap } from './up/48-deathtrap.js';
 import { WispWheel } from './wisp.js';
+import { RatMaze } from './up/02-ratmaze.js';
+import { HotMortar } from './up/04-hotmortar.js';
+import { PolymorphRing } from './up/09-polyring.js';
+import { BombBaldwin } from './up/11-baldwin.js';
+import { HungryKodos } from './up/13-hungrykodos.js';
+import { RaiderRelay } from './up/14-raider.js';
 import { GolemGauntlet } from './race.js';
 import { KingOfTheHill } from './koth.js';
 import { GoldRush } from './gold.js';
@@ -50,13 +56,19 @@ import { AncientPunisher } from './up/41-ancient.js';
 
 export const UTHER = [
   MortarMayhem, // #1 Peon Pandemonium
+  RatMaze, // #2 The Rat Maze
   KaboomRoom, // #3 The Kaboom Room
+  HotMortar, // #4 Hot Mortar
   CleanupCrew, // #5 The Clean-up Crew
   WayOfTheBow, // #6 Way of the Bow
   Roadkill, // #7 Roadkill Challenge
   CovertKitty, // #8 Covert Kitty
+  PolymorphRing, // #9 The Polymorph Ring
   TaurenTragedy, // #10 The Tauren Tragedy
+  BombBaldwin, // #11 Bomb Baldwin
   DarkForest, // #12 Dark Forest
+  HungryKodos, // #13 Hungry Hungry Kodos
+  RaiderRelay, // #14 Raider Relay
   TreantValley, // #15 Treant Valley
   SkeletonSonata, // #16 The Skeleton Sonata
   KodoStampede, // #17 Stampede
